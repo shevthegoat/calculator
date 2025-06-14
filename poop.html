@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator</title>
+  <style>
+    .calculator {
+      width: 300px;
+      margin: 50px auto;
+      background-color: #f0f0f0;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .display {
+      background-color: #fff;
+      padding: 10px;
+      text-align: right;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      padding: 20px;
+      font-size: 18px;
+      border: none;
+      background-color: #e0e0e0;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #d0d0d0;
+    }
+
+    button.clear {
+      background-color: #f44336;
+      color: white;
+    }
+
+    button.equals {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    button.operation {
+      background-color: #ff9800;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display">0</div>
+    <div class="buttons">
+      <button class="clear">C</button>
+      <button>7</button>
+      <button>8</button>
+      <button>9</button>
+      <button class="operation">/</button>
+      <button>4</button>
+      <button>5</button>
+      <button>6</button>
+      <button class="operation">*</button>
+      <button>1</button>
+      <button>2</button>
+      <button>3</button>
+      <button class="operation">-</button>
+      <button>0</button>
+      <button>.</button>
+      <button class="equals">=</button>
+      <button class="operation">+</button>
+    </div>
+  </div>
+  <script>
+    const display = document.querySelector('.display');
+    const buttons = document.querySelector('.buttons');
+
+    let firstNumber = null;
+    let operation = null;
+    let currentInput = '0';
+
+    buttons.addEventListener('click', (event) => {
+      if (event.target.tagName === 'BUTTON') {
+        const buttonText = event.target.textContent;
+
+        if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'].includes(buttonText)) {
+          if (buttonText === '.' && currentInput.includes('.')) {
+            return;
+          }
+          if (currentInput === '0' && buttonText !== '.') {
+            currentInput = buttonText;
+          } else {
+            currentInput += buttonText;
+          }
+          display.textContent = currentInput;
+        } else if (['+', '-', '*', '/'].includes(buttonText)) {
+          if (firstNumber === null) {
+            firstNumber = currentInput;
+          } else if (operation) {
+            const num1 = parseFloat(firstNumber);
+            const num2 = parseFloat(currentInput);
+            let result;
+            if (operation === '+') {
+              result = num1 + num2;
+            } else if (operation === '-') {
+              result = num1 - num2;
+            } else if (operation === '*') {
+              result = num1 * num2;
+            } else if (operation === '/') {
+              result = num2 === 0 ? 'Error' : num1 / num2;
+            }
+            display.textContent = result;
+            firstNumber = result.toString();
+          }
+          operation = buttonText;
+          currentInput = '0';
+        } else if (buttonText === '=') {
+          if (firstNumber !== null && operation && currentInput !== '') {
+            const num1 = parseFloat(firstNumber);
+            const num2 = parseFloat(currentInput);
+            let result;
+            if (operation === '+') {
+              result = num1 + num2;
+            } else if (operation === '-') {
+              result = num1 - num2;
+            } else if (operation === '*') {
+              result = num1 * num2;
+            } else if (operation === '/') {
+              result = num2 === 0 ? 'Error' : num1 / num2;
+            }
+            display.textContent = result;
+            firstNumber = null;
+            operation = null;
+            currentInput = result.toString();
+          }
+        } else if (buttonText === 'C') {
+          firstNumber = null;
+          operation = null;
+          currentInput = '0';
+          display.textContent = '0';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
