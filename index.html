@@ -1,82 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Basketball Scorekeeper</title>
-  <style>
-    .basketball-app {
-      display: flex;
-      justify-content: space-around;
-      padding: 20px;
-      border: 2px solid black;
-      background-color: #f0f0f0;
-    }
-    .team {
-      text-align: center;
-    }
-    .score {
-      font-size: 48px;
-      font-weight: bold;
-      margin: 20px 0;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 18px;
-      margin: 5px;
-      cursor: pointer;
-    }
-    .reset {
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Walker</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
 </head>
 <body>
-  <div class="basketball-app">
-    <div class="team" data-team="home">
-      <h2>Home</h2>
-      <div class="score">0</div>
-      <button class="add-point" data-points="1">+1</button>
-      <button class="add-point" data-points="2">+2</button>
-      <button class="add-point" data-points="3">+3</button>
-    </div>
-    <div class="team" data-team="away">
-      <h2>Away</h2>
-      <div class="score">0</div>
-      <button class="add-point" data-points="1">+1</button>
-      <button class="add-point" data-points="2">+2</button>
-      <button class="add-point" data-points="3">+3</button>
-    </div>
-    <button class="reset">Reset</button>
-  </div>
-  <script>
-    const addPointButtons = document.querySelectorAll('.add-point');
-    const resetButton = document.querySelector('.reset');
-    let homeScore = 0;
-    let awayScore = 0;
+    <canvas id="game" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const tileSize = 32;
+        const cityWidth = 50 * tileSize; // 50 tiles wide
+        const cityHeight = 50 * tileSize; // 50 tiles high
 
-    addPointButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const teamDiv = button.closest('.team');
-        const team = teamDiv.dataset.team;
-        const points = parseInt(button.dataset.points);
-        if (team === 'home') {
-          homeScore += points;
-          teamDiv.querySelector('.score').textContent = homeScore;
-        } else {
-          awayScore += points;
-          teamDiv.querySelector('.score').textContent = awayScore;
+        // Define a simple tile map: 0 = street (walkable), 2 = building (non-walkable)
+        const tileMap = Array(50).fill().map(() => Array(50).fill(0));
+        for (let row = 0; row < 50; row++) {
+            for (let col = 0; col < 50; col++) {
+                if (row === 0 || row === 49 || col === 0 || col === 49 || Math.random() < 0.2) {
+                    tileMap[row][col] = 2; // Buildings on edges and randomly scattered
+                }
+            }
         }
-      });
-    });
 
-    resetButton.addEventListener('click', () => {
-      homeScore = 0;
-      awayScore = 0;
-      document.querySelectorAll('.score').forEach(score => {
-        score.textContent = '0';
-      });
-    });
-  </script>
+        // Load images (replace with actual paths to your assets)
+        const images = {};
+        const imageSources = {
+            street: 'street.png',
+            building: 'building.png',
+            person: 'person.png', // Sprite sheet: 4 rows (directions) x 4 frames, 32x32 each
+            car: 'car.png' // Single car image, 64x32
+        };
+        let loadedImages = 0;
+        const totalImages = Object.keys(imageSources).length;
+
+        for (const key in imageSources) {
+            images[key] = new Image();
+            images[key].onload = () => {
+                loadedImages++;
+                if (loadedImages === totalImages) {
+                    startGame();
+                }
+            };
+            images[key].src = imageSources[key];
+        }
+
+        function startGame() {
+            // Player setup
+            const player = {
+                x: 100,
+                y: 100,
+                width: 32,
+                height: 32,
+                speed: 2,
+                direction: 1, // 0: left, 1: right, 2: up, 3: down
+                frame: 0,
+                animationTimer: 0,
+                animationInterval: 100 // ms per frame
+            };
+
+            // People setup
+            const people = [];
+            for (let i = 0; i < 20; i++) {
+                people.push({
+                    x: Math.random() * cityWidth,
+                    y: Math.random() * cityHeight,
+                    direction: Math.floor(Math.random() * 4),
+                    speed: 1 + Math.random(),
+                    frame: 0,
+                    animationTimer: 0
+                });
+            }
+
+            // Cars setup
+            const cars = [];
+            for (let i = 0; i < 10; i++) {
+                cars.push({
+                    x: Math.random() * cityWidth,
+                    y: (Math.floor(Math.random() * 50)) * tileSize + tileSize / 2 - 16,
+                    direction: Math.random() < 0.5 ? 0 : 1, // 0: left, 1: right
+                    speed: 2 + Math.random() * 2,
+                    image: images.car
+                });
+            }
+
+            // Keyboard input
+            const keys = {};
+            window.addEventListener('keydown', (e) => { keys[e.key] = true; });
+            window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+            let lastTime = 0;
+
+            function gameLoop(currentTime) {
+                const deltaTime = currentTime - lastTime;
+                lastTime = currentTime;
+                update(deltaTime);
+                draw();
+                requestAnimationFrame(gameLoop);
+            }
+
+            function update(deltaTime) {
+                let isMoving = false;
+
+                // Player movement with collision detection
+                if (keys['ArrowRight']) {
+                    const newX = player.x + player.speed;
+                    const tileCol = Math.floor((newX + player.width / 2) / tileSize);
+                    const tileRow = Math.floor((player.y + player.height / 2) / tileSize);
+                    if (tileCol >= 0 && tileCol < 50 && tileRow >= 0 && tileRow < 50 && tileMap[tileRow][tileCol] !== 2) {
+                        player.x = newX;
+                        player.direction = 1;
+                        isMoving = true;
+                    }
+                } else if (keys['ArrowLeft']) {
+                    const newX = player.x - player.speed;
+                    const tileCol = Math.floor((newX + player.width / 2) / tileSize);
+                    const tileRow = Math.floor((player.y + player.height / 2) / tileSize);
+                    if (tileCol >= 0 && tileCol < 50 && tileRow >= 0 && tileRow < 50 && tileMap[tileRow][tileCol] !== 2) {
+                        player.x = newX;
+                        player.direction = 0;
+                        isMoving = true;
+                    }
+                } else if (keys['ArrowUp']) {
+                    const newY = player.y - player.speed;
+                    const tileCol = Math.floor((player.x + player.width / 2) / tileSize);
+                    const tileRow = Math.floor((newY + player.height / 2) / tileSize);
+                    if (tileCol >= 0 && tileCol < 50 && tileRow >= 0 && tileRow < 50 && tileMap[tileRow][tileCol] !== 2) {
+                        player.y = newY;
+                        player.direction = 2;
+                        isMoving = true;
+                    }
+                } else if (keys['ArrowDown']) {
+                    const newY = player.y + player.speed;
+                    const tileCol = Math.floor((player.x + player.width / 2) / tileSize);
+                    const tileRow = Math.floor((newY + player.height / 2) / tileSize);
+                    if (tileCol >= 0 && tileCol < 50 && tileRow >= 0 && tileRow < 50 && tileMap[tileRow][tileCol] !== 2) {
+                        player.y = newY;
+                        player.direction = 3;
+                        isMoving = true;
+                    }
+                }
+
+                // Player animation
+                if (isMoving) {
+                    player.animationTimer += deltaTime;
+                    if (player.animationTimer > player.animationInterval) {
+                        player.frame = (player.frame + 1) % 4;
+                        player.animationTimer = 0;
+                    }
+                } else {
+                    player.frame = 0; // Idle state
+                }
+
+                // Update people
+                for (const person of people) {
+                    if (person.direction === 0) person.x -= person.speed; // left
+                    else if (person.direction === 1) person.x += person.speed; // right
+                    else if (person.direction === 2) person.y -= person.speed; // up
+                    else if (person.direction === 3) person.y += person.speed; // down
+
+                    // Wrap around city edges
+                    if (person.x < 0) person.x = cityWidth;
+                    if (person.x > cityWidth) person.x = 0;
+                    if (person.y < 0) person.y = cityHeight;
+                    if (person.y > cityHeight) person.y = 0;
+
+                    person.animationTimer += deltaTime;
+                    if (person.animationTimer > 100) {
+                        person.frame = (person.frame + 1) % 4;
+                        person.animationTimer = 0;
+                    }
+                }
+
+                // Update cars
+                for (const car of cars) {
+                    if (car.direction === 0) car.x -= car.speed; // left
+                    else car.x += car.speed; // right
+
+                    if (car.x < -64) car.x = cityWidth; // Car width assumed 64px
+                    if (car.x > cityWidth) car.x = -64;
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Camera follows player
+                const cameraX = player.x - canvas.width / 2;
+                const cameraY = player.y - canvas.height / 2;
+                const maxCameraX = cityWidth - canvas.width;
+                const maxCameraY = cityHeight - canvas.height;
+                const clampedCameraX = Math.max(0, Math.min(cameraX, maxCameraX));
+                const clampedCameraY = Math.max(0, Math.min(cameraY, maxCameraY));
+
+                ctx.save();
+                ctx.translate(-clampedCameraX, -clampedCameraY);
+
+                // Draw visible tiles
+                const startCol = Math.floor(clampedCameraX / tileSize);
+                const endCol = Math.ceil((clampedCameraX + canvas.width) / tileSize);
+                const startRow = Math.floor(clampedCameraY / tileSize);
+                const endRow = Math.ceil((clampedCameraY + canvas.height) / tileSize);
+
+                for (let row = Math.max(0, startRow); row < Math.min(50, endRow); row++) {
+                    for (let col = Math.max(0, startCol); col < Math.min(50, endCol); col++) {
+                        const tile = tileMap[row][col];
+                        const x = col * tileSize;
+                        const y = row * tileSize;
+                        if (tile === 0) {
+                            ctx.drawImage(images.street, x, y, tileSize, tileSize);
+                        } else if (tile === 2) {
+                            ctx.drawImage(images.building, x, y, tileSize, tileSize);
+                        }
+                    }
+                }
+
+                // Draw people
+                for (const person of people) {
+                    const frameX = person.frame * 32;
+                    const frameY = person.direction * 32;
+                    ctx.drawImage(images.person, frameX, frameY, 32, 32, person.x, person.y, 32, 32);
+                }
+
+                // Draw cars
+                for (const car of cars) {
+                    ctx.drawImage(car.image, car.x, car.y, 64, 32); // Car size: 64x32
+                }
+
+                // Draw player
+                const playerFrameX = player.frame * 32;
+                const playerFrameY = player.direction * 32;
+                ctx.drawImage(images.person, playerFrameX, playerFrameY, 32, 32, player.x, player.y, 32, 32);
+
+                ctx.restore();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+    </script>
 </body>
 </html>
