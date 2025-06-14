@@ -11,7 +11,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;å
+            height: 100vh;
             margin: 0;
             background-color: #1a1a1a;
             font-family: 'Roboto', sans-serif;
@@ -119,7 +119,7 @@
             if (gameState === 'playing') {
                 if (isPointInRect(mouseX, mouseY, stopButton)) hoverButton = stopButton;
                 if (isPointInRect(mouseX, mouseY, restartButton)) hoverButton = restartButton;
-            } else if (gameState === 'paused' && isPointInRect(mouseX, my, resumeButton)) {
+            } else if (gameState === 'paused' && isPointInRect(mouseX, mouseY, resumeButton)) {
                 hoverButton = resumeButton;
             } else if (gameState === 'difficultyScreen') {
                 if (isPointInRect(mouseX, mouseY, easyButton)) hoverButton = easyButton;
@@ -169,7 +169,7 @@
             if (difficulty === 'easy') {
                 gameSettings = { ballSpeed: 3.5, aiSpeed: 3.0, playerRacketLength: 85, aiRacketLength: 65, difficulty: 'Easy' };
             } else { // hard
-                gameSettings = { ballSpeed: 4.7, aiSpeed: 4.5, playerRacketLength: 80, aiRacketLength: 85, difficulty: 'Hard' };
+                gameSettings = { ballSpeed: 5.2, aiSpeed: 5.0, playerRacketLength: 80, aiRacketLength: 90, difficulty: 'Hard' };
             }
             ball.baseSpeedX = gameSettings.ballSpeed;
             ai.speed = gameSettings.aiSpeed;
@@ -226,7 +226,7 @@
             
             const aiCenter = ai.y + ai.height / 2;
             if (ball.speedX > 0) {
-                const randomOffset = (Math.random() - 0.5) * (gameSettings.aiSpeed === 3.0 ? 20 : 24); // ±10 for Easy, ±12 for Hard
+                const randomOffset = (Math.random() - 0.5) * (gameSettings.aiSpeed === 3.0 ? 20 : 16); // ±10 for Easy, ±8 for Hard
                 const targetY = ball.y + randomOffset;
                 if (aiCenter < targetY - 15) ai.y += ai.speed;
                 else if (aiCenter > targetY + 15) ai.y -= ai.speed;
@@ -375,7 +375,7 @@
             ctx.fillText('Choose number of sets to win:', canvas.width / 2, 300);
             ctx.font = '24px Roboto';
             setButtons.forEach(btn => {
-                ctx.fillStyle = '#DDDDDD';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                 ctx.globalAlpha = hoverButton === btn ? 0.8 : 1;
                 ctx.fillRect(btn.x, btn.y, btn.width, btn.height, 10);
                 ctx.fillStyle = 'black';
