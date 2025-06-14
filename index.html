@@ -3,151 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calculator</title>
+  <title>Basketball Scorekeeper</title>
   <style>
-    .calculator {
-      width: 300px;
-      margin: 50px auto;
+    .basketball-app {
+      display: flex;
+      justify-content: space-around;
+      padding: 20px;
+      border: 2px solid black;
       background-color: #f0f0f0;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-
-    .display {
-      background-color: #fff;
-      padding: 10px;
-      text-align: right;
-      font-size: 24px;
-      margin-bottom: 10px;
+    .team {
+      text-align: center;
     }
-
-    .buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+    .score {
+      font-size: 48px;
+      font-weight: bold;
+      margin: 20px 0;
     }
-
     button {
-      padding: 20px;
+      padding: 10px 20px;
       font-size: 18px;
-      border: none;
-      background-color: #e0e0e0;
+      margin: 5px;
       cursor: pointer;
     }
-
-    button:hover {
-      background-color: #d0d0d0;
-    }
-
-    button.clear {
-      background-color: #f44336;
-      color: white;
-    }
-
-    button.equals {
-      background-color: #4caf50;
-      color: white;
-    }
-
-    button.operation {
-      background-color: #ff9800;
-      color: white;
+    .reset {
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <div class="calculator">
-    <div class="display">0</div>
-    <div class="buttons">
-      <button class="clear">C</button>
-      <button>7</button>
-      <button>8</button>
-      <button>9</button>
-      <button class="operation">/</button>
-      <button>4</button>
-      <button>5</button>
-      <button>6</button>
-      <button class="operation">*</button>
-      <button>1</button>
-      <button>2</button>
-      <button>3</button>
-      <button class="operation">-</button>
-      <button>0</button>
-      <button>.</button>
-      <button class="equals">=</button>
-      <button class="operation">+</button>
+  <div class="basketball-app">
+    <div class="team" data-team="home">
+      <h2>Home</h2>
+      <div class="score">0</div>
+      <button class="add-point" data-points="1">+1</button>
+      <button class="add-point" data-points="2">+2</button>
+      <button class="add-point" data-points="3">+3</button>
     </div>
+    <div class="team" data-team="away">
+      <h2>Away</h2>
+      <div class="score">0</div>
+      <button class="add-point" data-points="1">+1</button>
+      <button class="add-point" data-points="2">+2</button>
+      <button class="add-point" data-points="3">+3</button>
+    </div>
+    <button class="reset">Reset</button>
   </div>
   <script>
-    const display = document.querySelector('.display');
-    const buttons = document.querySelector('.buttons');
+    const addPointButtons = document.querySelectorAll('.add-point');
+    const resetButton = document.querySelector('.reset');
+    let homeScore = 0;
+    let awayScore = 0;
 
-    let firstNumber = null;
-    let operation = null;
-    let currentInput = '0';
-
-    buttons.addEventListener('click', (event) => {
-      if (event.target.tagName === 'BUTTON') {
-        const buttonText = event.target.textContent;
-
-        if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'].includes(buttonText)) {
-          if (buttonText === '.' && currentInput.includes('.')) {
-            return;
-          }
-          if (currentInput === '0' && buttonText !== '.') {
-            currentInput = buttonText;
-          } else {
-            currentInput += buttonText;
-          }
-          display.textContent = currentInput;
-        } else if (['+', '-', '*', '/'].includes(buttonText)) {
-          if (firstNumber === null) {
-            firstNumber = currentInput;
-          } else if (operation) {
-            const num1 = parseFloat(firstNumber);
-            const num2 = parseFloat(currentInput);
-            let result;
-            if (operation === '+') {
-              result = num1 + num2;
-            } else if (operation === '-') {
-              result = num1 - num2;
-            } else if (operation === '*') {
-              result = num1 * num2;
-            } else if (operation === '/') {
-              result = num2 === 0 ? 'Error' : num1 / num2;
-            }
-            display.textContent = result;
-            firstNumber = result.toString();
-          }
-          operation = buttonText;
-          currentInput = '0';
-        } else if (buttonText === '=') {
-          if (firstNumber !== null && operation && currentInput !== '') {
-            const num1 = parseFloat(firstNumber);
-            const num2 = parseFloat(currentInput);
-            let result;
-            if (operation === '+') {
-              result = num1 + num2;
-            } else if (operation === '-') {
-              result = num1 - num2;
-            } else if (operation === '*') {
-              result = num1 * num2;
-            } else if (operation === '/') {
-              result = num2 === 0 ? 'Error' : num1 / num2;
-            }
-            display.textContent = result;
-            firstNumber = null;
-            operation = null;
-            currentInput = result.toString();
-          }
-        } else if (buttonText === 'C') {
-          firstNumber = null;
-          operation = null;
-          currentInput = '0';
-          display.textContent = '0';
+    addPointButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const teamDiv = button.closest('.team');
+        const team = teamDiv.dataset.team;
+        const points = parseInt(button.dataset.points);
+        if (team === 'home') {
+          homeScore += points;
+          teamDiv.querySelector('.score').textContent = homeScore;
+        } else {
+          awayScore += points;
+          teamDiv.querySelector('.score').textContent = awayScore;
         }
-      }
+      });
+    });
+
+    resetButton.addEventListener('click', () => {
+      homeScore = 0;
+      awayScore = 0;
+      document.querySelectorAll('.score').forEach(score => {
+        score.textContent = '0';
+      });
     });
   </script>
 </body>
