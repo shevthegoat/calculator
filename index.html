@@ -3,76 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Click Counter App</title>
+    <title>Simple Tennis Game</title>
     <style>
         body {
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
             margin: 0;
+            background-color: #1a1a1a;
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-        }
-        #clickArea {
-            width: 300px;
-            height: 300px;
-            background-color: #4CAF50;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             color: white;
-            font-size: 24px;
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.1s;
         }
-        #clickArea:active {
-            transform: scale(0.95);
+        canvas {
+            background-color: #006400; /* Tennis court green */
+            border: 2px solid white;
         }
-        #counter {
-            margin-top: 20px;
-            font-size: 36px;
-            color: #333;
-        }
-        #resetButton {
-            margin-top: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        #resetButton:hover {
-            background-color: #cc0000;
+        h1 {
+            position: absolute;
+            top: 20px;
+            font-size: 2rem;
         }
     </style>
 </head>
 <body>
-    <div id="clickArea">Click Me!</div>
-    <div id="counter">Clicks: 0</div>
-    <button id="resetButton">Reset</button>
+    <h1>Simple Tennis</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script>
-        let clickCount = 0;
-        const clickArea = document.getElementById('clickArea');
-        const counterDisplay = document.getElementById('counter');
-        const resetButton = document.getElementById('resetButton');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-        clickArea.addEventListener('click', () => {
-            clickCount++;
-            counterDisplay.textContent = `Clicks: ${clickCount}`;
+        // Game Objects
+        const player = {
+            x: 50,
+            y: canvas.height / 2 - 50,
+            width: 15,
+            height: 100,
+            color: '#FFFFFF',
+            speed: 8
+        };
+
+        const ai = {
+            x: canvas.width - 65,
+            y: canvas.height / 2 - 50,
+            width: 15,
+            height: 100,
+            color: '#FFFFFF',
+            speed: 4
+        };
+
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 10,
+            speedX: 5,
+            speedY: 5,
+            color: '#FFFF00' // Tennis ball yellow
+        };
+
+        // Keyboard state
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false
+        };
+
+        // Event Listeners for Keyboard Input
+        document.addEventListener('keydown', (e) => {
+            if (e.key in keys) {
+                keys[e.key] = true;
+            }
+            // Hit the ball with space key
+            if (e.code === 'Space') {
+                hitBall();
+            }
         });
 
-        resetButton.addEventListener('click', () => {
-            clickCount = 0;
-            counterDisplay.textContent = `Clicks: ${clickCount}`;
+        document.addEventListener('keyup', (e) => {
+            if (e.key in keys) {
+                keys[e.key] = false;
+            }
         });
+
+        function hitBall() {
+            // Check if ball is close to the player to "hit"
+            if (
+                ball.x - ball.radius < player.x + player.width &&
+                ball.y > player.y &&
+                ball.y < player.y + player.height
+            ) {
+                ball.speedX = Math.abs(ball.speedX) + 1; // Increase speed on hit
+            }
+        }
+
+        function update() {
+            // Move player
+            if (keys.ArrowUp && player.y > 0) {
+                player.y -= player.speed;
+            }
+            if (keys.ArrowDown && player.y < canvas.height - player.height) {
+                player.y += player.speed;
+            }
+
+            // Move ball
+            ball.x += ball.speedX;
+            ball.y += ball.speedY;
+
+            // Ball collision with top/bottom walls
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+                ball.speedY = -ball.speedY;
+            }
+
+            // Ball collision with paddles
+            if (
+                // Player paddle
+                (ball.x - ball.radius < player.x + player.width && ball.y > player.y && ball.y < player.y + player.height) ||
+                // AI paddle
+                (ball.x + ball.radius > ai.x && ball.y > ai.y && ball.y < ai.y + ai.height)
+            ) {
+                ball.speedX = -ball.speedX;
+            }
+
+            // Reset ball if it goes out of bounds (scoring)
+            if (ball.x + ball.radius < 0 || ball.x - ball.radius > canvas.width) {
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height / 2;
+                ball.speedX = -ball.speedX; // Serve to the other side
+                ball.speedY = 5;
+            }
+            
+            // Simple AI movement
+            const aiCenter = ai.y + ai.height / 2;
+            if (aiCenter < ball.y - 35) {
+                ai.y += ai.speed;
+            } else if (aiCenter > ball.y + 35) {
+                ai.y -= ai.speed;
+            }
+        }
+
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = '#006400';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw net
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+
+            // Draw player
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Draw AI
+            ctx.fillStyle = ai.color;
+            ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
+
+            // Draw ball
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = ball.color;
+            ctx.fill();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop); // Keep the loop going
+        }
+
+        // Start the game
+        gameLoop();
     </script>
 </body>
 </html>
