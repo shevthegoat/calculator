@@ -221,7 +221,7 @@
                     if (isPointInRect(mouseX, mouseY, btn)) hoverButton = btn;
                 });
             } else if (gameState === 'gameOver') {
-                if (isPointInRect(mouseX, mouseY, mainMenuButton)) hoverButton = mainMenuButton;
+                if (isPointInRect(mouseX, messageY, mainMenuButton)) hoverButton = mainMenuButton;
                 if (isPointInRect(mouseX, mouseY, leaderboardButton)) hoverButton = leaderboardButton;
             } else if (gameState === 'leaderboardScreen' && isPointInRect(mouseX, mouseY, leaderboardMainMenuButton)) {
                 hoverButton = leaderboardMainMenuButton;
@@ -559,9 +559,9 @@
             ctx.fillText(`Win Percentage: ${yourWinPercentage}%`, canvas.width / 2, 180);
 
             // Table dimensions
-            const tableX = canvas.width / 2 - 115; // Center table (230px wide)
+            const tableX = canvas.width / 2 - 130; // Center table (260px wide)
             const tableY = 210; // Start below header text
-            const colWidths = [70, 80, 80]; // Rank, W-L, Win %
+            const colWidths = [80, 90, 90]; // Rank, W-L, Win %
             const rowHeight = 30;
             const numRows = Math.min(leaderboard.length, 5);
 
@@ -585,7 +585,7 @@
 
             // Draw header text
             ctx.fillStyle = 'white';
-            ctx.font = '24px Roboto';
+            ctx.font = '20px Roboto';
             const headers = ['Rank', 'W-L', 'Win %'];
             x = tableX;
             for (let i = 0; i < headers.length; i++) {
