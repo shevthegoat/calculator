@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Full-Featured Tennis Game</title>
+    <title>Improved Tennis Game</title>
     <style>
         body {
             display: flex;
@@ -48,14 +48,16 @@
         const ai = {
             x: canvas.width - 120, y: canvas.height / 2 - 50, width: 20, height: 80,
             racketLength: 60, racketWidth: 10, color: '#e25a4a',
-            speed: 4.5, score: 0, sets: 0
+            speed: 4, score: 0, sets: 0
         };
         const ball = {
             x: canvas.width / 2, y: canvas.height / 2, radius: 10,
-            speedX: 5, speedY: 5, baseSpeedX: 5, color: '#FFFF00'
+            // **CHANGE 1: Reduced ball speed**
+            speedX: 3, speedY: 3, baseSpeedX: 3.5, color: '#FFFF00'
         };
         const swing = {
-            active: false, angle: 0, direction: 1, speed: 15
+            active: false, angle: 0, direction: 1, 
+            speed: 15, targetAngle: 90
         };
         const keys = { ArrowUp: false, ArrowDown: false };
 
@@ -64,8 +66,16 @@
             if (gameState === 'playing') {
                 if (e.key in keys) keys[e.key] = true;
                 if (e.code === 'Space' && !swing.active) {
+                    // **CHANGE 2: Forehand/Backhand logic**
+                    const playerCenterY = player.y + player.height / 2;
+                    // Determine swing direction based on ball position
+                    if (ball.y > playerCenterY) {
+                        swing.targetAngle = 90; // Backhand (downward swing)
+                    } else {
+                        swing.targetAngle = -90; // Forehand (upward swing)
+                    }
+                    swing.direction = Math.sign(swing.targetAngle);
                     swing.active = true;
-                    swing.direction = 1;
                 }
             }
         });
@@ -79,19 +89,10 @@
             const mouseY = e.clientY - rect.top;
 
             switch(gameState) {
-                case 'startScreen':
-                    handleStartScreenClick(mouseX, mouseY);
-                    break;
-                case 'playing':
-                    handlePlayingClick(mouseX, mouseY);
-                    break;
-
-                case 'paused':
-                    handlePausedClick(mouseX, mouseY);
-                    break;
-                case 'gameOver':
-                    handleGameOverClick(mouseX, mouseY);
-                    break;
+                case 'startScreen': handleStartScreenClick(mouseX, mouseY); break;
+                case 'playing': handlePlayingClick(mouseX, mouseY); break;
+                case 'paused': handlePausedClick(mouseX, mouseY); break;
+                case 'gameOver': handleGameOverClick(mouseX, mouseY); break;
             }
         });
         
@@ -104,27 +105,16 @@
         }
 
         function handlePlayingClick(mx, my) {
-            // Check Stop Button
-            if (mx > stopButton.x && mx < stopButton.x + stopButton.width && my > stopButton.y && my < stopButton.y + stopButton.height) {
-                gameState = 'paused';
-            }
-            // Check Restart Button
-            if (mx > restartButton.x && mx < restartButton.x + restartButton.width && my > restartButton.y && my < restartButton.y + restartButton.height) {
-                gameState = 'startScreen';
-            }
+            if (mx > stopButton.x && mx < stopButton.x + stopButton.width && my > stopButton.y && my < stopButton.y + stopButton.height) gameState = 'paused';
+            if (mx > restartButton.x && mx < restartButton.x + restartButton.width && my > restartButton.y && my < restartButton.y + restartButton.height) gameState = 'startScreen';
         }
 
         function handlePausedClick(mx, my) {
-            // Check Resume Button
-             if (mx > resumeButton.x && mx < resumeButton.x + resumeButton.width && my > resumeButton.y && my < resumeButton.y + resumeButton.height) {
-                gameState = 'playing';
-            }
+             if (mx > resumeButton.x && mx < resumeButton.x + resumeButton.width && my > resumeButton.y && my < resumeButton.y + resumeButton.height) gameState = 'playing';
         }
 
         function handleGameOverClick(mx, my) {
-            if (mx > 300 && mx < 500 && my > 400 && my < 450) {
-                gameState = 'startScreen';
-            }
+            if (mx > 300 && mx < 500 && my > 400 && my < 450) gameState = 'startScreen';
         }
 
         // --- GAME LOGIC ---
@@ -137,57 +127,47 @@
         }
 
         function update() {
-            // Stop all updates if not in 'playing' state
             if (gameState !== 'playing') return;
 
-            // Move player
             if (keys.ArrowUp && player.y > 0) player.y -= player.speed;
             if (keys.ArrowDown && player.y < canvas.height - player.height) player.y += player.speed;
             
-            // Animate racket swing
             if (swing.active) {
                 swing.angle += swing.speed * swing.direction;
-                if (swing.angle >= 90) swing.direction = -1;
-                if (swing.angle <= 0 && swing.direction === -1) {
+                // Check if swing reached its peak
+                if (Math.abs(swing.angle) >= Math.abs(swing.targetAngle)) {
+                    swing.direction *= -1;
+                }
+                // Check if swing is finished (returned to start)
+                if ((swing.direction === -1 && swing.angle <= 0 && swing.targetAngle > 0) || (swing.direction === 1 && swing.angle >= 0 && swing.targetAngle < 0)) {
                     swing.active = false;
                     swing.angle = 0;
                 }
             }
 
-            // Move ball
             ball.x += ball.speedX;
             ball.y += ball.speedY;
 
-            // Ball collision with top/bottom walls
-            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
-                ball.speedY = -ball.speedY;
-            }
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) ball.speedY = -ball.speedY;
 
-            // Ball collision with player
+            // Player hit detection using the dynamic swing angle
             const racketTipX = player.x + player.width + Math.cos(swing.angle * Math.PI / 180) * player.racketLength;
-            if (ball.x - ball.radius < racketTipX && ball.x + ball.radius > player.x && ball.y > player.y && ball.y < player.y + player.height) {
-                if (ball.speedX < 0) {
-                    ball.speedX = -ball.speedX;
-                    if (swing.active) {
-                        ball.speedX *= 1.5;
-                        ball.speedY = (ball.y - (player.y + player.height / 2)) * 0.2;
-                    }
+            if (ball.speedX < 0 && ball.x - ball.radius < racketTipX && ball.x + ball.radius > player.x && ball.y > player.y && ball.y < player.y + player.height) {
+                ball.speedX = -ball.speedX;
+                if (swing.active) {
+                    ball.speedX *= 1.2; // Reduced power shot multiplier
+                    ball.speedY = (ball.y - (player.y + player.height / 2)) * 0.25;
                 }
             }
 
-            // Ball collision with AI
-            if (ball.x + ball.radius > ai.x && ball.y > ai.y && ball.y < ai.y + ai.height) {
-                if (ball.speedX > 0) ball.speedX = -ball.speedX;
-            }
+            if (ball.speedX > 0 && ball.x + ball.radius > ai.x && ball.y > ai.y && ball.y < ai.y + ai.height) ball.speedX = -ball.speedX;
 
-            // Scoring
             if (ball.x + ball.radius < 0) {
                 ai.score++; checkSetWin(); resetBall(true);
             } else if (ball.x - ball.radius > canvas.width) {
                 player.score++; checkSetWin(); resetBall(false);
             }
             
-            // Simple AI movement
             const aiCenter = ai.y + ai.height / 2;
             if (ball.speedX > 0) {
                  if (aiCenter < ball.y - 20) ai.y += ai.speed;
@@ -197,26 +177,22 @@
         
         function checkSetWin() {
             if (player.score >= 11 || ai.score >= 11) {
-                 if(player.score > ai.score) player.sets++;
-                 else ai.sets++;
+                 if(player.score > ai.score) player.sets++; else ai.sets++;
                  player.score = 0; ai.score = 0;
             }
             const setsToWin = Math.ceil(totalSets / 2);
-            if (player.sets >= setsToWin || ai.sets >= setsToWin) {
-                gameState = 'gameOver';
-            }
+            if (player.sets >= setsToWin || ai.sets >= setsToWin) gameState = 'gameOver';
         }
 
         function resetBall(serveToPlayer) {
             ball.x = canvas.width / 2;
             ball.y = canvas.height / 2;
-            ball.speedY = Math.random() > 0.5 ? 5 : -5;
+            ball.speedY = Math.random() > 0.5 ? ball.baseSpeedX : -ball.baseSpeedX;
             ball.speedX = serveToPlayer ? -ball.baseSpeedX : ball.baseSpeedX;
         }
 
         // --- DRAWING FUNCTIONS ---
         function draw() {
-            // Always clear the canvas first
             ctx.fillStyle = '#006400';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -229,13 +205,10 @@
                 drawBall();
                 drawScore();
                 drawInGameButtons();
-                if(gameState === 'paused') {
-                    drawPausedOverlay();
-                }
+                if(gameState === 'paused') drawPausedOverlay();
             } else if (gameState === 'gameOver') {
                 drawGameOverScreen();
             }
-            
             requestAnimationFrame(gameLoop);
         }
         
@@ -292,15 +265,12 @@
         }
 
         function drawInGameButtons() {
-            // Stop Button
             ctx.fillStyle = '#e25a4a';
             ctx.fillRect(stopButton.x, stopButton.y, stopButton.width, stopButton.height);
             ctx.fillStyle = 'white';
             ctx.font = '18px "Segoe UI"';
             ctx.textAlign = 'center';
             ctx.fillText('Stop', stopButton.x + stopButton.width / 2, stopButton.y + 20);
-
-            // Restart Button
             ctx.fillStyle = '#4a90e2';
             ctx.fillRect(restartButton.x, restartButton.y, restartButton.width, restartButton.height);
             ctx.fillStyle = 'white';
@@ -314,8 +284,6 @@
             ctx.textAlign = 'center';
             ctx.font = '50px "Segoe UI"';
             ctx.fillText('Paused', canvas.width / 2, canvas.height / 2);
-            
-            // Resume Button
             ctx.fillStyle = '#DDDDDD';
             ctx.fillRect(resumeButton.x, resumeButton.y, resumeButton.width, resumeButton.height);
             ctx.fillStyle = 'black';
@@ -353,13 +321,11 @@
             ctx.fillText('Main Menu', canvas.width / 2, 432);
         }
 
-        // --- MAIN GAME LOOP ---
         function gameLoop() {
             update();
             draw();
         }
 
-        // Initial Draw to show Start Screen
         draw();
     </script>
 </body>
