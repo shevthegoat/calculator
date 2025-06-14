@@ -18,7 +18,7 @@
             color: white;
         }
         canvas {
-            background: linear-gradient(to bottom, #006400, #004d00); /* Subtle gradient for court */
+            background: linear-gradient(to bottom, #006400, #004d00);
             border: 2px solid white;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -30,20 +30,109 @@
         .button:hover {
             opacity: 0.8;
         }
+        #nameInputContainer {
+            position: absolute;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        #nameInput {
+            padding: 8px;
+            font-size: 16px;
+            font-family: 'Roboto', sans-serif;
+            border: 2px solid white;
+            border-radius: 5px;
+            background-color: #333;
+            color: white;
+            width: 200px;
+        }
+        #submitNameButton {
+            padding: 8px 16px;
+            font-size: 16px;
+            font-family: 'Roboto', sans-serif;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+        #submitNameButton:hover {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="nameInputContainer">
+        <input type="text" id="nameInput" placeholder="Enter your name" maxlength="15">
+        <button id="submitNameButton">Submit Name</button>
+    </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const nameInputContainer = document.getElementById('nameInputContainer');
+        const nameInput = document.getElementById('nameInput');
+        const submitNameButton = document.getElementById('submitNameButton');
 
         // --- GAME STATE & SETTINGS ---
-        let gameState = 'startScreen'; // 'startScreen', 'difficultyScreen', 'playing', 'paused', 'gameOver'
+        let gameState = 'startScreen';
         let totalSets = 1;
         let gameSettings = { difficulty: '' };
         let hoverButton = null;
+
+        // --- PLAYER & LEADERBOARD ---
+        let playerName = localStorage.getItem('tennisPlayerName') || '';
+        let nameSubmitted = !!playerName;
+        let record = JSON.parse(localStorage.getItem(`tennisRecord_${playerName}`)) || { wins: 0, losses: 0 };
+        let leaderboard = JSON.parse(localStorage.getItem('tennisLeaderboard')) || [];
+
+        // Show name input if no player name
+        if (!nameSubmitted) {
+            nameInputContainer.style.display = 'flex';
+        }
+
+        function saveRecord() {
+            localStorage.setItem(`tennisRecord_${playerName}`, JSON.stringify(record));
+            updateLeaderboard();
+        }
+
+        function updateLeaderboard() {
+            const winPercentage = (record.wins + record.losses) > 0 ? 
+                (record.wins / (record.wins + record.losses) * 100).toFixed(2) : '0.00';
+            let playerEntry = leaderboard.find(entry => entry.name === playerName);
+            if (playerEntry) {
+                playerEntry.wins = record.wins;
+                playerEntry.losses = record.losses;
+                playerEntry.winPercentage = winPercentage;
+            } else {
+                leaderboard.push({ name: playerName, wins: record.wins, losses: record.losses, winPercentage });
+            }
+            leaderboard.sort((a, b) => parseFloat(b.winPercentage) - parseFloat(a.winPercentage) || b.wins - a.wins);
+            localStorage.setItem('tennisLeaderboard', JSON.stringify(leaderboard));
+        }
+
+        // --- NAME INPUT HANDLING ---
+        submitNameButton.addEventListener('click', () => {
+            const inputName = nameInput.value.trim();
+            if (inputName && inputName.length <= 15) {
+                playerName = inputName;
+                localStorage.setItem('tennisPlayerName', playerName);
+                record = JSON.parse(localStorage.getItem(`tennisRecord_${playerName}`)) || { wins: 0, losses: 0 };
+                nameSubmitted = true;
+                nameInputContainer.style.display = 'none';
+            } else {
+                alert('Please enter a valid name (1-15 characters).');
+            }
+        });
+
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitNameButton.click();
+            }
+        });
 
         // --- UI BUTTONS ---
         const stopButton = { x: canvas.width - 120, y: 10, width: 110, height: 40 };
@@ -56,7 +145,9 @@
             { x: 375, y: 360, width: 110, height: 60, sets: 3 },
             { x: 500, y: 360, width: 110, height: 60, sets: 5 }
         ];
-        const mainMenuButton = { x: 320, y: 410, width: 160, height: 60 };
+        const mainMenuButton = { x: 200, y: 410, width: 160, height: 60 };
+        const leaderboardButton = { x: 440, y: 410, width: 160, height: 60 };
+        const leaderboardMainMenuButton = { x: 320, y: 500, width: 160, height: 60 };
 
         // --- GAME OBJECTS ---
         const player = {
@@ -107,6 +198,7 @@
                 case 'playing': handlePlayingClick(mouseX, mouseY); break;
                 case 'paused': handlePausedClick(mouseX, mouseY); break;
                 case 'gameOver': handleGameOverClick(mouseX, mouseY); break;
+                case 'leaderboardScreen': handleLeaderboardClick(mouseX, mouseY); break;
             }
         });
 
@@ -124,12 +216,15 @@
             } else if (gameState === 'difficultyScreen') {
                 if (isPointInRect(mouseX, mouseY, easyButton)) hoverButton = easyButton;
                 if (isPointInRect(mouseX, mouseY, hardButton)) hoverButton = hardButton;
-            } else if (gameState === 'startScreen') {
+            } else if (gameState === 'startScreen' && nameSubmitted) {
                 setButtons.forEach(btn => {
                     if (isPointInRect(mouseX, mouseY, btn)) hoverButton = btn;
                 });
-            } else if (gameState === 'gameOver' && isPointInRect(mouseX, mouseY, mainMenuButton)) {
-                hoverButton = mainMenuButton;
+            } else if (gameState === 'gameOver') {
+                if (isPointInRect(mouseX, mouseY, mainMenuButton)) hoverButton = mainMenuButton;
+                if (isPointInRect(mouseX, mouseY, leaderboardButton)) hoverButton = leaderboardButton;
+            } else if (gameState === 'leaderboardScreen' && isPointInRect(mouseX, mouseY, leaderboardMainMenuButton)) {
+                hoverButton = leaderboardMainMenuButton;
             }
         });
 
@@ -138,12 +233,14 @@
         }
         
         function handleStartScreenClick(mx, my) {
-            setButtons.forEach(btn => {
-                if (isPointInRect(mx, my, btn)) {
-                    totalSets = btn.sets;
-                    gameState = 'difficultyScreen';
-                }
-            });
+            if (nameSubmitted) {
+                setButtons.forEach(btn => {
+                    if (isPointInRect(mx, my, btn)) {
+                        totalSets = btn.sets;
+                        gameState = 'difficultyScreen';
+                    }
+                });
+            }
         }
         
         function handleDifficultyClick(mx, my) {
@@ -162,6 +259,11 @@
 
         function handleGameOverClick(mx, my) {
             if (isPointInRect(mx, my, mainMenuButton)) gameState = 'startScreen';
+            if (isPointInRect(mx, my, leaderboardButton)) gameState = 'leaderboardScreen';
+        }
+
+        function handleLeaderboardClick(mx, my) {
+            if (isPointInRect(mx, my, leaderboardMainMenuButton)) gameState = 'startScreen';
         }
 
         // --- GAME LOGIC ---
@@ -226,7 +328,7 @@
             
             const aiCenter = ai.y + ai.height / 2;
             if (ball.speedX > 0) {
-                const randomOffset = (Math.random() - 0.5) * (gameSettings.aiSpeed === 3.0 ? 20 : 16); // ±10 for Easy, ±8 for Hard
+                const randomOffset = (Math.random() - 0.5) * (gameSettings.aiSpeed === 3.0 ? 20 : 16);
                 const targetY = ball.y + randomOffset;
                 if (aiCenter < targetY - 15) ai.y += ai.speed;
                 else if (aiCenter > targetY + 15) ai.y -= ai.speed;
@@ -244,7 +346,15 @@
                 }
             }
             const setsToWin = Math.ceil(totalSets / 2);
-            if (player.sets >= setsToWin || ai.sets >= setsToWin) gameState = 'gameOver';
+            if (player.sets >= setsToWin || ai.sets >= setsToWin) {
+                if (player.sets > ai.sets) {
+                    record.wins++;
+                } else {
+                    record.losses++;
+                }
+                saveRecord();
+                gameState = 'gameOver';
+            }
         }
 
         function resetBall(serveToPlayer) {
@@ -270,6 +380,7 @@
                 drawInGameButtons();
                 if(gameState === 'paused') drawPausedOverlay();
             } else if (gameState === 'gameOver') drawGameOverScreen();
+            else if (gameState === 'leaderboardScreen') drawLeaderboardScreen();
             
             requestAnimationFrame(gameLoop);
         }
@@ -340,7 +451,7 @@
             ctx.globalAlpha = 1;
 
             ctx.fillStyle = '#4a90e2';
-            ctx.fillRect(restartButton.x, restartButton.y, restartButton.width, restartButton.height, 10);
+            ctx.fillRect(restartButton.x, restartButton.y, restartButton.width, stopButton.height, 10);
             ctx.fillStyle = 'white';
             ctx.globalAlpha = hoverButton === restartButton ? 0.8 : 1;
             ctx.fillText('Restart', restartButton.x + restartButton.width / 2, restartButton.y + 28);
@@ -353,7 +464,7 @@
             ctx.fillStyle = 'white';
             ctx.textAlign = 'center';
             ctx.font = '50px Roboto';
-            const pulse = 1 + Math.sin(Date.now() / 200) * 0.05; // Subtle pulse animation
+            const pulse = 1 + Math.sin(Date.now() / 200) * 0.05;
             ctx.globalAlpha = pulse;
             ctx.fillText('Paused', canvas.width / 2, canvas.height / 2);
             ctx.globalAlpha = 1;
@@ -371,17 +482,22 @@
             ctx.fillStyle = 'white';
             ctx.font = '50px Roboto';
             ctx.fillText('HTML5 Tennis', canvas.width / 2, 150);
-            ctx.font = '30px Roboto';
-            ctx.fillText('Choose number of sets to win:', canvas.width / 2, 300);
-            ctx.font = '24px Roboto';
-            setButtons.forEach(btn => {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.globalAlpha = hoverButton === btn ? 0.8 : 1;
-                ctx.fillRect(btn.x, btn.y, btn.width, btn.height, 10);
-                ctx.fillStyle = 'black';
-                ctx.fillText(`${btn.sets} Set${btn.sets > 1 ? 's' : ''}`, btn.x + btn.width / 2, btn.y + 40);
-                ctx.globalAlpha = 1;
-            });
+            if (!nameSubmitted) {
+                ctx.font = '30px Roboto';
+                ctx.fillText('Enter your name above', canvas.width / 2, 300);
+            } else {
+                ctx.font = '30px Roboto';
+                ctx.fillText('Choose number of sets to win:', canvas.width / 2, 300);
+                ctx.font = '24px Roboto';
+                setButtons.forEach(btn => {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.globalAlpha = hoverButton === btn ? 0.8 : 1;
+                    ctx.fillRect(btn.x, btn.y, btn.width, btn.height, 10);
+                    ctx.fillStyle = 'black';
+                    ctx.fillText(`${btn.sets} Set${btn.sets > 1 ? 's' : ''}`, btn.x + btn.width / 2, btn.y + 40);
+                    ctx.globalAlpha = 1;
+                });
+            }
         }
         
         function drawDifficultyScreen() {
@@ -402,6 +518,7 @@
             ctx.globalAlpha = hoverButton === hardButton ? 0.8 : 1;
             ctx.fillRect(hardButton.x, hardButton.y, hardButton.width, hardButton.height, 10);
             ctx.fillStyle = 'white';
+            ctx.font = '26px Roboto';
             ctx.fillText('Hard Mode', hardButton.x + hardButton.width / 2, hardButton.y + 40);
             ctx.globalAlpha = 1;
         }
@@ -411,7 +528,7 @@
             ctx.fillStyle = 'white';
             ctx.font = '50px Roboto';
             const winner = player.sets > ai.sets ? 'You Win!' : 'Bot Wins!';
-            const pulse = 1 + Math.sin(Date.now() / 200) * 0.05; // Subtle pulse animation
+            const pulse = 1 + Math.sin(Date.now() / 200) * 0.05;
             ctx.globalAlpha = pulse;
             ctx.fillText('Game Over', canvas.width / 2, 200);
             ctx.fillText(winner, canvas.width / 2, 300);
@@ -424,6 +541,86 @@
             ctx.fillStyle = 'black';
             ctx.font = '26px Roboto';
             ctx.fillText('Main Menu', mainMenuButton.x + mainMenuButton.width / 2, mainMenuButton.y + 40);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#4a90e2';
+            ctx.globalAlpha = hoverButton === leaderboardButton ? 0.8 : 1;
+            ctx.fillRect(leaderboardButton.x, leaderboardButton.y, leaderboardButton.width, leaderboardButton.height, 10);
+            ctx.fillStyle = 'white';
+            ctx.fillText('Leaderboard', leaderboardButton.x + leaderboardButton.width / 2, leaderboardButton.y + 40);
+            ctx.globalAlpha = 1;
+        }
+
+        function drawLeaderboardScreen() {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'white';
+            ctx.font = '50px Roboto';
+            ctx.fillText('Leaderboard', canvas.width / 2, 100);
+            ctx.font = '30px Roboto';
+            ctx.fillText(`Your Record (${playerName}): ${record.wins}-${record.losses}`, canvas.width / 2, 150);
+            const yourWinPercentage = (record.wins + record.losses) > 0 ? 
+                (record.wins / (record.wins + record.losses) * 100).toFixed(2) : '0.00';
+            ctx.fillText(`Win Percentage: ${yourWinPercentage}%`, canvas.width / 2, 180);
+
+            // Table dimensions
+            const tableX = canvas.width / 2 - 115; // Center table (230px wide)
+            const tableY = 210; // Start below header text
+            const colWidths = [70, 80, 80]; // Rank, W-L, Win %
+            const rowHeight = 30;
+            const numRows = Math.min(leaderboard.length, 5);
+
+            // Draw table grid
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Vertical lines
+            let x = tableX;
+            for (let i = 0; i <= colWidths.length; i++) {
+                ctx.moveTo(x, tableY);
+                ctx.lineTo(x, tableY + (numRows + 1) * rowHeight);
+                x += colWidths[i] || 0;
+            }
+            // Horizontal lines
+            for (let i = 0; i <= numRows + 1; i++) {
+                ctx.moveTo(tableX, tableY + i * rowHeight);
+                ctx.lineTo(tableX + colWidths.reduce((a, b) => a + b, 0), tableY + i * rowHeight);
+            }
+            ctx.stroke();
+
+            // Draw header text
+            ctx.fillStyle = 'white';
+            ctx.font = '24px Roboto';
+            const headers = ['Rank', 'W-L', 'Win %'];
+            x = tableX;
+            for (let i = 0; i < headers.length; i++) {
+                ctx.textAlign = 'center';
+                ctx.fillText(headers[i], x + colWidths[i] / 2, tableY + rowHeight / 2 + 8);
+                x += colWidths[i];
+            }
+
+            // Draw leaderboard data
+            leaderboard.forEach((entry, index) => {
+                if (index < 5) {
+                    const rowY = tableY + (index + 1) * rowHeight + rowHeight / 2 + 8;
+                    x = tableX;
+                    // Rank
+                    ctx.textAlign = 'center';
+                    ctx.fillText((index + 1).toString(), x + colWidths[0] / 2, rowY);
+                    x += colWidths[0];
+                    // W-L
+                    ctx.fillText(`${entry.wins}-${entry.losses}`, x + colWidths[1] / 2, rowY);
+                    x += colWidths[1];
+                    // Win %
+                    ctx.fillText(`${entry.winPercentage}%`, x + colWidths[2] / 2, rowY);
+                }
+            });
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#DDDDDD';
+            ctx.globalAlpha = hoverButton === leaderboardMainMenuButton ? 0.8 : 1;
+            ctx.fillRect(leaderboardMainMenuButton.x, leaderboardMainMenuButton.y, leaderboardMainMenuButton.width, leaderboardMainMenuButton.height, 10);
+            ctx.fillStyle = 'black';
+            ctx.font = '26px Roboto';
+            ctx.fillText('Main Menu', leaderboardMainMenuButton.x + leaderboardMainMenuButton.width / 2, leaderboardMainMenuButton.y + 40);
             ctx.globalAlpha = 1;
         }
 
