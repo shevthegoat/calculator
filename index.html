@@ -125,9 +125,9 @@
         // --- GAME LOGIC ---
         function setDifficulty(difficulty) {
             if (difficulty === 'easy') {
-                gameSettings = { ballSpeed: 2.8, aiSpeed: 3.5, playerRacketLength: 85, aiRacketLength: 70 };
+                gameSettings = { ballSpeed: 3.5, aiSpeed: 3.0, playerRacketLength: 85, aiRacketLength: 65 };
             } else { // hard
-                gameSettings = { ballSpeed: 5.5, aiSpeed: 5.8, playerRacketLength: 75, aiRacketLength: 85 };
+                gameSettings = { ballSpeed: 4.7, aiSpeed: 4.5, playerRacketLength: 80, aiRacketLength: 85 };
             }
             ball.baseSpeedX = gameSettings.ballSpeed;
             ai.speed = gameSettings.aiSpeed;
@@ -184,8 +184,11 @@
             
             const aiCenter = ai.y + ai.height / 2;
             if (ball.speedX > 0) {
-                 if (aiCenter < ball.y - 15) ai.y += ai.speed;
-                 else if (aiCenter > ball.y + 15) ai.y -= ai.speed;
+                // Add randomness to AI movement for less precision
+                const randomOffset = (Math.random() - 0.5) * (gameSettings.aiSpeed === 3.0 ? 20 : 24); // ±10 for Easy, ±12 for Hard
+                const targetY = ball.y + randomOffset;
+                if (aiCenter < targetY - 15) ai.y += ai.speed;
+                else if (aiCenter > targetY + 15) ai.y -= ai.speed;
             }
         }
         
@@ -363,11 +366,3 @@
     </script>
 </body>
 </html>
-
-Sources
-
-
-
-
-
-
