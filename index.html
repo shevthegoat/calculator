@@ -83,11 +83,10 @@
         let gameSettings = { difficulty: '' };
         let hoverButton = null;
 
-        // --- PLAYER & LEADERBOARD ---
+        // --- PLAYER & RECORD ---
         let playerName = localStorage.getItem('tennisPlayerName') || '';
         let nameSubmitted = !!playerName;
         let record = JSON.parse(localStorage.getItem(`tennisRecord_${playerName}`)) || { wins: 0, losses: 0 };
-        let leaderboard = JSON.parse(localStorage.getItem('tennisLeaderboard')) || [];
 
         // Show name input if no player name
         if (!nameSubmitted) {
@@ -96,22 +95,6 @@
 
         function saveRecord() {
             localStorage.setItem(`tennisRecord_${playerName}`, JSON.stringify(record));
-            updateLeaderboard();
-        }
-
-        function updateLeaderboard() {
-            const winPercentage = (record.wins + record.losses) > 0 ? 
-                (record.wins / (record.wins + record.losses) * 100).toFixed(2) : '0.00';
-            let playerEntry = leaderboard.find(entry => entry.name === playerName);
-            if (playerEntry) {
-                playerEntry.wins = record.wins;
-                playerEntry.losses = record.losses;
-                playerEntry.winPercentage = winPercentage;
-            } else {
-                leaderboard.push({ name: playerName, wins: record.wins, losses: record.losses, winPercentage });
-            }
-            leaderboard.sort((a, b) => parseFloat(b.winPercentage) - parseFloat(a.winPercentage) || b.wins - a.wins);
-            localStorage.setItem('tennisLeaderboard', JSON.stringify(leaderboard));
         }
 
         // --- NAME INPUT HANDLING ---
@@ -145,9 +128,7 @@
             { x: 375, y: 360, width: 110, height: 60, sets: 3 },
             { x: 500, y: 360, width: 110, height: 60, sets: 5 }
         ];
-        const mainMenuButton = { x: 200, y: 410, width: 160, height: 60 };
-        const leaderboardButton = { x: 440, y: 410, width: 160, height: 60 };
-        const leaderboardMainMenuButton = { x: 320, y: 500, width: 160, height: 60 };
+        const mainMenuButton = { x: canvas.width/2 - 80, y: 440, width: 160, height: 60 };
 
         // --- GAME OBJECTS ---
         const player = {
@@ -198,7 +179,6 @@
                 case 'playing': handlePlayingClick(mouseX, mouseY); break;
                 case 'paused': handlePausedClick(mouseX, mouseY); break;
                 case 'gameOver': handleGameOverClick(mouseX, mouseY); break;
-                case 'leaderboardScreen': handleLeaderboardClick(mouseX, mouseY); break;
             }
         });
 
@@ -221,10 +201,7 @@
                     if (isPointInRect(mouseX, mouseY, btn)) hoverButton = btn;
                 });
             } else if (gameState === 'gameOver') {
-                if (isPointInRect(mouseX, messageY, mainMenuButton)) hoverButton = mainMenuButton;
-                if (isPointInRect(mouseX, mouseY, leaderboardButton)) hoverButton = leaderboardButton;
-            } else if (gameState === 'leaderboardScreen' && isPointInRect(mouseX, mouseY, leaderboardMainMenuButton)) {
-                hoverButton = leaderboardMainMenuButton;
+                if (isPointInRect(mouseX, mouseY, mainMenuButton)) hoverButton = mainMenuButton;
             }
         });
 
@@ -259,11 +236,6 @@
 
         function handleGameOverClick(mx, my) {
             if (isPointInRect(mx, my, mainMenuButton)) gameState = 'startScreen';
-            if (isPointInRect(mx, my, leaderboardButton)) gameState = 'leaderboardScreen';
-        }
-
-        function handleLeaderboardClick(mx, my) {
-            if (isPointInRect(mx, my, leaderboardMainMenuButton)) gameState = 'startScreen';
         }
 
         // --- GAME LOGIC ---
@@ -380,7 +352,6 @@
                 drawInGameButtons();
                 if(gameState === 'paused') drawPausedOverlay();
             } else if (gameState === 'gameOver') drawGameOverScreen();
-            else if (gameState === 'leaderboardScreen') drawLeaderboardScreen();
             
             requestAnimationFrame(gameLoop);
         }
@@ -531,93 +502,17 @@
             ctx.fillText(winner, canvas.width / 2, 300);
             ctx.globalAlpha = 1;
             ctx.font = '30px Roboto';
-            ctx.fillText(`Final Sets: ${player.sets} - ${ai.sets}`, canvas.width / 2, 350);
+            ctx.fillText(`Player: ${playerName}`, canvas.width / 2, 350);
+            const winPercentage = (record.wins + record.losses) > 0 ? 
+                (record.wins / (record.wins + record.losses) * 100).toFixed(2) : '0.00';
+            ctx.fillText(`Record: ${record.wins}-${record.losses}`, canvas.width / 2, 380);
+            ctx.fillText(`Win Percentage: ${winPercentage}%`, canvas.width / 2, 410);
             ctx.fillStyle = '#DDDDDD';
             ctx.globalAlpha = hoverButton === mainMenuButton ? 0.8 : 1;
             ctx.fillRect(mainMenuButton.x, mainMenuButton.y, mainMenuButton.width, mainMenuButton.height, 10);
             ctx.fillStyle = 'black';
             ctx.font = '26px Roboto';
             ctx.fillText('Main Menu', mainMenuButton.x + mainMenuButton.width / 2, mainMenuButton.y + 40);
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = '#4a90e2';
-            ctx.globalAlpha = hoverButton === leaderboardButton ? 0.8 : 1;
-            ctx.fillRect(leaderboardButton.x, leaderboardButton.y, leaderboardButton.width, leaderboardButton.height, 10);
-            ctx.fillStyle = 'white';
-            ctx.fillText('Leaderboard', leaderboardButton.x + leaderboardButton.width / 2, leaderboardButton.y + 40);
-            ctx.globalAlpha = 1;
-        }
-
-        function drawLeaderboardScreen() {
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'white';
-            ctx.font = '50px Roboto';
-            ctx.fillText('Leaderboard', canvas.width / 2, 100);
-            ctx.font = '30px Roboto';
-            ctx.fillText(`Your Record (${playerName}): ${record.wins}-${record.losses}`, canvas.width / 2, 150);
-            const yourWinPercentage = (record.wins + record.losses) > 0 ? 
-                (record.wins / (record.wins + record.losses) * 100).toFixed(2) : '0.00';
-            ctx.fillText(`Win Percentage: ${yourWinPercentage}%`, canvas.width / 2, 180);
-
-            // Table dimensions
-            const tableX = canvas.width / 2 - 130; // Center table (260px wide)
-            const tableY = 210; // Start below header text
-            const colWidths = [80, 90, 90]; // Rank, W-L, Win %
-            const rowHeight = 30;
-            const numRows = Math.min(leaderboard.length, 5);
-
-            // Draw table grid
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            // Vertical lines
-            let x = tableX;
-            for (let i = 0; i <= colWidths.length; i++) {
-                ctx.moveTo(x, tableY);
-                ctx.lineTo(x, tableY + (numRows + 1) * rowHeight);
-                x += colWidths[i] || 0;
-            }
-            // Horizontal lines
-            for (let i = 0; i <= numRows + 1; i++) {
-                ctx.moveTo(tableX, tableY + i * rowHeight);
-                ctx.lineTo(tableX + colWidths.reduce((a, b) => a + b, 0), tableY + i * rowHeight);
-            }
-            ctx.stroke();
-
-            // Draw header text
-            ctx.fillStyle = 'white';
-            ctx.font = '20px Roboto';
-            const headers = ['Rank', 'W-L', 'Win %'];
-            x = tableX;
-            for (let i = 0; i < headers.length; i++) {
-                ctx.textAlign = 'center';
-                ctx.fillText(headers[i], x + colWidths[i] / 2, tableY + rowHeight / 2 + 8);
-                x += colWidths[i];
-            }
-
-            // Draw leaderboard data
-            leaderboard.forEach((entry, index) => {
-                if (index < 5) {
-                    const rowY = tableY + (index + 1) * rowHeight + rowHeight / 2 + 8;
-                    x = tableX;
-                    // Rank
-                    ctx.textAlign = 'center';
-                    ctx.fillText((index + 1).toString(), x + colWidths[0] / 2, rowY);
-                    x += colWidths[0];
-                    // W-L
-                    ctx.fillText(`${entry.wins}-${entry.losses}`, x + colWidths[1] / 2, rowY);
-                    x += colWidths[1];
-                    // Win %
-                    ctx.fillText(`${entry.winPercentage}%`, x + colWidths[2] / 2, rowY);
-                }
-            });
-
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#DDDDDD';
-            ctx.globalAlpha = hoverButton === leaderboardMainMenuButton ? 0.8 : 1;
-            ctx.fillRect(leaderboardMainMenuButton.x, leaderboardMainMenuButton.y, leaderboardMainMenuButton.width, leaderboardMainMenuButton.height, 10);
-            ctx.fillStyle = 'black';
-            ctx.font = '26px Roboto';
-            ctx.fillText('Main Menu', leaderboardMainMenuButton.x + leaderboardMainMenuButton.width / 2, leaderboardMainMenuButton.y + 40);
             ctx.globalAlpha = 1;
         }
 
