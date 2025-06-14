@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Improved Tennis Game</title>
+    <title>Polished Tennis Game</title>
     <style>
         body {
             display: flex;
@@ -31,29 +31,31 @@
         const ctx = canvas.getContext('2d');
 
         // --- GAME STATE & SETTINGS ---
-        let gameState = 'startScreen'; // 'startScreen', 'playing', 'paused', 'gameOver'
+        let gameState = 'startScreen'; // 'startScreen', 'difficultyScreen', 'playing', 'paused', 'gameOver'
         let totalSets = 1;
+        let gameSettings = {};
 
-        // --- UI BUTTONS (for click detection) ---
+        // --- UI BUTTONS ---
         const stopButton = { x: canvas.width - 110, y: 10, width: 100, height: 30 };
         const restartButton = { x: canvas.width - 110, y: 50, width: 100, height: 30 };
         const resumeButton = { x: canvas.width/2 - 75, y: 350, width: 150, height: 50 };
+        const easyButton = { x: canvas.width/2 - 225, y: 350, width: 200, height: 50 };
+        const hardButton = { x: canvas.width/2 + 25, y: 350, width: 200, height: 50 };
 
         // --- GAME OBJECTS ---
         const player = {
             x: 100, y: canvas.height / 2 - 50, width: 20, height: 80,
-            racketLength: 60, racketWidth: 10, color: '#4a90e2',
+            racketLength: 75, racketWidth: 10, color: '#4a90e2',
             speed: 8, score: 0, sets: 0
         };
         const ai = {
             x: canvas.width - 120, y: canvas.height / 2 - 50, width: 20, height: 80,
-            racketLength: 60, racketWidth: 10, color: '#e25a4a',
+            racketLength: 75, racketWidth: 10, color: '#e25a4a',
             speed: 4, score: 0, sets: 0
         };
         const ball = {
             x: canvas.width / 2, y: canvas.height / 2, radius: 10,
-            // **CHANGE 1: Reduced ball speed**
-            speedX: 3, speedY: 3, baseSpeedX: 3.5, color: '#FFFF00'
+            speedX: 3.5, speedY: 3.5, baseSpeedX: 3.5, color: '#FFFF00'
         };
         const swing = {
             active: false, angle: 0, direction: 1, 
@@ -66,14 +68,9 @@
             if (gameState === 'playing') {
                 if (e.key in keys) keys[e.key] = true;
                 if (e.code === 'Space' && !swing.active) {
-                    // **CHANGE 2: Forehand/Backhand logic**
                     const playerCenterY = player.y + player.height / 2;
-                    // Determine swing direction based on ball position
-                    if (ball.y > playerCenterY) {
-                        swing.targetAngle = 90; // Backhand (downward swing)
-                    } else {
-                        swing.targetAngle = -90; // Forehand (upward swing)
-                    }
+                    if (ball.y > playerCenterY) swing.targetAngle = 90;
+                    else swing.targetAngle = -90;
                     swing.direction = Math.sign(swing.targetAngle);
                     swing.active = true;
                 }
@@ -90,6 +87,7 @@
 
             switch(gameState) {
                 case 'startScreen': handleStartScreenClick(mouseX, mouseY); break;
+                case 'difficultyScreen': handleDifficultyClick(mouseX, mouseY); break;
                 case 'playing': handlePlayingClick(mouseX, mouseY); break;
                 case 'paused': handlePausedClick(mouseX, mouseY); break;
                 case 'gameOver': handleGameOverClick(mouseX, mouseY); break;
@@ -98,9 +96,16 @@
         
         function handleStartScreenClick(mx, my) {
             if (my > 350 && my < 400) {
-                if (mx > 250 && mx < 350) startGame(1);
-                if (mx > 375 && mx < 475) startGame(3);
-                if (mx > 500 && mx < 600) startGame(5);
+                if (mx > 250 && mx < 350) { totalSets = 1; gameState = 'difficultyScreen'; }
+                if (mx > 375 && mx < 475) { totalSets = 3; gameState = 'difficultyScreen'; }
+                if (mx > 500 && mx < 600) { totalSets = 5; gameState = 'difficultyScreen'; }
+            }
+        }
+        
+        function handleDifficultyClick(mx, my) {
+            if (my > easyButton.y && my < easyButton.y + easyButton.height) {
+                if (mx > easyButton.x && mx < easyButton.x + easyButton.width) startGame('easy');
+                if (mx > hardButton.x && mx < hardButton.x + hardButton.width) startGame('hard');
             }
         }
 
@@ -118,8 +123,20 @@
         }
 
         // --- GAME LOGIC ---
-        function startGame(sets) {
-            totalSets = sets;
+        function setDifficulty(difficulty) {
+            if (difficulty === 'easy') {
+                gameSettings = { ballSpeed: 2.8, aiSpeed: 3.5, playerRacketLength: 85, aiRacketLength: 70 };
+            } else { // hard
+                gameSettings = { ballSpeed: 5.5, aiSpeed: 5.8, playerRacketLength: 75, aiRacketLength: 85 };
+            }
+            ball.baseSpeedX = gameSettings.ballSpeed;
+            ai.speed = gameSettings.aiSpeed;
+            player.racketLength = gameSettings.playerRacketLength;
+            ai.racketLength = gameSettings.aiRacketLength;
+        }
+
+        function startGame(difficulty) {
+            setDifficulty(difficulty);
             player.score = 0; ai.score = 0;
             player.sets = 0; ai.sets = 0;
             resetBall(true);
@@ -134,14 +151,9 @@
             
             if (swing.active) {
                 swing.angle += swing.speed * swing.direction;
-                // Check if swing reached its peak
-                if (Math.abs(swing.angle) >= Math.abs(swing.targetAngle)) {
-                    swing.direction *= -1;
-                }
-                // Check if swing is finished (returned to start)
+                if (Math.abs(swing.angle) >= Math.abs(swing.targetAngle)) swing.direction *= -1;
                 if ((swing.direction === -1 && swing.angle <= 0 && swing.targetAngle > 0) || (swing.direction === 1 && swing.angle >= 0 && swing.targetAngle < 0)) {
-                    swing.active = false;
-                    swing.angle = 0;
+                    swing.active = false; swing.angle = 0;
                 }
             }
 
@@ -150,17 +162,19 @@
 
             if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) ball.speedY = -ball.speedY;
 
-            // Player hit detection using the dynamic swing angle
             const racketTipX = player.x + player.width + Math.cos(swing.angle * Math.PI / 180) * player.racketLength;
             if (ball.speedX < 0 && ball.x - ball.radius < racketTipX && ball.x + ball.radius > player.x && ball.y > player.y && ball.y < player.y + player.height) {
                 ball.speedX = -ball.speedX;
                 if (swing.active) {
-                    ball.speedX *= 1.2; // Reduced power shot multiplier
+                    ball.speedX *= 1.2;
                     ball.speedY = (ball.y - (player.y + player.height / 2)) * 0.25;
                 }
             }
 
-            if (ball.speedX > 0 && ball.x + ball.radius > ai.x && ball.y > ai.y && ball.y < ai.y + ai.height) ball.speedX = -ball.speedX;
+            const aiRacketTipX = ai.x - ai.racketLength;
+            if (ball.speedX > 0 && ball.x + ball.radius > aiRacketTipX && ball.x + ball.radius < ai.x + ai.width && ball.y > ai.y && ball.y < ai.y + ai.height) {
+                ball.speedX = -ball.speedX;
+            }
 
             if (ball.x + ball.radius < 0) {
                 ai.score++; checkSetWin(); resetBall(true);
@@ -170,8 +184,8 @@
             
             const aiCenter = ai.y + ai.height / 2;
             if (ball.speedX > 0) {
-                 if (aiCenter < ball.y - 20) ai.y += ai.speed;
-                 else if (aiCenter > ball.y + 20) ai.y -= ai.speed;
+                 if (aiCenter < ball.y - 15) ai.y += ai.speed;
+                 else if (aiCenter > ball.y + 15) ai.y -= ai.speed;
             }
         }
         
@@ -196,9 +210,9 @@
             ctx.fillStyle = '#006400';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            if (gameState === 'startScreen') {
-                drawStartScreen();
-            } else if (gameState === 'playing' || gameState === 'paused') {
+            if (gameState === 'startScreen') drawStartScreen();
+            else if (gameState === 'difficultyScreen') drawDifficultyScreen();
+            else if (gameState === 'playing' || gameState === 'paused') {
                 drawPlayingField();
                 drawPlayer();
                 drawAI();
@@ -206,9 +220,8 @@
                 drawScore();
                 drawInGameButtons();
                 if(gameState === 'paused') drawPausedOverlay();
-            } else if (gameState === 'gameOver') {
-                drawGameOverScreen();
-            }
+            } else if (gameState === 'gameOver') drawGameOverScreen();
+            
             requestAnimationFrame(gameLoop);
         }
         
@@ -305,6 +318,26 @@
             ctx.fillText('1 Set', 300, 382); ctx.fillText('3 Sets', 425, 382); ctx.fillText('5 Sets', 550, 382);
         }
         
+        function drawDifficultyScreen() {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'white';
+            ctx.font = '50px "Segoe UI"';
+            ctx.fillText('Select Difficulty', canvas.width / 2, 200);
+
+            // Easy Button
+            ctx.fillStyle = '#6ab04c';
+            ctx.fillRect(easyButton.x, easyButton.y, easyButton.width, easyButton.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '24px "Segoe UI"';
+            ctx.fillText('Easy Mode', easyButton.x + easyButton.width / 2, easyButton.y + 32);
+
+            // Hard Button
+            ctx.fillStyle = '#e25a4a';
+            ctx.fillRect(hardButton.x, hardButton.y, hardButton.width, hardButton.height);
+            ctx.fillStyle = 'white';
+            ctx.fillText('Hard Mode', hardButton.x + hardButton.width / 2, hardButton.y + 32);
+        }
+
         function drawGameOverScreen() {
             ctx.textAlign = 'center';
             ctx.fillStyle = 'white';
