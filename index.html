@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Polished Tennis Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
             display: flex;
@@ -13,13 +14,21 @@
             height: 100vh;
             margin: 0;
             background-color: #1a1a1a;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Roboto', sans-serif;
             color: white;
         }
         canvas {
-            background-color: #006400; /* Tennis court green */
+            background: linear-gradient(to bottom, #006400, #004d00); /* Subtle gradient for court */
             border: 2px solid white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             cursor: pointer;
+        }
+        .button {
+            transition: opacity 0.2s ease;
+        }
+        .button:hover {
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -33,14 +42,21 @@
         // --- GAME STATE & SETTINGS ---
         let gameState = 'startScreen'; // 'startScreen', 'difficultyScreen', 'playing', 'paused', 'gameOver'
         let totalSets = 1;
-        let gameSettings = {};
+        let gameSettings = { difficulty: '' };
+        let hoverButton = null;
 
         // --- UI BUTTONS ---
-        const stopButton = { x: canvas.width - 110, y: 10, width: 100, height: 30 };
-        const restartButton = { x: canvas.width - 110, y: 50, width: 100, height: 30 };
-        const resumeButton = { x: canvas.width/2 - 75, y: 350, width: 150, height: 50 };
-        const easyButton = { x: canvas.width/2 - 225, y: 350, width: 200, height: 50 };
-        const hardButton = { x: canvas.width/2 + 25, y: 350, width: 200, height: 50 };
+        const stopButton = { x: canvas.width - 120, y: 10, width: 110, height: 40 };
+        const restartButton = { x: canvas.width - 120, y: 60, width: 110, height: 40 };
+        const resumeButton = { x: canvas.width/2 - 80, y: 360, width: 160, height: 60 };
+        const easyButton = { x: canvas.width/2 - 230, y: 360, width: 210, height: 60 };
+        const hardButton = { x: canvas.width/2 + 20, y: 360, width: 210, height: 60 };
+        const setButtons = [
+            { x: 250, y: 360, width: 110, height: 60, sets: 1 },
+            { x: 375, y: 360, width: 110, height: 60, sets: 3 },
+            { x: 500, y: 360, width: 110, height: 60, sets: 5 }
+        ];
+        const mainMenuButton = { x: 320, y: 410, width: 160, height: 60 };
 
         // --- GAME OBJECTS ---
         const player = {
@@ -93,41 +109,67 @@
                 case 'gameOver': handleGameOverClick(mouseX, mouseY); break;
             }
         });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            hoverButton = null;
+            if (gameState === 'playing') {
+                if (isPointInRect(mouseX, mouseY, stopButton)) hoverButton = stopButton;
+                if (isPointInRect(mouseX, mouseY, restartButton)) hoverButton = restartButton;
+            } else if (gameState === 'paused' && isPointInRect(mouseX, mouseY, resumeButton)) {
+                hoverButton = resumeButton;
+            } else if (gameState === 'difficultyScreen') {
+                if (isPointInRect(mouseX, mouseY, easyButton)) hoverButton = easyButton;
+                if (isPointInRect(mouseX, mouseY, hardButton)) hoverButton = hardButton;
+            } else if (gameState === 'startScreen') {
+                setButtons.forEach(btn => {
+                    if (isPointInRect(mouseX, mouseY, btn)) hoverButton = btn;
+                });
+            } else if (gameState === 'gameOver' && isPointInRect(mouseX, mouseY, mainMenuButton)) {
+                hoverButton = mainMenuButton;
+            }
+        });
+
+        function isPointInRect(x, y, rect) {
+            return x > rect.x && x < rect.x + rect.width && y > rect.y && y < rect.y + rect.height;
+        }
         
         function handleStartScreenClick(mx, my) {
-            if (my > 350 && my < 400) {
-                if (mx > 250 && mx < 350) { totalSets = 1; gameState = 'difficultyScreen'; }
-                if (mx > 375 && mx < 475) { totalSets = 3; gameState = 'difficultyScreen'; }
-                if (mx > 500 && mx < 600) { totalSets = 5; gameState = 'difficultyScreen'; }
-            }
+            setButtons.forEach(btn => {
+                if (isPointInRect(mx, my, btn)) {
+                    totalSets = btn.sets;
+                    gameState = 'difficultyScreen';
+                }
+            });
         }
         
         function handleDifficultyClick(mx, my) {
-            if (my > easyButton.y && my < easyButton.y + easyButton.height) {
-                if (mx > easyButton.x && mx < easyButton.x + easyButton.width) startGame('easy');
-                if (mx > hardButton.x && mx < hardButton.x + hardButton.width) startGame('hard');
-            }
+            if (isPointInRect(mx, my, easyButton)) startGame('easy');
+            if (isPointInRect(mx, my, hardButton)) startGame('hard');
         }
 
         function handlePlayingClick(mx, my) {
-            if (mx > stopButton.x && mx < stopButton.x + stopButton.width && my > stopButton.y && my < stopButton.y + stopButton.height) gameState = 'paused';
-            if (mx > restartButton.x && mx < restartButton.x + restartButton.width && my > restartButton.y && my < restartButton.y + restartButton.height) gameState = 'startScreen';
+            if (isPointInRect(mx, my, stopButton)) gameState = 'paused';
+            if (isPointInRect(mx, my, restartButton)) gameState = 'startScreen';
         }
 
         function handlePausedClick(mx, my) {
-             if (mx > resumeButton.x && mx < resumeButton.x + resumeButton.width && my > resumeButton.y && my < resumeButton.y + resumeButton.height) gameState = 'playing';
+            if (isPointInRect(mx, my, resumeButton)) gameState = 'playing';
         }
 
         function handleGameOverClick(mx, my) {
-            if (mx > 300 && mx < 500 && my > 400 && my < 450) gameState = 'startScreen';
+            if (isPointInRect(mx, my, mainMenuButton)) gameState = 'startScreen';
         }
 
         // --- GAME LOGIC ---
         function setDifficulty(difficulty) {
             if (difficulty === 'easy') {
-                gameSettings = { ballSpeed: 3.5, aiSpeed: 3.0, playerRacketLength: 85, aiRacketLength: 65 };
+                gameSettings = { ballSpeed: 3.5, aiSpeed: 3.0, playerRacketLength: 85, aiRacketLength: 65, difficulty: 'Easy' };
             } else { // hard
-                gameSettings = { ballSpeed: 4.7, aiSpeed: 4.5, playerRacketLength: 80, aiRacketLength: 85 };
+                gameSettings = { ballSpeed: 4.7, aiSpeed: 4.5, playerRacketLength: 80, aiRacketLength: 85, difficulty: 'Hard' };
             }
             ball.baseSpeedX = gameSettings.ballSpeed;
             ai.speed = gameSettings.aiSpeed;
@@ -184,7 +226,6 @@
             
             const aiCenter = ai.y + ai.height / 2;
             if (ball.speedX > 0) {
-                // Add randomness to AI movement for less precision
                 const randomOffset = (Math.random() - 0.5) * (gameSettings.aiSpeed === 3.0 ? 20 : 24); // ±10 for Easy, ±12 for Hard
                 const targetY = ball.y + randomOffset;
                 if (aiCenter < targetY - 15) ai.y += ai.speed;
@@ -271,26 +312,34 @@
 
         function drawScore() {
             ctx.fillStyle = 'white';
-            ctx.font = '24px "Segoe UI"';
+            ctx.font = '26px Roboto';
             ctx.textAlign = 'center';
             const scoreText = `Player: ${player.score} | Bot: ${ai.score}`;
             const setText = `Sets: ${player.sets} - ${ai.sets}`;
+            const gameInfo = `${gameSettings.difficulty} Mode | ${totalSets} Set${totalSets > 1 ? 's' : ''}`;
             ctx.fillText(scoreText, canvas.width / 2, 30);
-            ctx.font = '18px "Segoe UI"';
+            ctx.font = '20px Roboto';
             ctx.fillText(setText, canvas.width / 2, 60);
+            ctx.font = '16px Roboto';
+            ctx.fillText(gameInfo, canvas.width / 2, 90);
         }
 
         function drawInGameButtons() {
             ctx.fillStyle = '#e25a4a';
-            ctx.fillRect(stopButton.x, stopButton.y, stopButton.width, stopButton.height);
+            ctx.fillRect(stopButton.x, stopButton.y, stopButton.width, stopButton.height, 10);
             ctx.fillStyle = 'white';
-            ctx.font = '18px "Segoe UI"';
+            ctx.font = '20px Roboto';
             ctx.textAlign = 'center';
-            ctx.fillText('Stop', stopButton.x + stopButton.width / 2, stopButton.y + 20);
+            ctx.globalAlpha = hoverButton === stopButton ? 0.8 : 1;
+            ctx.fillText('Stop', stopButton.x + stopButton.width / 2, stopButton.y + 28);
+            ctx.globalAlpha = 1;
+
             ctx.fillStyle = '#4a90e2';
-            ctx.fillRect(restartButton.x, restartButton.y, restartButton.width, restartButton.height);
+            ctx.fillRect(restartButton.x, restartButton.y, restartButton.width, restartButton.height, 10);
             ctx.fillStyle = 'white';
-            ctx.fillText('Restart', restartButton.x + restartButton.width / 2, restartButton.y + 20);
+            ctx.globalAlpha = hoverButton === restartButton ? 0.8 : 1;
+            ctx.fillText('Restart', restartButton.x + restartButton.width / 2, restartButton.y + 28);
+            ctx.globalAlpha = 1;
         }
 
         function drawPausedOverlay() {
@@ -298,63 +347,79 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
             ctx.textAlign = 'center';
-            ctx.font = '50px "Segoe UI"';
+            ctx.font = '50px Roboto';
+            const pulse = 1 + Math.sin(Date.now() / 200) * 0.05; // Subtle pulse animation
+            ctx.globalAlpha = pulse;
             ctx.fillText('Paused', canvas.width / 2, canvas.height / 2);
+            ctx.globalAlpha = 1;
             ctx.fillStyle = '#DDDDDD';
-            ctx.fillRect(resumeButton.x, resumeButton.y, resumeButton.width, resumeButton.height);
+            ctx.fillRect(resumeButton.x, resumeButton.y, resumeButton.width, resumeButton.height, 10);
             ctx.fillStyle = 'black';
-            ctx.font = '24px "Segoe UI"';
-            ctx.fillText('Resume', resumeButton.x + resumeButton.width/2, resumeButton.y + 32);
+            ctx.font = '26px Roboto';
+            ctx.globalAlpha = hoverButton === resumeButton ? 0.8 : 1;
+            ctx.fillText('Resume', resumeButton.x + resumeButton.width / 2, resumeButton.y + 40);
+            ctx.globalAlpha = 1;
         }
         
         function drawStartScreen() {
             ctx.textAlign = 'center';
             ctx.fillStyle = 'white';
-            ctx.font = '50px "Segoe UI"';
+            ctx.font = '50px Roboto';
             ctx.fillText('HTML5 Tennis', canvas.width / 2, 150);
-            ctx.font = '30px "Segoe UI"';
+            ctx.font = '30px Roboto';
             ctx.fillText('Choose number of sets to win:', canvas.width / 2, 300);
-            ctx.fillStyle = '#DDDDDD';
-            ctx.fillRect(250, 350, 100, 50); ctx.fillRect(375, 350, 100, 50); ctx.fillRect(500, 350, 100, 50);
-            ctx.fillStyle = 'black';
-            ctx.font = '24px "Segoe UI"';
-            ctx.fillText('1 Set', 300, 382); ctx.fillText('3 Sets', 425, 382); ctx.fillText('5 Sets', 550, 382);
+            ctx.font = '24px Roboto';
+            setButtons.forEach(btn => {
+                ctx.fillStyle = '#DDDDDD';
+                ctx.globalAlpha = hoverButton === btn ? 0.8 : 1;
+                ctx.fillRect(btn.x, btn.y, btn.width, btn.height, 10);
+                ctx.fillStyle = 'black';
+                ctx.fillText(`${btn.sets} Set${btn.sets > 1 ? 's' : ''}`, btn.x + btn.width / 2, btn.y + 40);
+                ctx.globalAlpha = 1;
+            });
         }
         
         function drawDifficultyScreen() {
             ctx.textAlign = 'center';
             ctx.fillStyle = 'white';
-            ctx.font = '50px "Segoe UI"';
+            ctx.font = '50px Roboto';
             ctx.fillText('Select Difficulty', canvas.width / 2, 200);
 
-            // Easy Button
             ctx.fillStyle = '#6ab04c';
-            ctx.fillRect(easyButton.x, easyButton.y, easyButton.width, easyButton.height);
+            ctx.globalAlpha = hoverButton === easyButton ? 0.8 : 1;
+            ctx.fillRect(easyButton.x, easyButton.y, easyButton.width, easyButton.height, 10);
             ctx.fillStyle = 'white';
-            ctx.font = '24px "Segoe UI"';
-            ctx.fillText('Easy Mode', easyButton.x + easyButton.width / 2, easyButton.y + 32);
+            ctx.font = '26px Roboto';
+            ctx.fillText('Easy Mode', easyButton.x + easyButton.width / 2, easyButton.y + 40);
+            ctx.globalAlpha = 1;
 
-            // Hard Button
             ctx.fillStyle = '#e25a4a';
-            ctx.fillRect(hardButton.x, hardButton.y, hardButton.width, hardButton.height);
+            ctx.globalAlpha = hoverButton === hardButton ? 0.8 : 1;
+            ctx.fillRect(hardButton.x, hardButton.y, hardButton.width, hardButton.height, 10);
             ctx.fillStyle = 'white';
-            ctx.fillText('Hard Mode', hardButton.x + hardButton.width / 2, hardButton.y + 32);
+            ctx.fillText('Hard Mode', hardButton.x + hardButton.width / 2, hardButton.y + 40);
+            ctx.globalAlpha = 1;
         }
 
         function drawGameOverScreen() {
             ctx.textAlign = 'center';
             ctx.fillStyle = 'white';
-            ctx.font = '50px "Segoe UI"';
+            ctx.font = '50px Roboto';
             const winner = player.sets > ai.sets ? 'You Win!' : 'Bot Wins!';
+            const pulse = 1 + Math.sin(Date.now() / 200) * 0.05; // Subtle pulse animation
+            ctx.globalAlpha = pulse;
             ctx.fillText('Game Over', canvas.width / 2, 200);
             ctx.fillText(winner, canvas.width / 2, 300);
-            ctx.font = '30px "Segoe UI"';
+            ctx.globalAlpha = 1;
+            ctx.font = '30px Roboto';
             ctx.fillText(`Final Sets: ${player.sets} - ${ai.sets}`, canvas.width / 2, 350);
             ctx.fillStyle = '#DDDDDD';
-            ctx.fillRect(300, 400, 200, 50);
+            ctx.globalAlpha = hoverButton === mainMenuButton ? 0.8 : 1;
+            ctx.fillRect(mainMenuButton.x, mainMenuButton.y, mainMenuButton.width, mainMenuButton.height, 10);
             ctx.fillStyle = 'black';
-            ctx.font = '24px "Segoe UI"';
-            ctx.fillText('Main Menu', canvas.width / 2, 432);
+            ctx.font = '26px Roboto';
+            ctx.fillText('Main Menu', mainMenuButton.x + mainMenuButton.width / 2, mainMenuButton.y + 40);
+            ctx.globalAlpha = 1;
         }
 
         function gameLoop() {
