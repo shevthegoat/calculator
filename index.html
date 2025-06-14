@@ -3,54 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Tennis Game</title>
+    <title>Advanced Tennis Game</title>
     <style>
         body {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
             background-color: #1a1a1a;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
         }
         canvas {
             background-color: #006400; /* Tennis court green */
             border: 2px solid white;
-        }
-        h1 {
-            position: absolute;
-            top: 20px;
-            font-size: 2rem;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h1>Simple Tennis</h1>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Game Objects
+        // --- GAME STATE & SETTINGS ---
+        let gameState = 'startScreen'; // 'startScreen', 'playing', 'gameOver'
+        let totalSets = 1;
+
+        // --- GAME OBJECTS ---
         const player = {
-            x: 50,
+            x: 100,
             y: canvas.height / 2 - 50,
-            width: 15,
-            height: 100,
-            color: '#FFFFFF',
-            speed: 8
+            width: 20,
+            height: 80,
+            racketLength: 60,
+            racketWidth: 10,
+            color: '#4a90e2',
+            speed: 8,
+            score: 0,
+            sets: 0
         };
 
         const ai = {
-            x: canvas.width - 65,
+            x: canvas.width - 120,
             y: canvas.height / 2 - 50,
-            width: 15,
-            height: 100,
-            color: '#FFFFFF',
-            speed: 4
+            width: 20,
+            height: 80,
+            racketLength: 60,
+            racketWidth: 10,
+            color: '#e25a4a',
+            speed: 4.5,
+            score: 0,
+            sets: 0
         };
 
         const ball = {
@@ -59,50 +67,83 @@
             radius: 10,
             speedX: 5,
             speedY: 5,
-            color: '#FFFF00' // Tennis ball yellow
+            baseSpeedX: 5,
+            color: '#FFFF00'
         };
 
-        // Keyboard state
-        const keys = {
-            ArrowUp: false,
-            ArrowDown: false
+        const swing = {
+            active: false,
+            angle: 0,
+            direction: 1, // 1 for forward, -1 for backward
+            speed: 15
         };
 
-        // Event Listeners for Keyboard Input
+        const keys = { ArrowUp: false, ArrowDown: false };
+
+        // --- EVENT LISTENERS ---
         document.addEventListener('keydown', (e) => {
-            if (e.key in keys) {
-                keys[e.key] = true;
-            }
-            // Hit the ball with space key
-            if (e.code === 'Space') {
-                hitBall();
+            if (gameState === 'playing') {
+                if (e.key in keys) keys[e.key] = true;
+                if (e.code === 'Space' && !swing.active) {
+                    swing.active = true;
+                    swing.direction = 1;
+                }
             }
         });
 
         document.addEventListener('keyup', (e) => {
-            if (e.key in keys) {
-                keys[e.key] = false;
+            if (e.key in keys) keys[e.key] = false;
+        });
+        
+        canvas.addEventListener('click', (e) => {
+            if (gameState === 'startScreen' || gameState === 'gameOver') {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                // Check clicks on start screen buttons
+                if (gameState === 'startScreen') {
+                    if (mouseY > 350 && mouseY < 400) {
+                        if (mouseX > 250 && mouseX < 350) startGame(1);
+                        if (mouseX > 375 && mouseX < 475) startGame(3);
+                        if (mouseX > 500 && mouseX < 600) startGame(5);
+                    }
+                }
+                // Check click to restart after game over
+                if (gameState === 'gameOver') {
+                    if (mouseX > 300 && mouseX < 500 && mouseY > 400 && mouseY < 450) {
+                        gameState = 'startScreen';
+                    }
+                }
             }
         });
 
-        function hitBall() {
-            // Check if ball is close to the player to "hit"
-            if (
-                ball.x - ball.radius < player.x + player.width &&
-                ball.y > player.y &&
-                ball.y < player.y + player.height
-            ) {
-                ball.speedX = Math.abs(ball.speedX) + 1; // Increase speed on hit
-            }
+        // --- GAME LOGIC ---
+        function startGame(sets) {
+            totalSets = sets;
+            player.score = 0;
+            ai.score = 0;
+            player.sets = 0;
+            ai.sets = 0;
+            resetBall(true);
+            gameState = 'playing';
         }
 
         function update() {
+            if (gameState !== 'playing') return;
+
             // Move player
-            if (keys.ArrowUp && player.y > 0) {
-                player.y -= player.speed;
-            }
-            if (keys.ArrowDown && player.y < canvas.height - player.height) {
-                player.y += player.speed;
+            if (keys.ArrowUp && player.y > 0) player.y -= player.speed;
+            if (keys.ArrowDown && player.y < canvas.height - player.height) player.y += player.speed;
+            
+            // Animate racket swing
+            if (swing.active) {
+                swing.angle += swing.speed * swing.direction;
+                if (swing.angle >= 90) swing.direction = -1;
+                if (swing.angle <= 0 && swing.direction === -1) {
+                    swing.active = false;
+                    swing.angle = 0;
+                }
             }
 
             // Move ball
@@ -114,38 +155,91 @@
                 ball.speedY = -ball.speedY;
             }
 
-            // Ball collision with paddles
-            if (
-                // Player paddle
-                (ball.x - ball.radius < player.x + player.width && ball.y > player.y && ball.y < player.y + player.height) ||
-                // AI paddle
-                (ball.x + ball.radius > ai.x && ball.y > ai.y && ball.y < ai.y + ai.height)
-            ) {
-                ball.speedX = -ball.speedX;
+            // Ball collision with player
+            const racketTipX = player.x + player.width + Math.cos(swing.angle * Math.PI / 180) * player.racketLength;
+            const racketTipY = player.y + player.height / 2 + Math.sin(swing.angle * Math.PI / 180) * player.racketLength;
+            if (ball.x - ball.radius < racketTipX && ball.x + ball.radius > player.x && ball.y > player.y && ball.y < player.y + player.height) {
+                if (ball.speedX < 0) {
+                    ball.speedX = -ball.speedX;
+                    if (swing.active) { // Power shot
+                        ball.speedX *= 1.5;
+                        ball.speedY = (ball.y - (player.y + player.height / 2)) * 0.2;
+                    }
+                }
             }
 
-            // Reset ball if it goes out of bounds (scoring)
-            if (ball.x + ball.radius < 0 || ball.x - ball.radius > canvas.width) {
-                ball.x = canvas.width / 2;
-                ball.y = canvas.height / 2;
-                ball.speedX = -ball.speedX; // Serve to the other side
-                ball.speedY = 5;
+            // Ball collision with AI
+            if (ball.x + ball.radius > ai.x && ball.y > ai.y && ball.y < ai.y + ai.height) {
+                if (ball.speedX > 0) {
+                    ball.speedX = -ball.speedX;
+                }
+            }
+
+            // Scoring
+            if (ball.x + ball.radius < 0) { // AI scores
+                ai.score++;
+                checkSetWin();
+                resetBall(true);
+            } else if (ball.x - ball.radius > canvas.width) { // Player scores
+                player.score++;
+                checkSetWin();
+                resetBall(false);
             }
             
             // Simple AI movement
             const aiCenter = ai.y + ai.height / 2;
-            if (aiCenter < ball.y - 35) {
-                ai.y += ai.speed;
-            } else if (aiCenter > ball.y + 35) {
-                ai.y -= ai.speed;
+            if (ball.speedX > 0) {
+                 if (aiCenter < ball.y - 20) ai.y += ai.speed;
+                 else if (aiCenter > ball.y + 20) ai.y -= ai.speed;
+            }
+        }
+        
+        function checkSetWin() {
+            if (player.score >= 11) {
+                player.sets++;
+                player.score = 0;
+                ai.score = 0;
+            } else if (ai.score >= 11) {
+                ai.sets++;
+                player.score = 0;
+                ai.score = 0;
+            }
+            
+            const setsToWin = Math.ceil(totalSets / 2);
+            if (player.sets >= setsToWin || ai.sets >= setsToWin) {
+                gameState = 'gameOver';
             }
         }
 
+        function resetBall(serveToPlayer) {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.speedY = Math.random() > 0.5 ? 5 : -5;
+            ball.speedX = serveToPlayer ? -ball.baseSpeedX : ball.baseSpeedX;
+        }
+
+        // --- DRAWING FUNCTIONS ---
         function draw() {
-            // Clear canvas
+            // Clear canvas with green court color
             ctx.fillStyle = '#006400';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            if (gameState === 'startScreen') {
+                drawStartScreen();
+            } else if (gameState === 'playing') {
+                drawPlayingField();
+                drawPlayer();
+                drawAI();
+                drawBall();
+                drawScore();
+            } else if (gameState === 'gameOver') {
+                drawGameOverScreen();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function drawPlayingField() {
             // Draw net
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
             ctx.lineWidth = 4;
@@ -155,31 +249,120 @@
             ctx.lineTo(canvas.width / 2, canvas.height);
             ctx.stroke();
             ctx.setLineDash([]);
+        }
 
-
-            // Draw player
+        function drawPlayer() {
+            // Body
             ctx.fillStyle = player.color;
             ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Racket - Save context to not affect other drawings
+            ctx.save();
+            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+            ctx.rotate(swing.angle * Math.PI / 180);
+            
+            // Racket Handle
+            ctx.fillStyle = '#654321'; // Brown
+            ctx.fillRect(player.width / 2, -player.racketWidth / 2, player.racketLength / 2, player.racketWidth);
+            
+            // Racket Head
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(player.width / 2 + player.racketLength * 0.75, 0, player.racketLength / 4, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
 
-            // Draw AI
+        function drawAI() {
+            // Body
             ctx.fillStyle = ai.color;
             ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
+            // Racket
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(ai.x - ai.racketLength, ai.y + ai.height / 2 - ai.racketWidth / 2, ai.racketLength, ai.racketWidth);
+        }
 
-            // Draw ball
+        function drawBall() {
             ctx.beginPath();
             ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
             ctx.fillStyle = ball.color;
             ctx.fill();
         }
 
+        function drawScore() {
+            ctx.fillStyle = 'white';
+            ctx.font = '24px "Segoe UI"';
+            ctx.textAlign = 'center';
+            const scoreText = `Player: ${player.score} | Bot: ${ai.score}`;
+            const setText = `Sets: ${player.sets} - ${ai.sets}`;
+            
+            ctx.fillText(scoreText, canvas.width / 2, 30);
+            ctx.font = '18px "Segoe UI"';
+            ctx.fillText(setText, canvas.width / 2, 60);
+        }
+
+        function drawStartScreen() {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'white';
+            ctx.font = '50px "Segoe UI"';
+            ctx.fillText('HTML5 Tennis', canvas.width / 2, 150);
+            
+            ctx.font = '30px "Segoe UI"';
+            ctx.fillText('Choose number of sets to win:', canvas.width / 2, 300);
+            
+            // Draw buttons
+            ctx.fillStyle = '#DDDDDD';
+            ctx.fillRect(250, 350, 100, 50); // 1 Set
+            ctx.fillRect(375, 350, 100, 50); // 3 Sets
+            ctx.fillRect(500, 350, 100, 50); // 5 Sets
+            
+            ctx.fillStyle = 'black';
+            ctx.font = '24px "Segoe UI"';
+            ctx.fillText('1 Set', 300, 382);
+            ctx.fillText('3 Sets', 425, 382);
+            ctx.fillText('5 Sets', 550, 382);
+        }
+        
+        function drawGameOverScreen() {
+             ctx.textAlign = 'center';
+            ctx.fillStyle = 'white';
+            ctx.font = '50px "Segoe UI"';
+            const winner = player.sets > ai.sets ? 'You Win!' : 'Bot Wins!';
+            ctx.fillText('Game Over', canvas.width / 2, 200);
+            ctx.fillText(winner, canvas.width / 2, 300);
+            
+            // Final score
+            ctx.font = '30px "Segoe UI"';
+            const finalSetScore = `Final Sets: ${player.sets} - ${ai.sets}`;
+            ctx.fillText(finalSetScore, canvas.width / 2, 350);
+
+            // Restart Button
+            ctx.fillStyle = '#DDDDDD';
+            ctx.fillRect(300, 400, 200, 50);
+            ctx.fillStyle = 'black';
+            ctx.font = '24px "Segoe UI"';
+            ctx.fillText('Main Menu', canvas.width / 2, 432);
+        }
+
+
+        // --- MAIN GAME LOOP ---
         function gameLoop() {
             update();
             draw();
-            requestAnimationFrame(gameLoop); // Keep the loop going
         }
 
-        // Start the game
-        gameLoop();
+        // Start the game by showing the start screen
+        draw();
     </script>
 </body>
 </html>
+
+Sources
+
+
+
+
+
+
