@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Tennis Game</title>
+    <title>Full-Featured Tennis Game</title>
     <style>
         body {
             display: flex;
@@ -31,53 +31,32 @@
         const ctx = canvas.getContext('2d');
 
         // --- GAME STATE & SETTINGS ---
-        let gameState = 'startScreen'; // 'startScreen', 'playing', 'gameOver'
+        let gameState = 'startScreen'; // 'startScreen', 'playing', 'paused', 'gameOver'
         let totalSets = 1;
+
+        // --- UI BUTTONS (for click detection) ---
+        const stopButton = { x: canvas.width - 110, y: 10, width: 100, height: 30 };
+        const restartButton = { x: canvas.width - 110, y: 50, width: 100, height: 30 };
+        const resumeButton = { x: canvas.width/2 - 75, y: 350, width: 150, height: 50 };
 
         // --- GAME OBJECTS ---
         const player = {
-            x: 100,
-            y: canvas.height / 2 - 50,
-            width: 20,
-            height: 80,
-            racketLength: 60,
-            racketWidth: 10,
-            color: '#4a90e2',
-            speed: 8,
-            score: 0,
-            sets: 0
+            x: 100, y: canvas.height / 2 - 50, width: 20, height: 80,
+            racketLength: 60, racketWidth: 10, color: '#4a90e2',
+            speed: 8, score: 0, sets: 0
         };
-
         const ai = {
-            x: canvas.width - 120,
-            y: canvas.height / 2 - 50,
-            width: 20,
-            height: 80,
-            racketLength: 60,
-            racketWidth: 10,
-            color: '#e25a4a',
-            speed: 4.5,
-            score: 0,
-            sets: 0
+            x: canvas.width - 120, y: canvas.height / 2 - 50, width: 20, height: 80,
+            racketLength: 60, racketWidth: 10, color: '#e25a4a',
+            speed: 4.5, score: 0, sets: 0
         };
-
         const ball = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            radius: 10,
-            speedX: 5,
-            speedY: 5,
-            baseSpeedX: 5,
-            color: '#FFFF00'
+            x: canvas.width / 2, y: canvas.height / 2, radius: 10,
+            speedX: 5, speedY: 5, baseSpeedX: 5, color: '#FFFF00'
         };
-
         const swing = {
-            active: false,
-            angle: 0,
-            direction: 1, // 1 for forward, -1 for backward
-            speed: 15
+            active: false, angle: 0, direction: 1, speed: 15
         };
-
         const keys = { ArrowUp: false, ArrowDown: false };
 
         // --- EVENT LISTENERS ---
@@ -90,46 +69,75 @@
                 }
             }
         });
-
         document.addEventListener('keyup', (e) => {
             if (e.key in keys) keys[e.key] = false;
         });
         
         canvas.addEventListener('click', (e) => {
-            if (gameState === 'startScreen' || gameState === 'gameOver') {
-                const rect = canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
 
-                // Check clicks on start screen buttons
-                if (gameState === 'startScreen') {
-                    if (mouseY > 350 && mouseY < 400) {
-                        if (mouseX > 250 && mouseX < 350) startGame(1);
-                        if (mouseX > 375 && mouseX < 475) startGame(3);
-                        if (mouseX > 500 && mouseX < 600) startGame(5);
-                    }
-                }
-                // Check click to restart after game over
-                if (gameState === 'gameOver') {
-                    if (mouseX > 300 && mouseX < 500 && mouseY > 400 && mouseY < 450) {
-                        gameState = 'startScreen';
-                    }
-                }
+            switch(gameState) {
+                case 'startScreen':
+                    handleStartScreenClick(mouseX, mouseY);
+                    break;
+                case 'playing':
+                    handlePlayingClick(mouseX, mouseY);
+                    break;
+
+                case 'paused':
+                    handlePausedClick(mouseX, mouseY);
+                    break;
+                case 'gameOver':
+                    handleGameOverClick(mouseX, mouseY);
+                    break;
             }
         });
+        
+        function handleStartScreenClick(mx, my) {
+            if (my > 350 && my < 400) {
+                if (mx > 250 && mx < 350) startGame(1);
+                if (mx > 375 && mx < 475) startGame(3);
+                if (mx > 500 && mx < 600) startGame(5);
+            }
+        }
+
+        function handlePlayingClick(mx, my) {
+            // Check Stop Button
+            if (mx > stopButton.x && mx < stopButton.x + stopButton.width && my > stopButton.y && my < stopButton.y + stopButton.height) {
+                gameState = 'paused';
+            }
+            // Check Restart Button
+            if (mx > restartButton.x && mx < restartButton.x + restartButton.width && my > restartButton.y && my < restartButton.y + restartButton.height) {
+                gameState = 'startScreen';
+            }
+        }
+
+        function handlePausedClick(mx, my) {
+            // Check Resume Button
+             if (mx > resumeButton.x && mx < resumeButton.x + resumeButton.width && my > resumeButton.y && my < resumeButton.y + resumeButton.height) {
+                gameState = 'playing';
+            }
+        }
+
+        function handleGameOverClick(mx, my) {
+            if (mx > 300 && mx < 500 && my > 400 && my < 450) {
+                gameState = 'startScreen';
+            }
+        }
 
         // --- GAME LOGIC ---
         function startGame(sets) {
             totalSets = sets;
-            player.score = 0;
-            ai.score = 0;
-            player.sets = 0;
-            ai.sets = 0;
+            player.score = 0; ai.score = 0;
+            player.sets = 0; ai.sets = 0;
             resetBall(true);
             gameState = 'playing';
         }
 
         function update() {
+            // Stop all updates if not in 'playing' state
             if (gameState !== 'playing') return;
 
             // Move player
@@ -157,11 +165,10 @@
 
             // Ball collision with player
             const racketTipX = player.x + player.width + Math.cos(swing.angle * Math.PI / 180) * player.racketLength;
-            const racketTipY = player.y + player.height / 2 + Math.sin(swing.angle * Math.PI / 180) * player.racketLength;
             if (ball.x - ball.radius < racketTipX && ball.x + ball.radius > player.x && ball.y > player.y && ball.y < player.y + player.height) {
                 if (ball.speedX < 0) {
                     ball.speedX = -ball.speedX;
-                    if (swing.active) { // Power shot
+                    if (swing.active) {
                         ball.speedX *= 1.5;
                         ball.speedY = (ball.y - (player.y + player.height / 2)) * 0.2;
                     }
@@ -170,20 +177,14 @@
 
             // Ball collision with AI
             if (ball.x + ball.radius > ai.x && ball.y > ai.y && ball.y < ai.y + ai.height) {
-                if (ball.speedX > 0) {
-                    ball.speedX = -ball.speedX;
-                }
+                if (ball.speedX > 0) ball.speedX = -ball.speedX;
             }
 
             // Scoring
-            if (ball.x + ball.radius < 0) { // AI scores
-                ai.score++;
-                checkSetWin();
-                resetBall(true);
-            } else if (ball.x - ball.radius > canvas.width) { // Player scores
-                player.score++;
-                checkSetWin();
-                resetBall(false);
+            if (ball.x + ball.radius < 0) {
+                ai.score++; checkSetWin(); resetBall(true);
+            } else if (ball.x - ball.radius > canvas.width) {
+                player.score++; checkSetWin(); resetBall(false);
             }
             
             // Simple AI movement
@@ -195,16 +196,11 @@
         }
         
         function checkSetWin() {
-            if (player.score >= 11) {
-                player.sets++;
-                player.score = 0;
-                ai.score = 0;
-            } else if (ai.score >= 11) {
-                ai.sets++;
-                player.score = 0;
-                ai.score = 0;
+            if (player.score >= 11 || ai.score >= 11) {
+                 if(player.score > ai.score) player.sets++;
+                 else ai.sets++;
+                 player.score = 0; ai.score = 0;
             }
-            
             const setsToWin = Math.ceil(totalSets / 2);
             if (player.sets >= setsToWin || ai.sets >= setsToWin) {
                 gameState = 'gameOver';
@@ -220,18 +216,22 @@
 
         // --- DRAWING FUNCTIONS ---
         function draw() {
-            // Clear canvas with green court color
+            // Always clear the canvas first
             ctx.fillStyle = '#006400';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             if (gameState === 'startScreen') {
                 drawStartScreen();
-            } else if (gameState === 'playing') {
+            } else if (gameState === 'playing' || gameState === 'paused') {
                 drawPlayingField();
                 drawPlayer();
                 drawAI();
                 drawBall();
                 drawScore();
+                drawInGameButtons();
+                if(gameState === 'paused') {
+                    drawPausedOverlay();
+                }
             } else if (gameState === 'gameOver') {
                 drawGameOverScreen();
             }
@@ -240,7 +240,6 @@
         }
         
         function drawPlayingField() {
-            // Draw net
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
             ctx.lineWidth = 4;
             ctx.setLineDash([10, 10]);
@@ -252,34 +251,24 @@
         }
 
         function drawPlayer() {
-            // Body
             ctx.fillStyle = player.color;
             ctx.fillRect(player.x, player.y, player.width, player.height);
-            
-            // Racket - Save context to not affect other drawings
             ctx.save();
             ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
             ctx.rotate(swing.angle * Math.PI / 180);
-            
-            // Racket Handle
-            ctx.fillStyle = '#654321'; // Brown
+            ctx.fillStyle = '#654321';
             ctx.fillRect(player.width / 2, -player.racketWidth / 2, player.racketLength / 2, player.racketWidth);
-            
-            // Racket Head
             ctx.strokeStyle = '#FFFFFF';
             ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.arc(player.width / 2 + player.racketLength * 0.75, 0, player.racketLength / 4, 0, 2 * Math.PI);
             ctx.stroke();
-            
             ctx.restore();
         }
 
         function drawAI() {
-            // Body
             ctx.fillStyle = ai.color;
             ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
-            // Racket
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(ai.x - ai.racketLength, ai.y + ai.height / 2 - ai.racketWidth / 2, ai.racketLength, ai.racketWidth);
         }
@@ -297,48 +286,66 @@
             ctx.textAlign = 'center';
             const scoreText = `Player: ${player.score} | Bot: ${ai.score}`;
             const setText = `Sets: ${player.sets} - ${ai.sets}`;
-            
             ctx.fillText(scoreText, canvas.width / 2, 30);
             ctx.font = '18px "Segoe UI"';
             ctx.fillText(setText, canvas.width / 2, 60);
         }
 
+        function drawInGameButtons() {
+            // Stop Button
+            ctx.fillStyle = '#e25a4a';
+            ctx.fillRect(stopButton.x, stopButton.y, stopButton.width, stopButton.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '18px "Segoe UI"';
+            ctx.textAlign = 'center';
+            ctx.fillText('Stop', stopButton.x + stopButton.width / 2, stopButton.y + 20);
+
+            // Restart Button
+            ctx.fillStyle = '#4a90e2';
+            ctx.fillRect(restartButton.x, restartButton.y, restartButton.width, restartButton.height);
+            ctx.fillStyle = 'white';
+            ctx.fillText('Restart', restartButton.x + restartButton.width / 2, restartButton.y + 20);
+        }
+
+        function drawPausedOverlay() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.font = '50px "Segoe UI"';
+            ctx.fillText('Paused', canvas.width / 2, canvas.height / 2);
+            
+            // Resume Button
+            ctx.fillStyle = '#DDDDDD';
+            ctx.fillRect(resumeButton.x, resumeButton.y, resumeButton.width, resumeButton.height);
+            ctx.fillStyle = 'black';
+            ctx.font = '24px "Segoe UI"';
+            ctx.fillText('Resume', resumeButton.x + resumeButton.width/2, resumeButton.y + 32);
+        }
+        
         function drawStartScreen() {
             ctx.textAlign = 'center';
             ctx.fillStyle = 'white';
             ctx.font = '50px "Segoe UI"';
             ctx.fillText('HTML5 Tennis', canvas.width / 2, 150);
-            
             ctx.font = '30px "Segoe UI"';
             ctx.fillText('Choose number of sets to win:', canvas.width / 2, 300);
-            
-            // Draw buttons
             ctx.fillStyle = '#DDDDDD';
-            ctx.fillRect(250, 350, 100, 50); // 1 Set
-            ctx.fillRect(375, 350, 100, 50); // 3 Sets
-            ctx.fillRect(500, 350, 100, 50); // 5 Sets
-            
+            ctx.fillRect(250, 350, 100, 50); ctx.fillRect(375, 350, 100, 50); ctx.fillRect(500, 350, 100, 50);
             ctx.fillStyle = 'black';
             ctx.font = '24px "Segoe UI"';
-            ctx.fillText('1 Set', 300, 382);
-            ctx.fillText('3 Sets', 425, 382);
-            ctx.fillText('5 Sets', 550, 382);
+            ctx.fillText('1 Set', 300, 382); ctx.fillText('3 Sets', 425, 382); ctx.fillText('5 Sets', 550, 382);
         }
         
         function drawGameOverScreen() {
-             ctx.textAlign = 'center';
+            ctx.textAlign = 'center';
             ctx.fillStyle = 'white';
             ctx.font = '50px "Segoe UI"';
             const winner = player.sets > ai.sets ? 'You Win!' : 'Bot Wins!';
             ctx.fillText('Game Over', canvas.width / 2, 200);
             ctx.fillText(winner, canvas.width / 2, 300);
-            
-            // Final score
             ctx.font = '30px "Segoe UI"';
-            const finalSetScore = `Final Sets: ${player.sets} - ${ai.sets}`;
-            ctx.fillText(finalSetScore, canvas.width / 2, 350);
-
-            // Restart Button
+            ctx.fillText(`Final Sets: ${player.sets} - ${ai.sets}`, canvas.width / 2, 350);
             ctx.fillStyle = '#DDDDDD';
             ctx.fillRect(300, 400, 200, 50);
             ctx.fillStyle = 'black';
@@ -346,14 +353,13 @@
             ctx.fillText('Main Menu', canvas.width / 2, 432);
         }
 
-
         // --- MAIN GAME LOOP ---
         function gameLoop() {
             update();
             draw();
         }
 
-        // Start the game by showing the start screen
+        // Initial Draw to show Start Screen
         draw();
     </script>
 </body>
