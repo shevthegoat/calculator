@@ -11,7 +11,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            height: 100vh;å
             margin: 0;
             background-color: #1a1a1a;
             font-family: 'Roboto', sans-serif;
@@ -119,7 +119,7 @@
             if (gameState === 'playing') {
                 if (isPointInRect(mouseX, mouseY, stopButton)) hoverButton = stopButton;
                 if (isPointInRect(mouseX, mouseY, restartButton)) hoverButton = restartButton;
-            } else if (gameState === 'paused' && isPointInRect(mouseX, mouseY, resumeButton)) {
+            } else if (gameState === 'paused' && isPointInRect(mouseX, my, resumeButton)) {
                 hoverButton = resumeButton;
             } else if (gameState === 'difficultyScreen') {
                 if (isPointInRect(mouseX, mouseY, easyButton)) hoverButton = easyButton;
@@ -234,9 +234,14 @@
         }
         
         function checkSetWin() {
-            if (player.score >= 11 || ai.score >= 11) {
-                 if(player.score > ai.score) player.sets++; else ai.sets++;
-                 player.score = 0; ai.score = 0;
+            if (player.score >= 6 || ai.score >= 6) {
+                const pointDifference = Math.abs(player.score - ai.score);
+                if (pointDifference >= 2) {
+                    if (player.score > ai.score) player.sets++;
+                    else ai.sets++;
+                    player.score = 0;
+                    ai.score = 0;
+                }
             }
             const setsToWin = Math.ceil(totalSets / 2);
             if (player.sets >= setsToWin || ai.sets >= setsToWin) gameState = 'gameOver';
