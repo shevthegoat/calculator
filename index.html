@@ -482,10 +482,7 @@
             ctx.fillStyle = 'white';
             ctx.font = '50px Roboto';
             ctx.fillText('HTML5 Tennis', canvas.width / 2, 150);
-            if (!nameSubmitted) {
-                ctx.font = '30px Roboto';
-                ctx.fillText('Enter your name above', canvas.width / 2, 300);
-            } else {
+            if (nameSubmitted) {
                 ctx.font = '30px Roboto';
                 ctx.fillText('Choose number of sets to win:', canvas.width / 2, 300);
                 ctx.font = '24px Roboto';
