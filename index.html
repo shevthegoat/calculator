@@ -35,13 +35,13 @@
                     <p class="text-gray-400 text-left">The target is now moving! Aim and click to shoot.</p>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <div id="timer-display" class="text-2xl font-semibold text-red-400">Time: 2:00</div>
+                    <div id="timer-display" class="text-2xl font-semibold text-red-400">Time: 1:00</div>
                     <div id="score-display" class="text-3xl font-bold text-amber-400">Score: 0</div>
                 </div>
             </div>
         </div>
 
-        <div id="message-box" class="h-10 text-2xl font-semibold mb-4 flex items-center justify-center">&nbsp;</div>
+        <div id="message-box" class="h-10 text-2xl font-semibold mb-4 flex items-center justify-center"> </div>
 
         <div class="w-full max-w-4xl aspect-[4/3] bg-gray-800 rounded-lg shadow-2xl overflow-hidden">
             <canvas id="gameCanvas"></canvas>
@@ -76,8 +76,8 @@
             x: 0, 
             y: 0, 
             radius: 50,
-            dx: 2,
-            dy: 2
+            dx: 0,
+            dy: 0
         };
         let crosshair = { x: 0, y: 0, size: 15 };
         let message = { text: '', color: '', timer: 0 };
@@ -85,7 +85,7 @@
         let shots = [];
         let animationFrameId;
         let gameStarted = false;
-        let timeLeft = 120; // 2 minutes in seconds
+        let timeLeft = 60; // 1 minute in seconds
         let timerId;
 
         // --- Setup and Resize ---
@@ -107,7 +107,8 @@
             }
             
             target.radius = Math.min(rect.width, rect.height) * 0.1;
-            const speed = Math.min(rect.width, rect.height) * 0.005;
+            // Set faster speed: 0.008 (was 0.005 in original)
+            const speed = Math.min(rect.width, rect.height) * 0.008;
             target.dx = speed;
             target.dy = speed;
         }
@@ -193,10 +194,12 @@
             target.x += target.dx;
             target.y += target.dy;
 
+            // Bounce off left/right walls
             if (target.x + target.radius > rect.width || target.x - target.radius < 0) {
                 target.dx *= -1;
             }
 
+            // Bounce off top/bottom walls
             if (target.y + target.radius > rect.height || target.y - target.radius < 0) {
                 target.dy *= -1;
             }
@@ -209,7 +212,7 @@
                 messageBox.style.color = message.color;
                 message.timer--;
             } else {
-                messageBox.innerHTML = '&nbsp;';
+                messageBox.innerHTML = ' ';
             }
         }
 
@@ -305,7 +308,8 @@
                 points = 5;
                 message.color = '#fecaca';
             } else {
-                points = 0;
+                points = -50;
+                message.color = '#f87171';
             }
 
             score += points;
@@ -313,6 +317,9 @@
             if (points > 0) {
                 message.text = `+${points} XP!`;
                 shots.push({ offsetX, offsetY });
+            } else if (points < 0) {
+                message.text = `${points} XP!`;
+                message.color = '#f87171';
             } else {
                 message.text = 'Miss!';
                 message.color = '#f87171';
@@ -327,7 +334,7 @@
             gameStarted = true;
             score = 0;
             shots = [];
-            timeLeft = 120;
+            timeLeft = 60;
             updateScoreDisplay();
             updateTimerDisplay();
             setupCanvas();
