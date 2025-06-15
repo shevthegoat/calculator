@@ -1,569 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-g">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polished Tennis Game</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <title>Shooting Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #1a1a1a;
-            font-family: 'Roboto', sans-serif;
-            color: white;
-            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevents scrollbars from appearing */
         }
         canvas {
-            width: 100vw;
-            height: 100vh;
-            background: linear-gradient(to bottom, #006400, #004d00);
-            border: none;
-            box-shadow: none;
-            cursor: pointer;
-        }
-        .button {
-            transition: opacity 0.2s ease;
-        }
-        .button:hover {
-            opacity: 0.8;
-        }
-        #nameInputContainer {
-            position: absolute;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        #nameInput {
-            padding: 8px;
-            font-size: 16px;
-            font-family: 'Roboto', sans-serif;
-            border: 2px solid white;
-            border-radius: 5px;
-            background-color: #333;
-            color: white;
-            width: 200px;
-        }
-        #submitNameButton {
-            padding: 8px 16px;
-            font-size: 16px;
-            font-family: 'Roboto', sans-serif;
-            background-color: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: opacity 0.2s ease;
-        }
-        #submitNameButton:hover {
-            opacity: 0.8;
+            cursor: crosshair;
+            display: block; /* Removes bottom margin */
         }
     </style>
 </head>
-<body>
-    <canvas id="gameCanvas"></canvas>
-    <div id="nameInputContainer">
-        <input type="text" id="nameInput" placeholder="Enter your name" maxlength="15">
-        <button id="submitNameButton">Submit Name</button>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center h-screen m-0 p-4">
+
+    <div class="w-full max-w-4xl text-center mb-4">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-cyan-400">Shooting Gallery</h1>
+                <p class="text-gray-400 text-left">The target is now moving! Aim and click to shoot.</p>
+            </div>
+            <div id="score-display" class="text-3xl font-bold text-amber-400">Score: 0</div>
+        </div>
+    </div>
+
+    <div id="message-box" class="h-10 text-2xl font-semibold mb-4 flex items-center justify-center">&nbsp;</div>
+
+    <div class="w-full max-w-4xl aspect-[4/3] bg-gray-800 rounded-lg shadow-2xl overflow-hidden">
+        <canvas id="gameCanvas"></canvas>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const nameInputContainer = document.getElementById('nameInputContainer');
-        const nameInput = document.getElementById('nameInput');
-        const submitNameButton = document.getElementById('submitNameButton');
-
-        // --- CANVAS SETUP ---
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-
-        // --- GAME STATE & SETTINGS ---
-        let gameState = 'startScreen';
-        let totalSets = 1;
-        let gameSettings = { difficulty: '' };
-        let hoverButton = null;
-        let scale = 1;
-
-        // --- PLAYER & RECORD ---
-        let playerName = localStorage.getItem('tennisPlayerName') || '';
-        let nameSubmitted = !!playerName;
-        let record = JSON.parse(localStorage.getItem(`tennisRecord_${playerName}`)) || { wins: 0, losses: 0 };
-
-        // Show name input if no player name
-        if (!nameSubmitted) {
-            nameInputContainer.style.display = 'flex';
-        }
-
-        function saveRecord() {
-            localStorage.setItem(`tennisRecord_${playerName}`, JSON.stringify(record));
-        }
-
-        // --- NAME INPUT HANDLING ---
-        submitNameButton.addEventListener('click', () => {
-            const inputName = nameInput.value.trim();
-            if (inputName && inputName.length <= 15) {
-                playerName = inputName;
-                localStorage.setItem('tennisPlayerName', playerName);
-                record = JSON.parse(localStorage.getItem(`tennisRecord_${playerName}`)) || { wins: 0, losses: 0 };
-                nameSubmitted = true;
-                nameInputContainer.style.display = 'none';
-            } else {
-                alert('Please enter a valid name (1-15 characters).');
-            }
-        });
-
-        nameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                submitNameButton.click();
-            }
-        });
-
-        // --- UI BUTTONS ---
-        function getScaledButton(x, y, width, height, sets = null) {
-            return { x: x*scale, y: y*scale, width: width*scale, height: height*scale, baseX: x, baseY: y, baseWidth: width, baseHeight: height, sets };
-        }
-
-        let stopButton = getScaledButton(680, 10, 110, 40);
-        let restartButton = getScaledButton(680, 60, 110, 40);
-        let resumeButton = getScaledButton(360, 360, 160, 60);
-        let easyButton = getScaledButton(170, 360, 210, 60);
-        let hardButton = getScaledButton(420, 360, 210, 60);
-        let setButtons = [
-            getScaledButton(225, 360, 100, 60, 1),
-            getScaledButton(350, 360, 100, 60, 3),
-            getScaledButton(475, 360, 100, 60, 5)
-        ];
-        let mainMenuButton = getScaledButton(360, 440, 160, 60);
-
-        // --- GAME OBJECTS ---
-        const player = {
-            x: 100, y: 250, width: 20, height: 80,
-            racketLength: 75, racketWidth: 10, color: '#4a90e2',
-            speed: 8, score: 0, sets: 0
-        };
-        const ai = {
-            x: 680, y: 250, width: 20, height: 80,
-            racketLength: 75, racketWidth: 10, color: '#e25a4a',
-            speed: 4, score: 0, sets: 0
-        };
-        const ball = {
-            x: 400, y: 300, radius: 10,
-            speedX: 3.5, speedY: 3.5, baseSpeedX: 3.5, color: '#FFFF00'
-        };
-        const swing = {
-            active: false, angle: 0, direction: 1, 
-            speed: 15, targetAngle: 90
-        };
-        const keys = { ArrowUp: false, ArrowDown: false };
-
-        // --- EVENT LISTENERS ---
-        document.addEventListener('keydown', (e) => {
-            if (gameState === 'playing') {
-                if (e.key in keys) keys[e.key] = true;
-                if (e.code === 'Space' && !swing.active) {
-                    const playerCenterY = player.y + player.height / 2;
-                    if (ball.y > playerCenterY) swing.targetAngle = 90;
-                    else swing.targetAngle = -90;
-                    swing.direction = Math.sign(swing.targetAngle);
-                    swing.active = true;
-                }
-            }
-        });
-        document.addEventListener('keyup', (e) => {
-            if (e.key in keys) keys[e.key] = false;
-        });
+        const messageBox = document.getElementById('message-box');
+        const scoreDisplay = document.getElementById('score-display');
         
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = (e.clientX - rect.left) / scale;
-            const mouseY = (e.clientY - rect.top) / scale;
+        // --- Game State ---
+        let target = { 
+            x: 0, 
+            y: 0, 
+            radius: 50,
+            dx: 2, // Horizontal velocity
+            dy: 2  // Vertical velocity
+        };
+        let crosshair = { x: 0, y: 0, size: 15 };
+        let message = { text: '', color: '', timer: 0 };
+        let score = 0;
+        // Store shots as offsets from the target's center
+        let shots = []; 
+        let animationFrameId;
 
-            switch(gameState) {
-                case 'startScreen': handleStartScreenClick(mouseX, mouseY); break;
-                case 'difficultyScreen': handleDifficultyClick(mouseX, mouseY); break;
-                case 'playing': handlePlayingClick(mouseX, mouseY); break;
-                case 'paused': handlePausedClick(mouseX, mouseY); break;
-                case 'gameOver': handleGameOverClick(mouseX, mouseY); break;
-            }
-        });
-
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = (e.clientX - rect.left) / scale;
-            const mouseY = (e.clientY - rect.top) / scale;
-
-            hoverButton = null;
-            if (gameState === 'playing') {
-                if (isPointInRect(mouseX, mouseY, stopButton, true)) hoverButton = stopButton;
-                if (isPointInRect(mouseX, mouseY, restartButton, true)) hoverButton = restartButton;
-            } else if (gameState === 'paused' && isPointInRect(mouseX, mouseY, resumeButton, true)) {
-                hoverButton = resumeButton;
-            } else if (gameState === 'difficultyScreen') {
-                if (isPointInRect(mouseX, mouseY, easyButton, true)) hoverButton = easyButton;
-                if (isPointInRect(mouseX, mouseY, hardButton, true)) hoverButton = hardButton;
-            } else if (gameState === 'startScreen' && nameSubmitted) {
-                setButtons.forEach(btn => {
-                    if (isPointInRect(mouseX, mouseY, btn, true)) hoverButton = btn;
-                });
-            } else if (gameState === 'gameOver') {
-                if (isPointInRect(mouseX, mouseY, mainMenuButton, true)) hoverButton = mainMenuButton;
-            }
-        });
-
-        function isPointInRect(x, y, rect, useBase = false) {
-            const rx = useBase ? rect.baseX : rect.x;
-            const ry = useBase ? rect.baseY : rect.y;
-            const rw = useBase ? rect.baseWidth : rect.width;
-            const rh = useBase ? rect.baseHeight : rect.height;
-            return x > rx && x < rx + rw && y > ry && y < ry + rh;
-        }
-        
-        function handleStartScreenClick(mx, my) {
-            if (nameSubmitted) {
-                setButtons.forEach(btn => {
-                    if (isPointInRect(mx, my, btn, true)) {
-                        totalSets = btn.sets;
-                        gameState = 'difficultyScreen';
-                    }
-                });
-            }
-        }
-        
-        function handleDifficultyClick(mx, my) {
-            if (isPointInRect(mx, my, easyButton, true)) startGame('easy');
-            if (isPointInRect(mx, my, hardButton, true)) startGame('hard');
-        }
-
-        function handlePlayingClick(mx, my) {
-            if (isPointInRect(mx, my, stopButton, true)) gameState = 'paused';
-            if (isPointInRect(mx, my, restartButton, true)) gameState = 'startScreen';
-        }
-
-        function handlePausedClick(mx, my) {
-            if (isPointInRect(mx, my, resumeButton, true)) gameState = 'playing';
-        }
-
-        function handleGameOverClick(mx, my) {
-            if (isPointInRect(mx, my, mainMenuButton, true)) gameState = 'startScreen';
-        }
-
-        // --- GAME LOGIC ---
-        function setDifficulty(difficulty) {
-            if (difficulty === 'easy') {
-                gameSettings = { ballSpeed: 3.5, aiSpeed: 3.0, playerRacketLength: 85, aiRacketLength: 65, difficulty: 'Easy' };
-            } else { // hard
-                gameSettings = { ballSpeed: 5.2, aiSpeed: 5.0, playerRacketLength: 80, aiRacketLength: 90, difficulty: 'Hard' };
-            }
-            ball.baseSpeedX = gameSettings.ballSpeed * scale;
-            ai.speed = gameSettings.aiSpeed * scale;
-            player.racketLength = gameSettings.playerRacketLength;
-            ai.racketLength = gameSettings.aiRacketLength;
-        }
-
-        function startGame(difficulty) {
-            setDifficulty(difficulty);
-            player.score = 0; ai.score = 0;
-            player.sets = 0; ai.sets = 0;
-            resetBall(true);
-            gameState = 'playing';
-        }
-
-        function update() {
-            if (gameState !== 'playing') return;
-
-            if (keys.ArrowUp && player.y > 0) player.y -= player.speed * scale;
-            if (keys.ArrowDown && player.y < 600 - player.height) player.y += player.speed * scale;
+        // --- Setup and Resize ---
+        function setupCanvas() {
+            const container = canvas.parentElement;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = container.getBoundingClientRect();
             
-            if (swing.active) {
-                swing.angle += swing.speed * swing.direction;
-                if (Math.abs(swing.angle) >= Math.abs(swing.targetAngle)) swing.direction *= -1;
-                if ((swing.direction === -1 && swing.angle <= 0 && swing.targetAngle > 0) || (swing.direction === 1 && swing.angle >= 0 && swing.targetAngle < 0)) {
-                    swing.active = false; swing.angle = 0;
-                }
-            }
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            ctx.scale(dpr, dpr);
 
-            ball.x += ball.speedX * scale;
-            ball.y += ball.speedY * scale;
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
 
-            if (ball.y + ball.radius > 600 || ball.y - ball.radius < 0) ball.speedY = -ball.speedY;
-
-            const racketTipX = player.x + player.width + Math.cos(swing.angle * Math.PI / 180) * player.racketLength;
-            if (ball.speedX < 0 && ball.x - ball.radius < racketTipX && ball.x + ball.radius > player.x && ball.y > player.y && ball.y < player.y + player.height) {
-                ball.speedX = -ball.speedX;
-                if (swing.active) {
-                    ball.speedX *= 1.2;
-                    ball.speedY = (ball.y - (player.y + player.height / 2)) * 0.25;
-                }
-            }
-
-            const aiRacketTipX = ai.x - ai.racketLength;
-            if (ball.speedX > 0 && ball.x + ball.radius > aiRacketTipX && ball.x + ball.radius < ai.x + ai.width && ball.y > ai.y && ball.y < ai.y + ai.height) {
-                ball.speedX = -ball.speedX;
-            }
-
-            if (ball.x + ball.radius < 0) {
-                ai.score++; checkSetWin(); resetBall(true);
-            } else if (ball.x - ball.radius > 800) {
-                player.score++; checkSetWin(); resetBall(false);
+            // Update target position if it's the first time
+            if (target.x === 0 && target.y === 0) {
+                 target.x = rect.width / 2;
+                 target.y = rect.height / 2;
             }
             
-            const aiCenter = ai.y + ai.height / 2;
-            if (ball.speedX > 0) {
-                const randomOffset = (Math.random() - 0.5) * (gameSettings.aiSpeed === 3.0 ? 20 : 16);
-                const targetY = ball.y + randomOffset;
-                if (aiCenter < targetY - 15) ai.y += ai.speed * scale;
-                else if (aiCenter > targetY + 15) ai.y -= ai.speed * scale;
-            }
-        }
-        
-        function checkSetWin() {
-            if (player.score >= 6 || ai.score >= 6) {
-                const pointDifference = Math.abs(player.score - ai.score);
-                if (pointDifference >= 2) {
-                    if (player.score > ai.score) player.sets++;
-                    else ai.sets++;
-                    player.score = 0;
-                    ai.score = 0;
-                }
-            }
-            const setsToWin = Math.ceil(totalSets / 2);
-            if (player.sets >= setsToWin || ai.sets >= setsToWin) {
-                if (player.sets > ai.sets) {
-                    record.wins++;
-                } else {
-                    record.losses++;
-                }
-                saveRecord();
-                gameState = 'gameOver';
-            }
-        }
-
-        function resetBall(serveToPlayer) {
-            ball.x = 400;
-            ball.y = 300;
-            ball.speedY = Math.random() > 0.5 ? ball.baseSpeedX : -ball.baseSpeedX;
-            ball.speedX = serveToPlayer ? -ball.baseSpeedX : ball.baseSpeedX;
-        }
-
-        // --- DRAWING FUNCTIONS ---
-        function draw() {
-            scale = Math.min(canvas.width / 800, canvas.height / 600);
-            const offsetX = (canvas.width - 800 * scale) / 2;
-            const offsetY = (canvas.height - 600 * scale) / 2;
-
-            ctx.fillStyle = '#006400';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.save();
-            ctx.translate(offsetX, offsetY);
-            ctx.scale(scale, scale);
-
-            if (gameState === 'startScreen') drawStartScreen();
-            else if (gameState === 'difficultyScreen') drawDifficultyScreen();
-            else if (gameState === 'playing' || gameState === 'paused') {
-                drawPlayingField();
-                drawPlayer();
-                drawAI();
-                drawBall();
-                drawScore();
-                drawInGameButtons();
-                if(gameState === 'paused') drawPausedOverlay();
-            } else if (gameState === 'gameOver') drawGameOverScreen();
+            // Recalculate radius based on smaller dimension
+            target.radius = Math.min(rect.width, rect.height) * 0.1;
             
-            ctx.restore();
-            requestAnimationFrame(gameLoop);
-        }
-        
-        function drawPlayingField() {
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 4;
-            ctx.setLineDash([10, 10]);
-            ctx.beginPath();
-            ctx.moveTo(400, 0);
-            ctx.lineTo(400, 600);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            // Set initial speed based on canvas size
+            const speed = Math.min(rect.width, rect.height) * 0.005;
+            target.dx = speed;
+            target.dy = speed;
         }
 
-        function drawPlayer() {
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-            ctx.save();
-            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-            ctx.rotate(swing.angle * Math.PI / 180);
-            ctx.fillStyle = '#654321';
-            ctx.fillRect(player.width / 2, -player.racketWidth / 2, player.racketLength / 2, player.racketWidth);
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(player.width / 2 + player.racketLength * 0.75, 0, player.racketLength / 4, 0, 2 * Math.PI);
-            ctx.stroke();
-            ctx.restore();
-        }
 
-        function drawAI() {
-            ctx.fillStyle = ai.color;
-            ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(ai.x - ai.racketLength, ai.y + ai.height / 2 - ai.racketWidth / 2, ai.racketLength, ai.racketWidth);
-        }
-
-        function drawBall() {
+        // --- Drawing Functions ---
+        function drawTarget() {
+            // Draw concentric circles for the target
             ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            ctx.fillStyle = ball.color;
+            ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#ef4444'; // red-500
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(target.x, target.y, target.radius * 0.66, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(target.x, target.y, target.radius * 0.33, 0, Math.PI * 2);
+            ctx.fillStyle = '#ef4444'; // red-500
             ctx.fill();
         }
 
-        function drawScore() {
-            ctx.fillStyle = 'white';
-            ctx.font = `${26*scale}px Roboto`;
-            ctx.textAlign = 'center';
-            const scoreText = `Player: ${player.score} | Bot: ${ai.score}`;
-            const setText = `Sets: ${player.sets} - ${ai.sets}`;
-            const gameInfo = `${gameSettings.difficulty} Mode | ${totalSets} Set${totalSets > 1 ? 's' : ''}`;
-            ctx.fillText(scoreText, 400, 30);
-            ctx.font = `${20*scale}px Roboto`;
-            ctx.fillText(setText, 400, 60);
-            ctx.font = `${16*scale}px Roboto`;
-            ctx.fillText(gameInfo, 400, 90);
+        function drawShots() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            // Draw each shot relative to the target's current center
+            shots.forEach(shot => {
+                const shotX = target.x + shot.offsetX;
+                const shotY = target.y + shot.offsetY;
+                ctx.beginPath();
+                ctx.arc(shotX, shotY, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
         }
 
-        function drawInGameButtons() {
-            ctx.fillStyle = '#e25a4a';
-            ctx.fillRect(stopButton.baseX, stopButton.baseY, stopButton.baseWidth, stopButton.baseHeight, 10);
-            ctx.fillStyle = 'white';
-            ctx.font = `${20*scale}px Roboto`;
-            ctx.textAlign = 'center';
-            ctx.globalAlpha = hoverButton === stopButton ? 0.8 : 1;
-            ctx.fillText('Stop', stopButton.baseX + stopButton.baseWidth / 2, stopButton.baseY + 28);
-            ctx.globalAlpha = 1;
+        function drawCrosshair() {
+            const { x, y, size } = crosshair;
+            ctx.strokeStyle = '#f5f5f5';
+            ctx.lineWidth = 2;
 
-            ctx.fillStyle = '#4a90e2';
-            ctx.fillRect(restartButton.baseX, restartButton.baseY, restartButton.baseWidth, restartButton.baseHeight, 10);
-            ctx.fillStyle = 'white';
-            ctx.globalAlpha = hoverButton === restartButton ? 0.8 : 1;
-            ctx.fillText('Restart', restartButton.baseX + restartButton.baseWidth / 2, restartButton.baseY + 28);
-            ctx.globalAlpha = 1;
-        }
+            ctx.beginPath();
+            ctx.moveTo(x - size, y);
+            ctx.lineTo(x + size, y);
+            ctx.stroke();
 
-        function drawPausedOverlay() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.fillRect(0, 0, 800, 600);
-            ctx.fillStyle = 'white';
-            ctx.textAlign = 'center';
-            ctx.font = `${50*scale}px Roboto`;
-            const pulse = 1 + Math.sin(Date.now() / 200) * 0.05;
-            ctx.globalAlpha = pulse;
-            ctx.fillText('Paused', 400, 300);
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = '#DDDDDD';
-            ctx.fillRect(resumeButton.baseX, resumeButton.baseY, resumeButton.baseWidth, resumeButton.baseHeight, 10);
-            ctx.fillStyle = 'black';
-            ctx.font = `${26*scale}px Roboto`;
-            ctx.globalAlpha = hoverButton === resumeButton ? 0.8 : 1;
-            ctx.fillText('Resume', resumeButton.baseX + resumeButton.baseWidth / 2, resumeButton.baseY + 40);
-            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x, y + size);
+            ctx.stroke();
         }
         
-        function drawStartScreen() {
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'white';
-            ctx.font = `${50*scale}px Roboto`;
-            ctx.fillText('HTML5 Tennis', 400, 150);
-            if (nameSubmitted) {
-                ctx.font = `${30*scale}px Roboto`;
-                ctx.fillText('Choose number of sets to win:', 400, 300);
-                ctx.font = `${24*scale}px Roboto`;
-                setButtons.forEach(btn => {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    ctx.globalAlpha = hoverButton === btn ? 0.8 : 1;
-                    ctx.fillRect(btn.baseX, btn.baseY, btn.baseWidth, btn.baseHeight, 10);
-                    ctx.fillStyle = 'black';
-                    ctx.fillText(`${btn.sets} Set${btn.sets > 1 ? 's' : ''}`, btn.baseX + btn.baseWidth / 2, btn.baseY + 40);
-                    ctx.globalAlpha = 1;
-                });
+        // --- Game Logic ---
+        function moveTarget() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            
+            // Move the target
+            target.x += target.dx;
+            target.y += target.dy;
+            
+            // Bounce off left/right walls
+            if (target.x + target.radius > rect.width || target.x - target.radius < 0) {
+                target.dx *= -1;
+            }
+            
+            // Bounce off top/bottom walls
+            if (target.y + target.radius > rect.height || target.y - target.radius < 0) {
+                target.dy *= -1;
             }
         }
         
-        function drawDifficultyScreen() {
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'white';
-            ctx.font = `${50*scale}px Roboto`;
-            ctx.fillText('Select Difficulty', 400, 200);
-
-            ctx.fillStyle = '#6ab04c';
-            ctx.globalAlpha = hoverButton === easyButton ? 0.8 : 1;
-            ctx.fillRect(easyButton.baseX, easyButton.baseY, easyButton.baseWidth, easyButton.baseHeight, 10);
-            ctx.fillStyle = 'white';
-            ctx.font = `${26*scale}px Roboto`;
-            ctx.fillText('Easy Mode', easyButton.baseX + easyButton.baseWidth / 2, easyButton.baseY + 40);
-            ctx.globalAlpha = 1;
-
-            ctx.fillStyle = '#e25a4a';
-            ctx.globalAlpha = hoverButton === hardButton ? 0.8 : 1;
-            ctx.fillRect(hardButton.baseX, hardButton.baseY, hardButton.baseWidth, hardButton.baseHeight, 10);
-            ctx.fillStyle = 'white';
-            ctx.font = `${26*scale}px Roboto`;
-            ctx.fillText('Hard Mode', hardButton.baseX + hardButton.baseWidth / 2, hardButton.baseY + 40);
-            ctx.globalAlpha = 1;
+        // --- UI Update Functions ---
+        function updateMessage() {
+            if (message.timer > 0) {
+                messageBox.textContent = message.text;
+                messageBox.style.color = message.color;
+                message.timer--;
+            } else {
+                messageBox.innerHTML = '&nbsp;';
+            }
+        }
+        
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = `Score: ${score}`;
         }
 
-        function drawGameOverScreen() {
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'white';
-            ctx.font = `${50*scale}px Roboto`;
-            const winner = player.sets > ai.sets ? 'You Win!' : 'Bot Wins!';
-            const pulse = 1 + Math.sin(Date.now() / 200) * 0.05;
-            ctx.globalAlpha = pulse;
-            ctx.fillText('Game Over', 400, 200);
-            ctx.fillText(winner, 400, 300);
-            ctx.globalAlpha = 1;
-            ctx.font = `${30*scale}px Roboto`;
-            ctx.fillText(`Player: ${playerName}`, 400, 350);
-            const winPercentage = (record.wins + record.losses) > 0 ? 
-                (record.wins / (record.wins + record.losses) * 100).toFixed(2) : '0.00';
-            ctx.fillText(`Record: ${record.wins}-${record.losses}`, 400, 380);
-            ctx.fillText(`Win Percentage: ${winPercentage}%`, 400, 410);
-            ctx.fillStyle = '#DDDDDD';
-            ctx.globalAlpha = hoverButton === mainMenuButton ? 0.8 : 1;
-            ctx.fillRect(mainMenuButton.baseX, mainMenuButton.baseY, mainMenuButton.baseWidth, mainMenuButton.baseHeight, 10);
-            ctx.fillStyle = 'black';
-            ctx.font = `${26*scale}px Roboto`;
-            ctx.fillText('Main Menu', mainMenuButton.baseX + mainMenuButton.baseWidth / 2, mainMenuButton.baseY + 40);
-            ctx.globalAlpha = 1;
-        }
 
+        // --- Game Loop ---
         function gameLoop() {
-            update();
-            draw();
+            const rect = canvas.parentElement.getBoundingClientRect();
+            ctx.clearRect(0, 0, rect.width, rect.height);
+            
+            moveTarget(); // Move the target each frame
+            
+            drawTarget();
+            drawShots(); // Draw shots relative to the target
+            drawCrosshair();
+
+            updateMessage();
+            
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+        
+
+        // --- Event Handlers ---
+        function handleMouseMove(event) {
+            const rect = canvas.getBoundingClientRect();
+            crosshair.x = event.clientX - rect.left;
+            crosshair.y = event.clientY - rect.top;
         }
 
-        // Update name input styles dynamically
-        function updateNameInputStyles() {
-            nameInput.style.width = `${200 * scale}px`;
-            nameInput.style.fontSize = `${16 * scale}px`;
-            nameInput.style.padding = `${8 * scale}px`;
-            submitNameButton.style.padding = `${8 * scale}px ${16 * scale}px`;
-            submitNameButton.style.fontSize = `${16 * scale}px`;
-        }
-        updateNameInputStyles();
-        window.addEventListener('resize', updateNameInputStyles);
+        function handleMouseClick(event) {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
 
-        draw();
+            // Calculate offset from the target's center and store it
+            const offsetX = clickX - target.x;
+            const offsetY = clickY - target.y;
+            shots.push({ offsetX, offsetY });
+
+
+            // Distance is calculated from the offset
+            const distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
+
+            let points = 0;
+            if (distance <= target.radius * 0.33) {
+                points = 100;
+                message.color = '#f59e0b';
+            } else if (distance <= target.radius * 0.66) {
+                points = 50;
+                message.color = '#6ee7b7';
+            } else if (distance <= target.radius) {
+                points = 25;
+                message.color = '#93c5fd';
+            } else {
+                points = 0;
+            }
+
+            score += points;
+
+            if (points > 0) {
+                message.text = `+${points} XP!`;
+            } else {
+                message.text = 'Miss!';
+                message.color = '#f87171';
+            }
+            message.timer = 90; 
+            updateScoreDisplay();
+        }
+
+        // --- Initialization ---
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('click', handleMouseClick);
+        window.addEventListener('resize', () => {
+            cancelAnimationFrame(animationFrameId);
+            setupCanvas();
+            shots = []; // Clear shots on resize to avoid visual bugs
+            gameLoop();
+        });
+
+        setupCanvas();
+        gameLoop();
+
     </script>
 </body>
 </html>
