@@ -15,14 +15,43 @@
             cursor: crosshair;
             display: block;
         }
+        #tutorial-modal {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white flex flex-col items-center justify-center h-screen m-0 p-4">
     <div id="start-screen" class="absolute inset-0 flex items-center justify-center bg-gray-900">
         <div class="text-center">
             <h1 class="text-5xl font-bold text-cyan-400 mb-8">Shooting Gallery</h1>
-            <button id="start-button" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300">
+            <button id="start-button" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300 mb-4">
                 Start Game
+            </button>
+            <button id="tutorial-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300">
+                Tutorial
+            </button>
+        </div>
+    </div>
+
+    <div id="tutorial-modal" class="hidden absolute inset-0 flex items-center justify-center">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full">
+            <h2 class="text-3xl font-bold text-cyan-400 mb-4">How to Play</h2>
+            <p class="text-gray-300 mb-4">
+                <strong>Objective:</strong> Shoot the moving target to score points within 1 minute. Hit closer to the center for more points, but miss the target and lose points!
+            </p>
+            <p class="text-gray-300 mb-4">
+                <strong>Controls:</strong><br>
+                - Move the crosshair with your mouse.<br>
+                - Click to shoot at the target.
+            </p>
+            <p class="text-gray-300 mb-4">
+                <strong>Scoring:</strong><br>
+                - Bullseye (center): 200 points<br>
+                - Inner rings: 150, 100, 75, 50, 30, 20, 10, 5 points<br>
+                - Miss: -50 points
+            </p>
+            <button id="close-tutorial" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                Close
             </button>
         </div>
     </div>
@@ -68,6 +97,9 @@
         const gameScreen = document.getElementById('game-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
         const startButton = document.getElementById('start-button');
+        const tutorialButton = document.getElementById('tutorial-button');
+        const closeTutorialButton = document.getElementById('close-tutorial');
+        const tutorialModal = document.getElementById('tutorial-modal');
         const restartButton = document.getElementById('restart-button');
         const finalScoreDisplay = document.getElementById('final-score');
 
@@ -107,7 +139,6 @@
             }
             
             target.radius = Math.min(rect.width, rect.height) * 0.1;
-            // Set faster speed: 0.008 (was 0.005 in original)
             const speed = Math.min(rect.width, rect.height) * 0.008;
             target.dx = speed;
             target.dy = speed;
@@ -194,12 +225,10 @@
             target.x += target.dx;
             target.y += target.dy;
 
-            // Bounce off left/right walls
             if (target.x + target.radius > rect.width || target.x - target.radius < 0) {
                 target.dx *= -1;
             }
 
-            // Bounce off top/bottom walls
             if (target.y + target.radius > rect.height || target.y - target.radius < 0) {
                 target.dy *= -1;
             }
@@ -352,10 +381,22 @@
             clearInterval(timerId);
         }
 
+        function showTutorial() {
+            tutorialModal.classList.remove('hidden');
+            startScreen.classList.add('hidden');
+        }
+
+        function closeTutorial() {
+            tutorialModal.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }
+
         // --- Initialization ---
         window.onload = function() {
             setupCanvas();
             startButton.addEventListener('click', startGame);
+            tutorialButton.addEventListener('click', showTutorial);
+            closeTutorialButton.addEventListener('click', closeTutorial);
             restartButton.addEventListener('click', resetGame);
             window.addEventListener('resize', () => {
                 if (gameStarted) {
