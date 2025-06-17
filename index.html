@@ -1,46 +1,385 @@
-import confetti from 'canvas-confetti';
+import React, { useState, useEffect, useCallback } from 'react';
 
-const ResultsScreen = ({ seasonResults, onReset, onStartPlayoffs }) => {
-    const { wins, losses, playoffOutcome, regularSeasonComplete } = seasonResults;
-    const winPercentage = ((wins / SEASON_GAMES) * 100).toFixed(1);
-    const madePlayoffs = wins >= PLAYOFF_QUALIFYING_WINS;
-    let verdict = '';
+// --- Data: Expanded NBA Players ---
+// In a real app, this would come from an API like NBA.com, Basketball-Reference, or 2kratings.com.
+const ALL_PLAYERS = [
+    // Elite Tier (95-99)
+    { id: 1, name: 'Nikola Jokic', position: 'C', overall: 98, team: 'Nuggets', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/76/Denver_Nuggets.svg/200px-Denver_Nuggets.svg.png' },
+    { id: 2, name: 'Giannis Antetokounmpo', position: 'PF', overall: 97, team: 'Bucks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Milwaukee_Bucks_logo.svg/200px-Milwaukee_Bucks_logo.svg.png' },
+    { id: 3, name: 'Joel Embiid', position: 'C', overall: 97, team: '76ers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Philadelphia_76ers_logo.svg/200px-Philadelphia_76ers_logo.svg.png' },
+    { id: 4, name: 'LeBron James', position: 'SF', overall: 96, team: 'Lakers', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Los_Angele_Lakers_logo.svg/200px-Los_Angele_Lakers_logo.svg.png' },
+    { id: 5, name: 'Kevin Durant', position: 'SF', overall: 96, team: 'Suns', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/dc/Phoenix_Suns_logo.svg/200px-Phoenix_Suns_logo.svg.png' },
+    { id: 6, name: 'Stephen Curry', position: 'PG', overall: 95, team: 'Warriors', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Golden_State_Warriors_logo.svg/200px-Golden_State_Warriors_logo.svg.png' },
+    { id: 7, name: 'Luka Dončić', position: 'PG', overall: 95, team: 'Mavericks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/97/Dallas_Mavericks_logo.svg/200px-Dallas_Mavericks_logo.svg.png' },
+    { id: 8, name: 'Shai Gilgeous-Alexander', position: 'SG', overall: 96, team: 'Thunder', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5d/Oklahoma_City_Thunder.svg/200px-Oklahoma_City_Thunder.svg.png' },
+    
+    // All-Star Tier (90-94)
+    { id: 9, name: 'Jayson Tatum', position: 'SF', overall: 94, team: 'Celtics', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8f/Boston_Celtics.svg/200px-Boston_Celtics.svg.png' },
+    { id: 10, name: 'Devin Booker', position: 'SG', overall: 94, team: 'Suns', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/dc/Phoenix_Suns_logo.svg/200px-Phoenix_Suns_logo.svg.png' },
+    { id: 11, name: 'Kawhi Leonard', position: 'SF', overall: 94, team: 'Clippers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Los_Angeles_Clippers_(2015).svg/200px-Los_Angeles_Clippers_(2015).svg.png' },
+    { id: 12, name: 'Anthony Davis', position: 'C', overall: 93, team: 'Lakers', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Los_Angele_Lakers_logo.svg/200px-Los_Angele_Lakers_logo.svg.png' },
+    { id: 13, name: 'Jimmy Butler', position: 'SF', overall: 92, team: 'Heat', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/Miami_Heat_logo.svg/200px-Miami_Heat_logo.svg.png' },
+    { id: 14, name: 'Damian Lillard', position: 'PG', overall: 92, team: 'Bucks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Milwaukee_Bucks_logo.svg/200px-Milwaukee_Bucks_logo.svg.png' },
+    { id: 15, name: 'Ja Morant', position: 'PG', overall: 91, team: 'Grizzlies', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f1/Memphis_Grizzlies.svg/200px-Memphis_Grizzlies.svg.png' },
+    { id: 16, name: 'Donovan Mitchell', position: 'SG', overall: 91, team: 'Cavaliers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4c/Cleveland_Cavaliers_logo.svg/200px-Cleveland_Cavaliers_logo.svg.png' },
+    { id: 17, name: 'Jalen Brunson', position: 'PG', overall: 90, team: 'Knicks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/25/New_York_Knicks_logo.svg/200px-New_York_Knicks_logo.svg.png' },
+    { id: 18, name: 'Domantas Sabonis', position: 'C', overall: 90, team: 'Kings', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Sacramento_Kings_Primary_Logo.svg/200px-Sacramento_Kings_Primary_Logo.svg.png' },
 
-    const confettiRef = useRef(null);
+    // Starter Tier (85-89)
+    { id: 19, name: 'Kyrie Irving', position: 'PG', overall: 89, team: 'Mavericks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/97/Dallas_Mavericks_logo.svg/200px-Dallas_Mavericks_logo.svg.png' },
+    { id: 20, name: 'Zion Williamson', position: 'PF', overall: 89, team: 'Pelicans', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/New_Orleans_Pelicans_logo.svg/200px-New_Orleans_Pelicans_logo.svg.png' },
+    { id: 21, name: 'Paul George', position: 'SF', overall: 89, team: 'Clippers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Los_Angeles_Clippers_(2015).svg/200px-Los_Angeles_Clippers_(2015).svg.png' },
+    { id: 22, name: 'Bam Adebayo', position: 'C', overall: 88, team: 'Heat', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/Miami_Heat_logo.svg/200px-Miami_Heat_logo.svg.png' },
+    { id: 23, name: 'Trae Young', position: 'PG', overall: 88, team: 'Hawks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/25/Atlanta_Hawks_logo.svg/200px-Atlanta_Hawks_logo.svg.png' },
+    { id: 24, name: 'Anthony Edwards', position: 'SG', overall: 88, team: 'Timberwolves', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c2/Minnesota_Timberwolves_logo.svg/200px-Minnesota_Timberwolves_logo.svg.png' },
+    { id: 25, name: 'Tyrese Haliburton', position: 'PG', overall: 88, team: 'Pacers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1a/Indiana_Pacers_logo.svg/200px-Indiana_Pacers_logo.svg.png' },
+    { id: 26, name: 'Jaylen Brown', position: 'SG', overall: 87, team: 'Celtics', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8f/Boston_Celtics.svg/200px-Boston_Celtics.svg.png' },
+    { id: 27, name: 'De\'Aaron Fox', position: 'PG', overall: 87, team: 'Kings', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Sacramento_Kings_Primary_Logo.svg/200px-Sacramento_Kings_Primary_Logo.svg.png' },
+    { id: 28, name: 'Karl-Anthony Towns', position: 'C', overall: 87, team: 'Timberwolves', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c2/Minnesota_Timberwolves_logo.svg/200px-Minnesota_Timberwolves_logo.svg.png' },
+    { id: 29, name: 'Victor Wembanyama', position: 'C', overall: 86, team: 'Spurs', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/San_Antonio_Spurs.svg/200px-San_Antonio_Spurs.svg.png' },
+    { id: 30, name: 'Tyrese Maxey', position: 'PG', overall: 86, team: '76ers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Philadelphia_76ers_logo.svg/200px-Philadelphia_76ers_logo.svg.png' },
+    { id: 31, name: 'Lauri Markkanen', position: 'PF', overall: 86, team: 'Jazz', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/04/Utah_Jazz_logo_%282016%29.svg/200px-Utah_Jazz_logo_%282016%29.svg.png' },
+    { id: 32, name: 'Pascal Siakam', position: 'PF', overall: 86, team: 'Pacers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1a/Indiana_Pacers_logo.svg/200px-Indiana_Pacers_logo.svg.png' },
+    { id: 33, name: 'Jrue Holiday', position: 'PG', overall: 85, team: 'Celtics', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8f/Boston_Celtics.svg/200px-Boston_Celtics_logo.svg.png' },
+    { id: 34, name: 'Jamal Murray', position: 'PG', overall: 85, team: 'Nuggets', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/76/Denver_Nuggets.svg/200px-Denver_Nuggets.svg.png' },
+    { id: 35, name: 'Bradley Beal', position: 'SG', overall: 85, team: 'Suns', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/dc/Phoenix_Suns_logo.svg/200px-Phoenix_Suns_logo.svg.png' },
+
+    // Role Player Tier (78-84)
+    { id: 36, name: 'Khris Middleton', position: 'SF', overall: 84, team: 'Bucks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Milwaukee_Bucks_logo.svg/200px-Milwaukee_Bucks_logo.svg.png' },
+    { id: 37, name: 'Rudy Gobert', position: 'C', overall: 84, team: 'Timberwolves', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c2/Minnesota_Timberwolves_logo.svg/200px-Minnesota_Timberwolves_logo.svg.png' },
+    { id: 38, name: 'Mikal Bridges', position: 'SF', overall: 83, team: 'Nets', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Brooklyn_Nets_logo.svg/200px-Brooklyn_Nets_logo.svg.png' },
+    { id: 39, name: 'Dejounte Murray', position: 'PG', overall: 83, team: 'Hawks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/25/Atlanta_Hawks_logo.svg/200px-Atlanta_Hawks_logo.svg.png' },
+    { id: 40, name: 'Chet Holmgren', position: 'C', overall: 83, team: 'Thunder', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5d/Oklahoma_City_Thunder.svg/200px-Oklahoma_City_Thunder.svg.png' },
+    { id: 41, name: 'Franz Wagner', position: 'SF', overall: 82, team: 'Magic', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/10/Orlando_Magic_logo.svg/200px-Orlando_Magic_logo.svg.png' },
+    { id: 42, name: 'Draymond Green', position: 'PF', overall: 82, team: 'Warriors', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Golden_State_Warriors_logo.svg/200px-Golden_State_Warriors_logo.svg.png' },
+    { id: 43, name: 'Andrew Wiggins', position: 'SF', overall: 81, team: 'Warriors', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Golden_State_Warriors_logo.svg/200px-Golden_State_Warriors_logo.svg.png' },
+    { id: 44, name: 'Jarrett Allen', position: 'C', overall: 81, team: 'Cavaliers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4c/Cleveland_Cavaliers_logo.svg/200px-Cleveland_Cavaliers_logo.svg.png' },
+    { id: 45, name: 'RJ Barrett', position: 'SF', overall: 80, team: 'Raptors', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Toronto_Raptors_logo.svg/200px-Toronto_Raptors_logo.svg.png' },
+    { id: 46, name: 'Tyler Herro', position: 'SG', overall: 80, team: 'Heat', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/Miami_Heat_logo.svg/200px-Miami_Heat_logo.svg.png' },
+    { id: 47, name: 'Fred VanVleet', position: 'PG', overall: 79, team: 'Rockets', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/28/Houston_Rockets.svg/200px-Houston_Rockets.svg.png' },
+    { id: 48, name: 'Dillon Brooks', position: 'SF', overall: 78, team: 'Rockets', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/28/Houston_Rockets.svg/200px-Houston_Rockets.svg.png' },
+    { id: 49, name: 'Jordan Poole', position: 'SG', overall: 78, team: 'Wizards', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Washington_Wizards_logo.svg/200px-Washington_Wizards_logo.svg.png' },
+    { id: 50, name: 'DeAndre Ayton', position: 'C', overall: 78, team: 'Trail Blazers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/21/Portland_Trail_Blazers_logo.svg/200px-Portland_Trail_Blazers_logo.svg.png' },
+
+    // Bench/Depth Tier (70-77) - Add many more for variety
+    { id: 51, name: 'Max Strus', position: 'SG', overall: 77, team: 'Cavaliers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4c/Cleveland_Cavaliers_logo.svg/200px-Cleveland_Cavaliers_logo.svg.png' },
+    { id: 52, name: 'Spencer Dinwiddie', position: 'PG', overall: 77, team: 'Lakers', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Los_Angele_Lakers_logo.svg/200px-Los_Angele_Lakers_logo.svg.png' },
+    { id: 53, name: 'Kyle Kuzma', position: 'PF', overall: 76, team: 'Wizards', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Washington_Wizards_logo.svg/200px-Washington_Wizards_logo.svg.png' },
+    { id: 54, name: 'Bogdan Bogdanovic', position: 'SG', overall: 76, team: 'Hawks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/25/Atlanta_Hawks_logo.svg/200px-Atlanta_Hawks_logo.svg.png' },
+    { id: 55, name: 'Derrick White', position: 'SG', overall: 76, team: 'Celtics', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8f/Boston_Celtics.svg/200px-Boston_Celtics_logo.svg.png' },
+    { id: 56, name: 'Jalen Green', position: 'SG', overall: 75, team: 'Rockets', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/28/Houston_Rockets.svg/200px-Houston_Rockets_logo.svg.png' },
+    { id: 57, name: 'Walker Kessler', position: 'C', overall: 75, team: 'Jazz', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/04/Utah_Jazz_logo_%282016%29.svg/200px-Utah_Jazz_logo_%282016%29.svg.png' },
+    { id: 58, name: 'Cole Anthony', position: 'PG', overall: 75, team: 'Magic', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/10/Orlando_Magic_logo.svg/200px-Orlando_Magic_logo.svg.png' },
+    { id: 59, name: 'Harrison Barnes', position: 'SF', overall: 74, team: 'Kings', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Sacramento_Kings_Primary_Logo.svg/200px-Sacramento_Kings_Primary_Logo.svg.png' },
+    { id: 60, name: 'Coby White', position: 'PG', overall: 74, team: 'Bulls', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/6/67/Chicago_Bulls_logo.svg/200px-Chicago_Bulls_logo.svg.png' },
+    { id: 61, name: 'Bobby Portis', position: 'PF', overall: 73, team: 'Bucks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Milwaukee_Bucks_logo.svg/200px-Milwaukee_Bucks_logo.svg.png' },
+    { id: 62, name: 'Dorian Finney-Smith', position: 'SF', overall: 73, team: 'Nets', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Brooklyn_Nets_logo.svg/200px-Brooklyn_Nets_logo.svg.png' },
+    { id: 63, name: 'Jusuf Nurkic', position: 'C', overall: 72, team: 'Suns', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/dc/Phoenix_Suns_logo.svg/200px-Phoenix_Suns_logo.svg.png' },
+    { id: 64, name: 'Isaiah Hartenstein', position: 'C', overall: 72, team: 'Knicks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/25/New_York_Knicks_logo.svg/200px-New_York_Knicks_logo.svg.png' },
+    { id: 65, name: 'Onyeka Okongwu', position: 'C', overall: 71, team: 'Hawks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/25/Atlanta_Hawks_logo.svg/200px-Atlanta_Hawks_logo.svg.png' },
+    { id: 66, name: 'Deni Avdija', position: 'SF', overall: 71, team: 'Wizards', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Washington_Wizards_logo.svg/200px-Washington_Wizards_logo.svg.png' },
+    { id: 67, name: 'Kelly Oubre Jr.', position: 'SF', overall: 70, team: '76ers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Philadelphia_76ers_logo.svg/200px-Philadelphia_76ers_logo.svg.png' },
+    { id: 68, name: 'Naz Reid', position: 'C', overall: 70, team: 'Timberwolves', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c2/Minnesota_Timberwolves_logo.svg/200px-Minnesota_Timberwolves_logo.svg.png' },
+    { id: 69, name: 'Jonathan Kuminga', position: 'SF', overall: 70, team: 'Warriors', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Golden_State_Warriors_logo.svg/200px-Golden_State_Warriors_logo.svg.png' },
+    { id: 70, name: 'Lu Dort', position: 'SG', overall: 70, team: 'Thunder', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5d/Oklahoma_City_Thunder.svg/200px-Oklahoma_City_Thunder.svg.png' },
+    { id: 71, name: 'Immanuel Quickley', position: 'PG', overall: 70, team: 'Raptors', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Toronto_Raptors_logo.svg/200px-Toronto_Raptors_logo.svg.png' },
+    { id: 72, name: 'Christian Wood', position: 'PF', overall: 69, team: 'Lakers', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Los_Angele_Lakers_logo.svg/200px-Los_Angele_Lakers_logo.svg.png' },
+    { id: 73, name: 'Grayson Allen', position: 'SG', overall: 69, team: 'Suns', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/dc/Phoenix_Suns_logo.svg/200px-Phoenix_Suns_logo.svg.png' },
+    { id: 74, name: 'Bruce Brown', position: 'SG', overall: 68, team: 'Raptors', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Toronto_Raptors_logo.svg/200px-Toronto_Raptors_logo.svg.png' },
+    { id: 75, name: 'Malik Monk', position: 'SG', overall: 68, team: 'Kings', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Sacramento_Kings_Primary_Logo.svg/200px-Sacramento_Kings_Primary_Logo.svg.png' },
+    { id: 76, name: 'Aaron Gordon', position: 'PF', overall: 80, team: 'Nuggets', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/76/Denver_Nuggets.svg/200px-Denver_Nuggets.svg.png' },
+    { id: 77, name: 'Mike Conley', position: 'PG', overall: 79, team: 'Timberwolves', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c2/Minnesota_Timberwolves_logo.svg/200px-Minnesota_Timberwolves_logo.svg.png' },
+    { id: 78, name: 'Nicolas Batum', position: 'SF', overall: 70, team: '76ers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Philadelphia_76ers_logo.svg/200px-Philadelphia_76ers_logo.svg.png' },
+    { id: 79, name: 'Gabe Vincent', position: 'PG', overall: 70, team: 'Lakers', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Los_Angele_Lakers_logo.svg/200px-Los_Angele_Lakers_logo.svg.png' },
+    { id: 80, name: 'Lonnie Walker IV', position: 'SG', overall: 69, team: 'Nets', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Brooklyn_Nets_logo.svg/200px-Brooklyn_Nets_logo.svg.png' },
+
+    // Deep Bench/G-League Tier (60-68) - Many of these to fill out options
+    { id: 81, name: 'Shake Milton', position: 'PG', overall: 68, team: 'Pistons', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Detroit_Pistons_logo.svg/200px-Detroit_Pistons_logo.svg.png' },
+    { id: 82, name: 'Pat Connaughton', position: 'SG', overall: 68, team: 'Bucks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Milwaukee_Bucks_logo.svg/200px-Milwaukee_Bucks_logo.svg.png' },
+    { id: 83, name: 'Royce O\'Neale', position: 'SF', overall: 67, team: 'Suns', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/dc/Phoenix_Suns_logo.svg/200px-Phoenix_Suns_logo.svg.png' },
+    { id: 84, name: 'Reggie Jackson', position: 'PG', overall: 67, team: 'Nuggets', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/76/Denver_Nuggets.svg/200px-Denver_Nuggets.svg.png' },
+    { id: 85, name: 'T.J. McConnell', position: 'PG', overall: 67, team: 'Pacers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1a/Indiana_Pacers_logo.svg/200px-Indiana_Pacers_logo.svg.png' },
+    { id: 86, name: 'Jose Alvarado', position: 'PG', overall: 66, team: 'Pelicans', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/New_Orleans_Pelicans_logo.svg/200px-New_Orleans_Pelicans_logo.svg.png' },
+    { id: 87, name: 'Santi Aldama', position: 'PF', overall: 66, team: 'Grizzlies', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f1/Memphis_Grizzlies.svg/200px-Memphis_Grizzlies.svg.png' },
+    { id: 88, name: 'Payton Pritchard', position: 'PG', overall: 65, team: 'Celtics', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8f/Boston_Celtics.svg/200px-Boston_Celtics_logo.svg.png' },
+    { id: 89, name: 'Malaki Branham', position: 'SG', overall: 65, team: 'Spurs', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/San_Antonio_Spurs.svg/200px-San_Antonio_Spurs_logo.svg.png' },
+    { id: 90, name: 'Isaiah Stewart', position: 'PF', overall: 64, team: 'Pistons', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Detroit_Pistons_logo.svg/200px-Detroit_Pistons_logo.svg.png' },
+    { id: 91, name: 'Matisse Thybulle', position: 'SF', overall: 64, team: 'Trail Blazers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/21/Portland_Trail_Blazers_logo.svg/200px-Portland_Trail_Blazers_logo.svg.png' },
+    { id: 92, name: 'Drew Eubanks', position: 'C', overall: 63, team: 'Suns', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/dc/Phoenix_Suns_logo.svg/200px-Phoenix_Suns_logo.svg.png' },
+    { id: 93, name: 'Sam Hauser', position: 'SF', overall: 63, team: 'Celtics', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8f/Boston_Celtics.svg/200px-Boston_Celtics_logo.svg.png' },
+    { id: 94, name: 'Keon Ellis', position: 'SG', overall: 62, team: 'Kings', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Sacramento_Kings_Primary_Logo.svg/200px-Sacramento_Kings_Primary_Logo.svg.png' },
+    { id: 95, name: 'Goga Bitadze', position: 'C', overall: 62, team: 'Magic', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/10/Orlando_Magic_logo.svg/200px-Orlando_Magic_logo.svg.png' },
+    { id: 96, name: 'Trey Murphy III', position: 'SF', overall: 75, team: 'Pelicans', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/New_Orleans_Pelicans_logo.svg/200px-New_Orleans_Pelicans_logo.svg.png' },
+    { id: 97, name: 'Jalen Johnson', position: 'PF', overall: 75, team: 'Hawks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/25/Atlanta_Hawks_logo.svg/200px-Atlanta_Hawks_logo.svg.png' },
+    { id: 98, name: 'Collin Sexton', position: 'SG', overall: 79, team: 'Jazz', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/04/Utah_Jazz_logo_%282016%29.svg/200px-Utah_Jazz_logo_%282016%29.svg.png' },
+    { id: 99, name: 'Alperen Sengun', position: 'C', overall: 86, team: 'Rockets', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/28/Houston_Rockets.svg/200px-Houston_Rockets.svg.png' },
+    { id: 100, name: 'Scottie Barnes', position: 'SF', overall: 87, team: 'Raptors', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Toronto_Raptors_logo.svg/200px-Toronto_Raptors_logo.svg.png' },
+];
+
+const TEAM_SIZE = 5;
+const SEASON_GAMES = 82;
+const AVERAGE_NBA_TEAM_OVERALL = 80; // A rough estimate for an average team's overall rating per player
+
+// --- Utility Functions ---
+
+// Function to generate a random number from a normal distribution (Box-Muller transform)
+function gaussianRandom(mean = 0, stdev = 1) {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random(); // Converting [0,1) to (0,1)
+    while (v === 0) v = Math.random();
+    let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    return num * stdev + mean;
+}
+
+// --- Components ---
+
+// PlayerCard: Displays a single player available for drafting
+const PlayerCard = ({ player, onDraft, isDrafted }) => (
+    <div
+        onClick={() => !isDrafted && onDraft(player)}
+        className={`relative p-4 rounded-lg shadow-lg cursor-pointer transition-all duration-300 transform ${
+            isDrafted
+                ? 'bg-gray-700 opacity-50'
+                : 'bg-gray-800 hover:bg-indigo-600 hover:-translate-y-1'
+        }`}
+    >
+        <div className="flex items-center space-x-4">
+            <img 
+                src={player.logo} 
+                alt={`${player.team} logo`}
+                className="w-10 h-10 object-contain"
+                onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/40x40/1f2937/ffffff?text=?'; }}
+            />
+            <div className="flex-grow">
+                <h3 className="text-lg font-bold text-white">{player.name}</h3>
+                <p className="text-sm text-gray-400">{player.position} - {player.team}</p>
+            </div>
+            <div className="flex flex-col items-center justify-center bg-gray-900 w-16 h-16 rounded-full border-2 border-indigo-500">
+                <span className="text-xs text-indigo-400">OVR</span>
+                <span className="text-xl font-bold text-white">{player.overall}</span>
+            </div>
+        </div>
+        {isDrafted && (
+            <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-white text-lg font-bold bg-black bg-opacity-50 px-4 py-2 rounded-md">DRAFTED</span>
+            </div>
+        )}
+    </div>
+);
+
+// TeamSlot: A slot in the user's drafted team
+const TeamSlot = ({ player }) => (
+    <div className="bg-gray-800 p-3 rounded-lg flex items-center justify-between shadow-inner">
+        {player ? (
+            <>
+                <div className="flex items-center space-x-3">
+                    <img src={player.logo} alt={`${player.team} logo`} className="w-8 h-8 object-contain" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/32x32/1f2937/ffffff?text=?'; }}/>
+                    <div>
+                        <p className="font-semibold text-white">{player.name}</p>
+                        <p className="text-xs text-gray-400">{player.position} - {player.team}</p>
+                    </div>
+                </div>
+                <div className="text-lg font-bold text-indigo-400">{player.overall}</div>
+            </>
+        ) : (
+            <p className="text-gray-500">Empty Slot</p>
+        )}
+    </div>
+);
+
+// DraftScreen: The main drafting interface
+const DraftScreen = ({ myTeam, setMyTeam, setGameState }) => {
+    const handleDraftPlayer = (player) => {
+        if (myTeam.length < TEAM_SIZE) {
+            setMyTeam(prevTeam => [...prevTeam, player]);
+        }
+    };
+
+    const draftedPlayerIds = new Set(myTeam.map(p => p.id));
+
+    // Sort players by overall rating in descending order for better user experience
+    const sortedPlayers = [...ALL_PLAYERS].sort((a, b) => b.overall - a.overall);
+
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-4 md:p-8">
+            {/* Player List */}
+            <div className="lg:col-span-2">
+                <h2 className="text-3xl font-bold text-white mb-4 border-b-2 border-indigo-500 pb-2">Available Players</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[75vh] overflow-y-auto pr-2">
+                    {sortedPlayers.map(player => (
+                        <PlayerCard
+                            key={player.id}
+                            player={player}
+                            onDraft={handleDraftPlayer}
+                            isDrafted={draftedPlayerIds.has(player.id)}
+                        />
+                    ))}
+                </div>
+            </div>
+
+            {/* Your Team */}
+            <div>
+                <h2 className="text-3xl font-bold text-white mb-4 border-b-2 border-indigo-500 pb-2">Your Team</h2>
+                <div className="bg-gray-900 p-4 rounded-lg space-y-3">
+                    {Array.from({ length: TEAM_SIZE }).map((_, i) => (
+                        <TeamSlot key={i} player={myTeam[i]} />
+                    ))}
+                    {myTeam.length === TEAM_SIZE && (
+                         <button
+                            onClick={() => setGameState('simulation')}
+                            className="w-full mt-4 bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 text-lg shadow-lg"
+                        >
+                            Start Simulation
+                        </button>
+                    )}
+                </div>
+                <div className="text-center mt-4 text-gray-400 font-semibold">
+                    {myTeam.length} / {TEAM_SIZE} Players Drafted
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// SimulationScreen: Shows the season simulation progress
+const SimulationScreen = ({ myTeam, setSeasonResults, setGameState }) => {
+    const [progress, setProgress] = useState(0);
+    const [wins, setWins] = useState(0);
+    const [losses, setLosses] = useState(0);
+    const [currentGame, setCurrentGame] = useState(0);
+
+    const myTeamOverallStrength = myTeam.reduce((sum, player) => sum + player.overall, 0);
 
     useEffect(() => {
-        if (playoffOutcome === 'Won Championship' && confettiRef.current) {
-            confetti({
-                particleCount: 150,
-                spread: 180,
-                origin: { y: 0.2, x: 0.5 },
-                colors: ['#FFD700', '#800080', '#FFFFFF', '#000000'],
-                scalar: 1.2,
-                gravity: 0.8,
-                ticks: 200
-            });
-            confetti({
-                particleCount: 100,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0, y: 0.8 },
-                colors: ['#FFD700', '#800080', '#FFFFFF', '#000000'],
-                scalar: 1.0,
-                gravity: 0.8,
-                ticks: 200
-            });
-            confetti({
-                particleCount: 100,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1, y: 0.8 },
-                colors: ['#FFD700', '#800080', '#FFFFFF', '#000000'],
-                scalar: 1.0,
-                gravity: 0.8,
-                ticks: 200
-            });
+        if (currentGame >= SEASON_GAMES) {
+            setSeasonResults({ wins, losses });
+            setTimeout(() => setGameState('results'), 1000);
+            return;
         }
-    }, [playoffOutcome]);
 
-    // ... rest of the component remains the same ...
+        const simTimeout = setTimeout(() => {
+            // Simulate opponent strength: vary opponents around the average NBA team strength
+            // This makes the simulation more dynamic, as some games will be against tougher teams and some easier.
+            const opponentTeamStrength = gaussianRandom(AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE, 15); // StDev of 15 for opponent team strength
+
+            // Calculate win probability based on the difference in team strengths
+            // A larger difference means a higher probability for the stronger team.
+            // We use a sigmoid-like function to map strength difference to probability (0-1)
+            // (myTeamOverallStrength - opponentTeamStrength) / 100 provides a reasonable scale for difference.
+            const strengthDifference = myTeamOverallStrength - opponentTeamStrength;
+            const winProbability = 0.5 + (strengthDifference / (AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE * 2)); // Adjust divisor for desired sensitivity
+            const clampedWinProbability = Math.min(Math.max(winProbability, 0.1), 0.9); // Clamp between 10% and 90%
+
+            // Simulate game outcome with some randomness
+            // Use a slight random factor to simulate upsets or dominant performances
+            const gameRandomness = gaussianRandom(0, 0.1); // Small standard deviation for per-game variability
+            const finalWinChance = clampedWinProbability + gameRandomness;
+
+            const result = Math.random(); // Simple uniform random for the final decision
+
+            if (result < finalWinChance) {
+                setWins(w => w + 1);
+            } else {
+                setLosses(l => l + 1);
+            }
+            setCurrentGame(g => g + 1);
+            setProgress((p) => (currentGame + 1) / SEASON_GAMES * 100);
+        }, 30); // Speed of simulation (faster for more games)
+
+        return () => clearTimeout(simTimeout);
+    }, [currentGame, losses, wins, myTeamOverallStrength, setSeasonResults, setGameState]);
+
+    return (
+        <div className="flex flex-col items-center justify-center h-full p-8 text-white">
+            <h2 className="text-4xl font-bold mb-4">Simulating Season...</h2>
+            <div className="w-full max-w-2xl bg-gray-700 rounded-full h-8 shadow-inner">
+                <div
+                    className="bg-indigo-600 h-8 rounded-full transition-all duration-50"
+                    style={{ width: `${progress}%` }}
+                ></div>
+            </div>
+            <div className="mt-6 text-2xl font-semibold">
+                Game: <span className="text-indigo-400">{currentGame} / {SEASON_GAMES}</span>
+            </div>
+            <div className="mt-4 text-5xl font-bold tracking-wider">
+                <span className="text-green-500">{wins}</span> - <span className="text-red-500">{losses}</span>
+            </div>
+        </div>
+    );
 };
+
+
+// ResultsScreen: Displays the final outcome
+const ResultsScreen = ({ seasonResults, onReset }) => {
+    const { wins, losses } = seasonResults;
+    const winPercentage = ((wins / SEASON_GAMES) * 100).toFixed(1);
+    let verdict = '';
+    if (wins >= 60) verdict = 'Championship Contender!';
+    else if (wins >= 50) verdict = 'Playoff Bound!';
+    else if (wins >= 41) verdict = 'Solid Season.';
+    else if (wins >= 30) verdict = 'Building for the Future.';
+    else verdict = 'Back to the drawing board!';
+
+    return (
+        <div className="flex flex-col items-center justify-center h-full p-8 text-white text-center">
+            <h2 className="text-5xl font-extrabold mb-2">Season Complete!</h2>
+            <p className="text-2xl text-indigo-400 mb-8">{verdict}</p>
+            
+            <div className="bg-gray-800 p-8 rounded-xl shadow-2xl border-2 border-indigo-500">
+                <p className="text-lg text-gray-400">Final Record</p>
+                <div className="text-8xl font-bold my-4">
+                    <span className="text-green-400">{wins}</span>
+                    <span className="text-gray-500 mx-4">-</span>
+                    <span className="text-red-400">{losses}</span>
+                </div>
+                <p className="text-xl text-gray-300">Win Percentage: {winPercentage}%</p>
+            </div>
+            
+            <button
+                onClick={onReset}
+                className="mt-12 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-8 rounded-lg transition-colors duration-300 text-xl shadow-lg"
+            >
+                Draft Again
+            </button>
+        </div>
+    );
+};
+
+// Main App Component
+export default function App() {
+    const [gameState, setGameState] = useState('draft'); // 'draft', 'simulation', 'results'
+    const [myTeam, setMyTeam] = useState([]);
+    const [seasonResults, setSeasonResults] = useState({ wins: 0, losses: 0 });
+
+    const handleReset = () => {
+        setMyTeam([]);
+        setSeasonResults({ wins: 0, losses: 0 });
+        setGameState('draft');
+    };
+
+    const renderGameState = () => {
+        switch (gameState) {
+            case 'simulation':
+                return <SimulationScreen myTeam={myTeam} setSeasonResults={setSeasonResults} setGameState={setGameState} />;
+            case 'results':
+                return <ResultsScreen seasonResults={seasonResults} onReset={handleReset} />;
+            case 'draft':
+            default:
+                return <DraftScreen myTeam={myTeam} setMyTeam={setMyTeam} setGameState={setGameState} />;
+        }
+    };
+    
+    return (
+        <div className="bg-gray-900 text-gray-100 min-h-screen font-sans">
+             <header className="bg-gray-900/80 backdrop-blur-sm p-4 shadow-lg border-b border-gray-700 sticky top-0 z-10">
+                <h1 className="text-center text-3xl font-bold text-white tracking-wider">
+                    NBA Draft <span className="text-indigo-500">&</span> Simulator
+                </h1>
+            </header>
+            <main className="h-[calc(100vh-73px)]">
+               {renderGameState()}
+            </main>
+        </div>
+    );
+}
