@@ -1,412 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Target Shooting Game</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            overflow: hidden;
-        }
-        canvas {
-            cursor: crosshair;
-            display: block;
-        }
-        #tutorial-modal {
-            background-color: rgba(0, 0, 0, 0.8);
-        }
-    </style>
-</head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-center h-screen m-0 p-4">
-    <div id="start-screen" class="absolute inset-0 flex items-center justify-center bg-gray-900">
-        <div class="text-center">
-            <h1 class="text-5xl font-bold text-cyan-400 mb-8">Target Shooting Game</h1>
-            <button id="start-button" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300 mb-4">
-                Start Game
-            </button>
-            <button id="tutorial-button" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300">
-                Tutorial
-            </button>
-        </div>
-    </div>
+import confetti from 'canvas-confetti';
 
-    <div id="tutorial-modal" class="hidden absolute inset-0 flex items-center justify-center">
-        <div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full">
-            <h2 class="text-3xl font-bold text-cyan-400 mb-4">How to Play</h2>
-            <p class="text-gray-300 mb-4">
-                <strong>Objective:</strong> Shoot the moving target to score points within 1 minute. Hit closer to the center for more points, but miss the target and lose points!
-            </p>
-            <p class="text-gray-300 mb-4">
-                <strong>Controls:</strong><br>
-                - Move the crosshair with your mouse.<br>
-                - Click to shoot at the target.
-            </p>
-            <p class="text-gray-300 mb-4">
-                <strong>Scoring:</strong><br>
-                - Bullseye (center): 200 points<br>
-                - Inner rings: 150, 100, 75, 50, 30, 20, 10, 5 points<br>
-                - Miss: -30 points
-            </p>
-            <button id="close-tutorial" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-                Close
-            </button>
-        </div>
-    </div>
+const ResultsScreen = ({ seasonResults, onReset, onStartPlayoffs }) => {
+    const { wins, losses, playoffOutcome, regularSeasonComplete } = seasonResults;
+    const winPercentage = ((wins / SEASON_GAMES) * 100).toFixed(1);
+    const madePlayoffs = wins >= PLAYOFF_QUALIFYING_WINS;
+    let verdict = '';
 
-    <div id="game-screen" class="hidden w-full h-full flex flex-col items-center justify-center">
-        <div class="w-full max-w-4xl text-center mb-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-bold text-cyan-400">Target Shooting Game</h1>
-                    <p class="text-gray-400 text-left">The target is now moving! Aim and click to shoot.</p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div id="timer-display" class="text-2xl font-semibold text-red-400">Time: 1:00</div>
-                    <div id="score-display" class="text-3xl font-bold text-amber-400">Score: 0</div>
-                </div>
-            </div>
-        </div>
+    const confettiRef = useRef(null);
 
-        <div id="message-box" class="h-10 text-2xl font-semibold mb-4 flex items-center justify-center"> </div>
-
-        <div class="w-full max-w-4xl aspect-[4/3] bg-gray-800 rounded-lg shadow-2xl overflow-hidden">
-            <canvas id="gameCanvas"></canvas>
-        </div>
-    </div>
-
-    <div id="game-over-screen" class="hidden absolute inset-0 flex items-center justify-center bg-gray-900">
-        <div class="text-center">
-            <h1 class="text-5xl font-bold text-red-400 mb-4">Game Over</h1>
-            <p id="final-score" class="text-3xl text-amber-400 mb-8">Your Score: 0</p>
-            <button id="restart-button" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300">
-                Play Again
-            </button>
-        </div>
-    </div>
-
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const messageBox = document.getElementById('message-box');
-        const scoreDisplay = document.getElementById('score-display');
-        const timerDisplay = document.getElementById('timer-display');
-        const startScreen = document.getElementById('start-screen');
-        const gameScreen = document.getElementById('game-screen');
-        const gameOverScreen = document.getElementById('game-over-screen');
-        const startButton = document.getElementById('start-button');
-        const tutorialButton = document.getElementById('tutorial-button');
-        const closeTutorialButton = document.getElementById('close-tutorial');
-        const tutorialModal = document.getElementById('tutorial-modal');
-        const restartButton = document.getElementById('restart-button');
-        const finalScoreDisplay = document.getElementById('final-score');
-
-        // --- Game State ---
-        let target = { 
-            x: 0, 
-            y: 0, 
-            radius: 50,
-            dx: 0,
-            dy: 0
-        };
-        let crosshair = { x: 0, y: 0, size: 15 };
-        let message = { text: '', color: '', timer: 0 };
-        let score = 0;
-        let shots = [];
-        let animationFrameId;
-        let gameStarted = false;
-        let timeLeft = 60; // 1 minute in seconds
-        let timerId;
-
-        // --- Setup and Resize ---
-        function setupCanvas() {
-            const container = canvas.parentElement;
-            const dpr = window.devicePixelRatio || 1;
-            const rect = container.getBoundingClientRect();
-            
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            
-            ctx.scale(dpr, dpr);
-            canvas.style.width = `${rect.width}px`;
-            canvas.style.height = `${rect.height}px`;
-
-            if (target.x === 0 && target.y === 0) {
-                target.x = rect.width / 2;
-                target.y = rect.height / 2;
-            }
-            
-            target.radius = Math.min(rect.width, rect.height) * 0.1;
-            const speed = Math.min(rect.width, rect.height) * 0.008;
-            target.dx = speed;
-            target.dy = speed;
-        }
-
-        // --- Drawing Functions ---
-        function drawTarget() {
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#ef4444';
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, target.radius * 0.9, 0, Math.PI * 2);
-            ctx.fillStyle = '#cbd5e1';
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, target.radius * 0.8, 0, Math.PI * 2);
-            ctx.fillStyle = '#ef4444';
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, target.radius * 0.7, 0, Math.PI * 2);
-            ctx.fillStyle = '#cbd5e1';
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, target.radius * 0.6, 0, Math.PI * 2);
-            ctx.fillStyle = '#ef4444';
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, target.radius * 0.5, 0, Math.PI * 2);
-            ctx.fillStyle = '#cbd5e1';
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, target.radius * 0.4, 0, Math.PI * 2);
-            ctx.fillStyle = '#ef4444';
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, target.radius * 0.3, 0, Math.PI * 2);
-            ctx.fillStyle = '#cbd5e1';
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, target.radius * 0.2, 0, Math.PI * 2);
-            ctx.fillStyle = '#ef4444';
-            ctx.fill();
-        }
-
-        function drawShots() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-            shots.forEach(shot => {
-                const shotX = target.x + shot.offsetX;
-                const shotY = target.y + shot.offsetY;
-                ctx.beginPath();
-                ctx.arc(shotX, shotY, 3, 0, Math.PI * 2);
-                ctx.fill();
+    useEffect(() => {
+        if (playoffOutcome === 'Won Championship' && confettiRef.current) {
+            confetti({
+                particleCount: 150,
+                spread: 180,
+                origin: { y: 0.2, x: 0.5 },
+                colors: ['#FFD700', '#800080', '#FFFFFF', '#000000'],
+                scalar: 1.2,
+                gravity: 0.8,
+                ticks: 200
+            });
+            confetti({
+                particleCount: 100,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 0.8 },
+                colors: ['#FFD700', '#800080', '#FFFFFF', '#000000'],
+                scalar: 1.0,
+                gravity: 0.8,
+                ticks: 200
+            });
+            confetti({
+                particleCount: 100,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 0.8 },
+                colors: ['#FFD700', '#800080', '#FFFFFF', '#000000'],
+                scalar: 1.0,
+                gravity: 0.8,
+                ticks: 200
             });
         }
+    }, [playoffOutcome]);
 
-        function drawCrosshair() {
-            const { x, y, size } = crosshair;
-            ctx.strokeStyle = '#f5f5f5';
-            ctx.lineWidth = 2;
-
-            ctx.beginPath();
-            ctx.moveTo(x - size, y);
-            ctx.lineTo(x + size, y);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(x, y - size);
-            ctx.lineTo(x, y + size);
-            ctx.stroke();
-        }
-
-        // --- Game Logic ---
-        function moveTarget() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            target.x += target.dx;
-            target.y += target.dy;
-
-            if (target.x + target.radius > rect.width || target.x - target.radius < 0) {
-                target.dx *= -1;
-            }
-
-            if (target.y + target.radius > rect.height || target.y - target.radius < 0) {
-                target.dy *= -1;
-            }
-        }
-
-        // --- UI Update Functions ---
-        function updateMessage() {
-            if (message.timer > 0) {
-                messageBox.textContent = message.text;
-                messageBox.style.color = message.color;
-                message.timer--;
-            } else {
-                messageBox.innerHTML = ' ';
-            }
-        }
-
-        function updateScoreDisplay() {
-            scoreDisplay.textContent = `Score: ${score}`;
-        }
-
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = Math.floor(timeLeft % 60);
-            timerDisplay.textContent = `Time: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-        }
-
-        function startTimer() {
-            timerId = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
-                if (timeLeft <= 0) {
-                    endGame();
-                }
-            }, 1000);
-        }
-
-        function endGame() {
-            cancelAnimationFrame(animationFrameId);
-            clearInterval(timerId);
-            gameScreen.classList.add('hidden');
-            gameOverScreen.classList.remove('hidden');
-            finalScoreDisplay.textContent = `Your Score: ${score}`;
-            canvas.removeEventListener('mousemove', handleMouseMove);
-            canvas.removeEventListener('click', handleMouseClick);
-        }
-
-        // --- Game Loop ---
-        function gameLoop() {
-            if (!gameStarted) return;
-            const rect = canvas.parentElement.getBoundingClientRect();
-            ctx.clearRect(0, 0, rect.width, rect.height);
-            
-            moveTarget();
-            drawTarget();
-            drawShots();
-            drawCrosshair();
-            updateMessage();
-            
-            animationFrameId = requestAnimationFrame(gameLoop);
-        }
-
-        // --- Event Handlers ---
-        function handleMouseMove(event) {
-            if (!gameStarted) return;
-            const rect = canvas.getBoundingClientRect();
-            crosshair.x = event.clientX - rect.left;
-            crosshair.y = event.clientY - rect.top;
-        }
-
-        function handleMouseClick(event) {
-            if (!gameStarted) return;
-            const rect = canvas.getBoundingClientRect();
-            const clickX = event.clientX - rect.left;
-            const clickY = event.clientY - rect.top;
-
-            const offsetX = clickX - target.x;
-            const offsetY = clickY - target.y;
-            const distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
-
-            let points = 0;
-            if (distance <= target.radius * 0.2) {
-                points = 200;
-                message.color = '#f59e0b';
-            } else if (distance <= target.radius * 0.3) {
-                points = 150;
-                message.color = '#6ee7b7';
-            } else if (distance <= target.radius * 0.4) {
-                points = 100;
-                message.color = '#93c5fd';
-            } else if (distance <= target.radius * 0.5) {
-                points = 75;
-                message.color = '#d8b4fe';
-            } else if (distance <= target.radius * 0.6) {
-                points = 50;
-                message.color = '#fde68a';
-            } else if (distance <= target.radius * 0.7) {
-                points = 30;
-                message.color = '#f87171';
-            } else if (distance <= target.radius * 0.8) {
-                points = 20;
-                message.color = '#fdba74';
-            } else if (distance <= target.radius * 0.9) {
-                points = 10;
-                message.color = '#a78bfa';
-            } else if (distance <= target.radius) {
-                points = 5;
-                message.color = '#fecaca';
-            } else {
-                points = -30;
-                message.color = '#f87171';
-            }
-
-            score += points;
-
-            if (points > 0) {
-                message.text = `+${points} XP!`;
-                shots.push({ offsetX, offsetY });
-            } else if (points < 0) {
-                message.text = `${points} XP!`;
-                message.color = '#f87171';
-            } else {
-                message.text = 'Miss!';
-                message.color = '#f87171';
-            }
-            message.timer = 90;
-            updateScoreDisplay();
-        }
-
-        function startGame() {
-            startScreen.classList.add('hidden');
-            gameScreen.classList.remove('hidden');
-            gameStarted = true;
-            score = 0;
-            shots = [];
-            timeLeft = 60;
-            updateScoreDisplay();
-            updateTimerDisplay();
-            setupCanvas();
-            startTimer();
-            gameLoop();
-            canvas.addEventListener('mousemove', handleMouseMove);
-            canvas.addEventListener('click', handleMouseClick);
-        }
-
-        function resetGame() {
-            gameOverScreen.classList.add('hidden');
-            startScreen.classList.remove('hidden');
-            gameStarted = false;
-            cancelAnimationFrame(animationFrameId);
-            clearInterval(timerId);
-        }
-
-        function showTutorial() {
-            tutorialModal.classList.remove('hidden');
-            startScreen.classList.add('hidden');
-        }
-
-        function closeTutorial() {
-            tutorialModal.classList.add('hidden');
-            startScreen.classList.remove('hidden');
-        }
-
-        // --- Initialization ---
-        window.onload = function() {
-            setupCanvas();
-            startButton.addEventListener('click', startGame);
-            tutorialButton.addEventListener('click', showTutorial);
-            closeTutorialButton.addEventListener('click', closeTutorial);
-            restartButton.addEventListener('click', resetGame);
-            window.addEventListener('resize', () => {
-                if (gameStarted) {
-                    cancelAnimationFrame(animationFrameId);
-                    setupCanvas();
-                    shots = [];
-                    gameLoop();
-                }
-            });
-        };
-    </script>
-</body>
-</html>
+    // ... rest of the component remains the same ...
+};
