@@ -6,20 +6,23 @@
     <title>NBA Draft and Season Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Import Inter font from Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
+            font-family: 'Inter', sans-serif; /* Apply Inter font to the body */
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
+        /* Confetti animation styles */
         .confetti {
             position: absolute;
             width: 10px;
             height: 20px;
-            background-color: #f00;
+            background-color: #f00; /* Default red, will be overridden by JS */
             opacity: 1;
             transform: rotate(0deg);
-            animation: fall 5s linear forwards;
+            animation: fall 5s linear forwards; /* Default animation, will be overridden by JS */
         }
+        /* Base fall animation keyframes */
         @keyframes fall {
             0% {
                 transform: translateY(0) rotate(0deg);
@@ -39,9 +42,17 @@
         <button id="start-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300">Start Game</button>
     </div>
 
+    <!-- Team Selection Screen (hidden initially) -->
+    <div id="team-selection-screen" class="hidden flex flex-col justify-center items-center min-h-screen bg-gray-900 p-4">
+        <h2 class="text-3xl font-bold text-orange-500 mb-8 text-center">Choose Your Team</h2>
+        <div id="team-logos-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 sm:gap-6 max-w-6xl w-full">
+            <!-- Team logos will be injected here by JavaScript -->
+        </div>
+    </div>
+
     <!-- Game Container (hidden initially) -->
-    <div id="game-container" style="display: none;">
-        <div id="confetti-container" class="absolute top-0 left-0 w-full h-full pointer-events-none z-50"></div>
+    <div id="game-container" class="hidden">
+        <div id="confetti-container" class="absolute top-0 left-0 w-full h-full pointer-events-none z-50 overflow-hidden"></div>
         <div class="container mx-auto p-4">
             <h1 id="draft-header" class="text-4xl font-bold text-center mb-8 text-orange-500">Draft Point Guard</h1>
             <div id="draft-section" class="grid grid-cols-1 md:grid-cols-5 gap-8">
@@ -50,7 +61,7 @@
                     <div id="player-pool" class="bg-gray-800 rounded-lg p-4 h-96 overflow-y-auto"></div>
                 </div>
                 <div class="md:col-span-2">
-                    <h2 class="text-2xl font-semibold mb-4">Your Team (<span id="team-count">0</span>/5)</h2>
+                    <h2 class="text-2xl font-semibold mb-4">Your Team: <span id="your-team-name" class="text-yellow-400"></span> (<span id="team-count">0</span>/5)</h2>
                     <div id="your-team" class="bg-gray-800 rounded-lg p-4 min-h-[24rem]"></div>
                 </div>
             </div>
@@ -70,8 +81,19 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const PLAYOFF_WIN_THRESHOLD = 40;
+            // Constants for game logic
+            const PLAYOFF_WIN_THRESHOLD = 40; // Minimum wins to make playoffs
+            const TEAM_SIZE = 5; // Number of players required for a full team
+            // Draft order by position
+            const DRAFT_ORDER = [
+                { position: "PG", label: "Point Guards" },
+                { position: "SG", label: "Shooting Guards" },
+                { position: "SF", label: "Small Forwards" },
+                { position: "PF", label: "Power Forwards" },
+                { position: "C", label: "Centers" }
+            ];
 
+            // Player data with name, rating, and position
             const players = [
                 { name: "Nikola Jokic", rating: 98, position: "C" },
                 { name: "Luka Dončić", rating: 97, position: "PG" },
@@ -157,6 +179,42 @@
                 { name: "Marcus Smart", rating: 77, position: "PG" }
             ];
 
+            // List of all 30 NBA teams with their logo URLs
+            const nbaTeams = [
+                { name: "Atlanta Hawks", initials: "ATL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/2/24/Atlanta_Hawks_logo.svg" },
+                { name: "Boston Celtics", initials: "BOS", logoUrl: "https://upload.wikimedia.org/wikipedia/en/8/8f/Boston_Celtics.svg" },
+                { name: "Brooklyn Nets", initials: "BKN", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Brooklyn_Nets_Logo.svg/512px-Brooklyn_Nets_Logo.svg.png" },
+                { name: "Charlotte Hornets", initials: "CHA", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c4/Charlotte_Hornets_%282014%29.svg/512px-Charlotte_Hornets_%282014%29.svg.png" },
+                { name: "Chicago Bulls", initials: "CHI", logoUrl: "https://upload.wikimedia.org/wikipedia/en/6/67/Chicago_Bulls_logo.svg" },
+                { name: "Cleveland Cavaliers", initials: "CLE", logoUrl: "https://upload.wikimedia.org/wikipedia/en/4/4b/Cleveland_Cavaliers_logo.svg" },
+                { name: "Dallas Mavericks", initials: "DAL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/9/97/Dallas_Mavericks_logo.svg/512px-Dallas_Mavericks_logo.svg.png" },
+                { name: "Denver Nuggets", initials: "DEN", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/7/76/Denver_Nuggets_logo.svg/512px-Denver_Nuggets_logo.svg.png" },
+                { name: "Detroit Pistons", initials: "DET", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c9/Detroit_Pistons_logo.svg/512px-Detroit_Pistons_logo.svg.png" },
+                { name: "Golden State Warriors", initials: "GSW", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Golden_State_Warriors_logo.svg/512px-Golden_State_Warriors_logo.svg.png" },
+                { name: "Houston Rockets", initials: "HOU", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/2/28/Houston_Rockets.svg/512px-Houston_Rockets.svg.png" },
+                { name: "Indiana Pacers", initials: "IND", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/1/1e/Indiana_Pacers_logo.svg/512px-Indiana_Pacers_logo.svg.png" },
+                { name: "Los Angeles Clippers", initials: "LAC", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Los_Angeles_Clippers_logo.svg/512px-Los_Angeles_Clippers_logo.svg.png" },
+                { name: "Los Angeles Lakers", initials: "LAL", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Los_Angeles_Lakers_logo.svg/512px-Los_Angeles_Lakers_logo.svg.png" },
+                { name: "Memphis Grizzlies", initials: "MEM", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f1/Memphis_Grizzlies.svg/512px-Memphis_Grizzlies.svg.png" },
+                { name: "Miami Heat", initials: "MIA", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Miami_Heat_logo.svg/512px-Miami_Heat_logo.svg.png" },
+                { name: "Milwaukee Bucks", initials: "MIL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/4/44/Milwaukee_Bucks_logo.svg/512px-Milwaukee_Bucks_logo.svg.png" },
+                { name: "Minnesota Timberwolves", initials: "MIN", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/d/d9/Minnesota_Timberwolves_logo.svg/512px-Minnesota_Timberwolves_logo.svg.png" },
+                { name: "New Orleans Pelicans", initials: "NOP", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/New_Orleans_Pelicans_logo.svg/512px-New_Orleans_Pelicans_logo.svg.png" },
+                { name: "New York Knicks", initials: "NYK", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/2/25/New_York_Knicks_logo.svg/512px-New_York_Knicks_logo.svg.png" },
+                { name: "Oklahoma City Thunder", initials: "OKC", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/5/5d/Oklahoma_City_Thunder.svg/512px-Oklahoma_City_Thunder.svg.png" },
+                { name: "Orlando Magic", initials: "ORL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/1/10/Orlando_Magic_logo.svg/512px-Orlando_Magic_logo.svg.png" },
+                { name: "Philadelphia 76ers", initials: "PHI", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Philadelphia_76ers_logo.svg/512px-Philadelphia_76ers_logo.svg.png" },
+                { name: "Phoenix Suns", initials: "PHX", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/5/57/Phoenix_Suns_logo.svg/512px-Phoenix_Suns_logo.svg.png" },
+                { name: "Portland Trail Blazers", initials: "POR", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/2/21/Portland_Trail_Blazers_logo.svg/512px-Portland_Trail_Blazers_logo.svg.png" },
+                { name: "Sacramento Kings", initials: "SAC", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Sacramento_Kings_logo.svg/512px-Sacramento_Kings_logo.svg.png" },
+                { name: "San Antonio Spurs", initials: "SAS", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/San_Antonio_Spurs.svg/512px-San_Antonio_Spurs.svg.png" },
+                { name: "Toronto Raptors", initials: "TOR", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Toronto_Raptors_logo.svg/512px-Toronto_Raptors_logo.svg.png" },
+                { name: "Utah Jazz", initials: "UTA", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/04/Utah_Jazz_logo_%282016%29.svg/512px-Utah_Jazz_logo_%282016%29.svg.png" },
+                { name: "Washington Wizards", initials: "WAS", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Washington_Wizards_logo.svg/512px-Washington_Wizards_logo.svg.png" }
+            ];
+
+
+            // Get DOM elements
             const playerPoolEl = document.getElementById('player-pool');
             const yourTeamEl = document.getElementById('your-team');
             const simSeasonBtn = document.getElementById('sim-season-btn');
@@ -171,23 +229,76 @@
             const startBtn = document.getElementById('start-btn');
             const startScreen = document.getElementById('start-screen');
             const gameContainer = document.getElementById('game-container');
+            const teamSelectionScreen = document.getElementById('team-selection-screen'); // New
+            const teamLogosContainer = document.getElementById('team-logos-container'); // New
+            const yourTeamNameEl = document.getElementById('your-team-name'); // New
 
-            let yourTeam = [];
-            const TEAM_SIZE = 5;
-            const DRAFT_ORDER = [
-                { position: "PG", label: "Point Guards" },
-                { position: "SG", label: "Shooting Guards" },
-                { position: "SF", label: "Small Forwards" },
-                { position: "PF", label: "Power Forwards" },
-                { position: "C", label: "Centers" }
-            ];
 
+            let yourTeam = []; // Array to hold drafted players
+            let selectedTeamName = ''; // Variable to store the chosen NBA team name
+
+            /**
+             * Generates a random hexadecimal color code.
+             * This function is now mostly for the fallback background if a logo doesn't load.
+             * @returns {string} A 6-character hexadecimal color string.
+             */
+            function getRandomColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
+
+            /**
+             * Creates and appends team logo cards to the team selection screen.
+             */
+            function renderTeams() {
+                teamLogosContainer.innerHTML = ''; // Clear previous logos
+                nbaTeams.forEach(team => {
+                    const teamCard = document.createElement('div');
+                    // Use the actual logoUrl, with a fallback to a generic NBA placeholder if the image fails
+                    const imageUrl = team.logoUrl;
+                    // Updated fallback: Use team initials as text
+                    const fallbackImageUrl = `https://placehold.co/100x100/333333/ffffff?text=${team.initials}`;
+                    teamCard.className = 'flex flex-col items-center p-3 bg-gray-800 rounded-lg shadow-md cursor-pointer hover:bg-gray-700 transition-colors duration-200';
+                    teamCard.innerHTML = `
+                        <img src="${imageUrl}" alt="${team.name} Logo" class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full mb-2 object-contain" onerror="this.onerror=null;this.src='${fallbackImageUrl}'; this.style.backgroundColor = '#333333';">
+                        <p class="text-sm sm:text-base font-semibold text-center">${team.name}</p>
+                    `;
+                    teamCard.addEventListener('click', () => selectTeam(team.name));
+                    teamLogosContainer.appendChild(teamCard);
+                });
+            }
+
+            /**
+             * Handles team selection, updates UI, and transitions to the game screen.
+             * @param {string} teamName - The name of the selected team.
+             */
+            function selectTeam(teamName) {
+                selectedTeamName = teamName;
+                yourTeamNameEl.textContent = selectedTeamName; // Display the selected team name
+                teamSelectionScreen.classList.add('hidden'); // Hide team selection
+                teamSelectionScreen.classList.remove('flex'); // Remove flex for proper hiding
+                gameContainer.classList.remove('hidden'); // Show game container
+                renderPlayers(); // Render players for drafting
+            }
+
+            // Event listener for the initial "Start Game" button
             startBtn.addEventListener('click', () => {
-                startScreen.style.display = 'none';
-                gameContainer.style.display = 'block';
-                renderPlayers();
+                startScreen.style.display = 'none'; // Hide start screen
+                teamSelectionScreen.classList.remove('hidden'); // Show team selection screen
+                teamSelectionScreen.classList.add('flex'); // Add flex for proper display
+                renderTeams(); // Populate team logos
             });
 
+            /**
+             * Creates an HTML card for a player.
+             * @param {object} player - The player object.
+             * @param {boolean} inTeam - True if the player is in the user's team, false otherwise.
+             * @returns {HTMLElement} The player card div element.
+             */
             function createPlayerCard(player, inTeam) {
                 const card = document.createElement('div');
                 card.className = 'bg-gray-700 p-3 rounded-lg flex justify-between items-center mb-2 shadow-md hover:bg-gray-600 transition-colors duration-200';
@@ -201,8 +312,9 @@
                         <button class="draft-btn mt-1 text-sm ${inTeam ? 'bg-red-500 hover:bg-red-600 py-1 px-2' : 'bg-green-500 hover:bg-green-600 py-2 px-4'} text-white rounded transition duration-300">${inTeam ? 'Remove' : 'Draft'}</button>
                     </div>
                 `;
+                // Add event listener to the draft/remove button
                 card.querySelector('.draft-btn').addEventListener('click', (e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // Prevent card click event if any
                     if (inTeam) {
                         removePlayerFromTeam(player);
                     } else {
@@ -212,142 +324,197 @@
                 return card;
             }
 
+            /**
+             * Renders players in the player pool and the user's team.
+             * Updates counts and button states.
+             */
             function renderPlayers() {
-                playerPoolEl.innerHTML = '';
-                const currentPosition = DRAFT_ORDER[yourTeam.length]?.position;
-                const currentLabel = DRAFT_ORDER[yourTeam.length]?.label || "Players";
+                playerPoolEl.innerHTML = ''; // Clear player pool display
+                // Determine the current required position for drafting
+                const currentPositionInfo = DRAFT_ORDER[yourTeam.length];
+                const currentPosition = currentPositionInfo?.position;
+                const currentLabel = currentPositionInfo?.label || "Players";
+
+                // Filter available players: not in your team and match the current required position
                 const availablePlayers = players
                     .filter(p => !yourTeam.some(teamPlayer => teamPlayer.name === p.name))
                     .filter(p => currentPosition ? p.position.split('/').includes(currentPosition) : true)
-                    .sort((a, b) => b.rating - a.rating);
+                    .sort((a, b) => b.rating - a.rating); // Sort by rating descending
+
+                // Append player cards to the player pool
                 availablePlayers.forEach(p => {
                     playerPoolEl.appendChild(createPlayerCard(p, false));
                 });
-                yourTeamEl.innerHTML = '';
+
+                yourTeamEl.innerHTML = ''; // Clear your team display
+                // Append player cards to your team, sorted by rating
                 yourTeam.sort((a, b) => b.rating - a.rating).forEach(p => {
                     yourTeamEl.appendChild(createPlayerCard(p, true));
                 });
-                teamCountEl.textContent = `${yourTeam.length}`;
-                playerCountEl.textContent = `${availablePlayers.length}`;
-                positionLabelEl.textContent = currentLabel;
+
+                // Update UI elements
+                teamCountEl.textContent = `${yourTeam.length}`; // Number of players in your team
+                playerCountEl.textContent = `${availablePlayers.length}`; // Number of available players
+                positionLabelEl.textContent = currentLabel; // Current position being drafted
+                // Enable simulate season button only when team is full
                 simSeasonBtn.disabled = yourTeam.length !== TEAM_SIZE;
-                draftHeaderEl.textContent = yourTeam.length < TEAM_SIZE ? `Draft ${DRAFT_ORDER[yourTeam.length].label.slice(0, -1)}` : 'NBA Draft & Season Simulator';
+                // Update draft header text based on draft progress
+                draftHeaderEl.textContent = yourTeam.length < TEAM_SIZE ? `Draft ${currentPositionInfo.label.slice(0, -1)}` : 'NBA Draft & Season Simulator';
             }
 
+            /**
+             * Adds a player to the user's team.
+             * @param {object} player - The player object to draft.
+             */
             function draftPlayer(player) {
                 if (yourTeam.length >= TEAM_SIZE) {
                     resultsDisplay.textContent = "Your team is full! Remove a player to draft another.";
                     return;
                 }
-                const currentPosition = DRAFT_ORDER[yourTeam.length].position;
+                const currentPositionInfo = DRAFT_ORDER[yourTeam.length];
+                const currentPosition = currentPositionInfo.position;
+                // Check if the player's position matches the required draft position
                 if (!player.position.split('/').includes(currentPosition)) {
-                    resultsDisplay.textContent = `Please draft a ${DRAFT_ORDER[yourTeam.length].label.slice(0, -1)}.`;
+                    resultsDisplay.textContent = `Please draft a ${currentPositionInfo.label.slice(0, -1)}.`;
                     return;
                 }
-                yourTeam.push(player);
-                renderPlayers();
+                yourTeam.push(player); // Add player to team
+                renderPlayers(); // Re-render displays
+                resultsDisplay.textContent = `You drafted ${player.name} as your ${currentPositionInfo.label.slice(0, -1)}.`; // Update status message
             }
 
+            /**
+             * Removes a player from the user's team.
+             * @param {object} player - The player object to remove.
+             */
             function removePlayerFromTeam(player) {
-                yourTeam = yourTeam.filter(p => p.name !== player.name);
-                renderPlayers();
+                yourTeam = yourTeam.filter(p => p.name !== player.name); // Filter out the player
+                renderPlayers(); // Re-render displays
+                resultsDisplay.textContent = `Removed ${player.name} from your team.`; // Update status message
             }
 
+            // Event listener for "Simulate Season" button
             simSeasonBtn.addEventListener('click', () => {
-                const totalRating = yourTeam.reduce((acc, p) => acc + p.rating, 0);
-                const avgRating = totalRating / TEAM_SIZE;
-                const baseWins = 10;
-                const winsPerRatingPoint = 0.9;
+                const totalRating = yourTeam.reduce((acc, p) => acc + p.rating, 0); // Sum of all player ratings
+                const avgRating = totalRating / TEAM_SIZE; // Average team rating
+                const baseWins = 10; // Base wins for a very low-rated team
+                const winsPerRatingPoint = 0.9; // How many wins per rating point above 80
+                // Calculate wins based on average rating, scaled by team size
                 let wins = Math.round(baseWins + (avgRating - 80) * winsPerRatingPoint * (TEAM_SIZE / 2));
-                wins += Math.floor(Math.random() * 15) - 7;
-                wins = Math.max(0, Math.min(82, wins));
-                const losses = 82 - wins;
+                // Add some randomness to wins
+                wins += Math.floor(Math.random() * 15) - 7; // +/- 7 wins randomly
+                wins = Math.max(0, Math.min(82, wins)); // Cap wins between 0 and 82 (total games in NBA season)
+                const losses = 82 - wins; // Calculate losses
+
                 resultsDisplay.innerHTML = `
                     <p class="text-xl font-bold">Regular Season Finished!</p>
                     <p>Your team's record: <span class="text-green-400">${wins}</span> - <span class="text-red-400">${losses}</span></p>
                 `;
+                // Check if the team made the playoffs
                 if (wins >= PLAYOFF_WIN_THRESHOLD) {
                     resultsDisplay.innerHTML += '<p class="text-yellow-400 mt-2">Congratulations, you made the playoffs!</p>';
-                    simPlayoffsBtn.style.display = 'inline-block';
+                    simPlayoffsBtn.style.display = 'inline-block'; // Show playoffs button
                 } else {
                     resultsDisplay.innerHTML += '<p class="text-gray-400 mt-2">You missed the playoffs. Better luck next year!</p>';
                 }
-                simSeasonBtn.style.display = 'none';
-                resetBtn.style.display = 'inline-block';
+                simSeasonBtn.style.display = 'none'; // Hide season button
+                resetBtn.style.display = 'inline-block'; // Show reset button
             });
 
+            /**
+             * Simulates the playoff rounds based on team's average rating.
+             * @param {number} avgRating - The average rating of the user's team.
+             * @returns {object} An object indicating if the team won the championship or was eliminated.
+             */
             function simulatePlayoffs(avgRating) {
+                // Playoff rounds with increasing opponent difficulty
                 const rounds = [
-                    { name: "First Round", opponentRating: 85 + Math.random() * 5 },
-                    { name: "Conference Semifinals", opponentRating: 90 + Math.random() * 5 },
-                    { name: "Conference Finals", opponentRating: 95 + Math.random() * 3 },
-                    { name: "NBA Finals", opponentRating: 98 + Math.random() * 2 }
+                    { name: "First Round", opponentRating: 85 + Math.random() * 5 }, // Opponent rating for First Round
+                    { name: "Conference Semifinals", opponentRating: 90 + Math.random() * 5 }, // Opponent rating for Conference Semifinals
+                    { name: "Conference Finals", opponentRating: 95 + Math.random() * 3 }, // Opponent rating for Conference Finals
+                    { name: "NBA Finals", opponentRating: 98 + Math.random() * 2 } // Opponent rating for NBA Finals
                 ];
+
                 for (let round of rounds) {
-                    const ratingDiff = avgRating - round.opponentRating;
+                    const ratingDiff = avgRating - round.opponentRating; // Difference in rating
+                    // Logistic function to determine win probability (higher ratingDiff = higher probability)
                     const probability = 1 / (1 + Math.exp(-0.1 * ratingDiff));
                     if (Math.random() < probability) {
-                        continue;
+                        continue; // Win the round, proceed to next
                     } else {
-                        return { eliminatedIn: round.name };
+                        return { eliminatedIn: round.name }; // Lose the round, return elimination info
                     }
                 }
-                return { champion: true };
+                return { champion: true }; // Won all rounds, champion!
             }
 
+            // Event listener for "Simulate Playoffs" button
             simPlayoffsBtn.addEventListener('click', () => {
                 const totalRating = yourTeam.reduce((acc, p) => acc + p.rating, 0);
                 const avgRating = totalRating / TEAM_SIZE;
-                const playoffResult = simulatePlayoffs(avgRating);
+                const playoffResult = simulatePlayoffs(avgRating); // Simulate playoffs
+
                 if (playoffResult.champion) {
                     resultsDisplay.innerHTML = `
                         <p class="text-3xl font-bold text-yellow-300 animate-pulse">🏆 CHAMPIONSHIP WON! 🏆</p>
                         <p class="mt-2">Your team battled through the playoffs and emerged victorious!</p>
                     `;
-                    triggerConfetti();
+                    triggerConfetti(); // Trigger confetti for championship win
                 } else {
                     resultsDisplay.innerHTML = `
                         <p class="text-xl font-bold text-red-500">Playoffs Result</p>
                         <p>Your team was eliminated in the ${playoffResult.eliminatedIn}. Tough break!</p>
                     `;
                 }
-                simPlayoffsBtn.style.display = 'none';
-                resetBtn.style.display = 'inline-block';
+                simPlayoffsBtn.style.display = 'none'; // Hide playoffs button
+                resetBtn.style.display = 'inline-block'; // Show reset button
             });
 
+            // Event listener for "Draft Again" (Reset) button
             resetBtn.addEventListener('click', () => {
-                gameContainer.style.display = 'none';
-                startScreen.style.display = 'flex';
-                yourTeam = [];
-                resultsDisplay.innerHTML = 'Draft your 5-player team to begin!';
-                simSeasonBtn.style.display = 'inline-block';
-                simPlayoffsBtn.style.display = 'none';
-                resetBtn.style.display = 'none';
-                confettiContainer.innerHTML = '';
+                gameContainer.classList.add('hidden'); // Hide game container
+                startScreen.style.display = 'flex'; // Show start screen (which leads to team selection)
+                yourTeam = []; // Reset your team
+                selectedTeamName = ''; // Reset selected team
+                yourTeamNameEl.textContent = ''; // Clear team name display
+                resultsDisplay.innerHTML = 'Draft your 5-player team to begin!'; // Reset results message
+                simSeasonBtn.style.display = 'inline-block'; // Show season button
+                simPlayoffsBtn.style.display = 'none'; // Hide playoffs button
+                resetBtn.style.display = 'none'; // Hide reset button
+                confettiContainer.innerHTML = ''; // Clear confetti
             });
 
+            /**
+             * Triggers a confetti animation for celebratory moments.
+             * Dynamically creates confetti elements with random positions, colors, and animations.
+             */
             function triggerConfetti() {
                 let styleSheet = document.getElementById('confetti-styles');
-                if (styleSheet) {
-                    styleSheet.innerHTML = '';
-                } else {
+                // Create a stylesheet for dynamic keyframes if it doesn't exist
+                if (!styleSheet) {
                     styleSheet = document.createElement('style');
                     styleSheet.id = 'confetti-styles';
                     document.head.appendChild(styleSheet);
+                } else {
+                    styleSheet.innerHTML = ''; // Clear previous keyframes
                 }
+
+                // Generate multiple confetti pieces
                 for (let i = 0; i < 200; i++) {
                     const confetti = document.createElement('div');
                     confetti.classList.add('confetti');
-                    const x = Math.random() * 100;
-                    const rotation = Math.random() * 360;
-                    const animationName = `fall-${i}`;
+                    const x = Math.random() * 100; // Random horizontal position (viewport width)
+                    const rotation = Math.random() * 360; // Initial random rotation
+                    const animationName = `fall-${i}`; // Unique animation name for each confetti
                     confetti.style.left = `${x}vw`;
                     confetti.style.animationName = animationName;
-                    confetti.style.animationDuration = `${4 + Math.random() * 2}s`;
-                    confetti.style.animationDelay = `${Math.random() * 2}s`;
-                    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    confetti.style.animationDuration = `${4 + Math.random() * 2}s`; // Random duration
+                    confetti.style.animationDelay = `${Math.random() * 2}s`; // Random delay
+                    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`; // Random bright color
+
+                    // Define unique keyframes for each confetti for varied fall paths and rotations
                     const keyframes = `
-                    @keyframes ${animationName} {
+                        @keyframes ${animationName} {
                             0% {
                                 transform: translateY(-10vh) translateX(0) rotate(${rotation}deg);
                                 opacity: 1;
@@ -358,11 +525,13 @@
                             }
                         }
                     `;
-                    styleSheet.innerHTML += keyframes;
-                    confettiContainer.appendChild(confetti);
+                    styleSheet.innerHTML += keyframes; // Add keyframes to the stylesheet
+                    confettiContainer.appendChild(confetti); // Append confetti to the container
+
+                    // Remove confetti after its animation completes to clean up DOM
                     setTimeout(() => {
                         confetti.remove();
-                    }, 7000);
+                    }, 7000); // Remove after 7 seconds (max animation duration + buffer)
                 }
             }
         });
