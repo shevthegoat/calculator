@@ -60,7 +60,7 @@ const ALL_PLAYERS = [
     { id: 49, name: 'Jordan Poole', position: 'SG', overall: 78, team: 'Wizards', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Washington_Wizards_logo.svg/200px-Washington_Wizards_logo.svg.png' },
     { id: 50, name: 'DeAndre Ayton', position: 'C', overall: 78, team: 'Trail Blazers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/21/Portland_Trail_Blazers_logo.svg/200px-Portland_Trail_Blazers_logo.svg.png' },
 
-    // Bench/Depth Tier (70-77) - Add many more for variety
+    // Bench/Depth Tier (70-77)
     { id: 51, name: 'Max Strus', position: 'SG', overall: 77, team: 'Cavaliers', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4c/Cleveland_Cavaliers_logo.svg/200px-Cleveland_Cavaliers_logo.svg.png' },
     { id: 52, name: 'Spencer Dinwiddie', position: 'PG', overall: 77, team: 'Lakers', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Los_Angeles_Lakers_logo.svg/200px-Los_Angeles_Lakers_logo.svg.png' },
     { id: 53, name: 'Kyle Kuzma', position: 'PF', overall: 76, team: 'Wizards', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Washington_Wizards_logo.svg/200px-Washington_Wizards_logo.svg.png' },
@@ -92,7 +92,7 @@ const ALL_PLAYERS = [
     { id: 79, name: 'Gabe Vincent', position: 'PG', overall: 70, team: 'Lakers', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Los_Angeles_Lakers_logo.svg/200px-Los_Angeles_Lakers_logo.svg.png' },
     { id: 80, name: 'Lonnie Walker IV', position: 'SG', overall: 69, team: 'Nets', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Brooklyn_Nets_logo.svg/200px-Brooklyn_Nets_logo.svg.png' },
 
-    // Deep Bench/G-League Tier (60-68) - Many of these to fill out options
+    // Deep Bench/G-League Tier (60-68)
     { id: 81, name: 'Shake Milton', position: 'PG', overall: 68, team: 'Pistons', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Detroit_Pistons_logo.svg/200px-Detroit_Pistons_logo.svg.png' },
     { id: 82, name: 'Pat Connaughton', position: 'SG', overall: 68, team: 'Bucks', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Milwaukee_Bucks_logo.svg/200px-Milwaukee_Bucks_logo.svg.png' },
     { id: 83, name: 'Royce O\'Neale', position: 'SF', overall: 67, team: 'Suns', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/dc/Phoenix_Suns_logo.svg/200px-Phoenix_Suns_logo.svg.png' },
@@ -120,22 +120,18 @@ const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C']; // Required positions for a com
 const SEASON_GAMES = 82;
 const AVERAGE_NBA_TEAM_OVERALL = 80; // A rough estimate for an average team's overall rating per player
 const PLAYOFF_QUALIFYING_WINS = 50; // Number of wins required to make the playoffs
-// Corrected URL for the Larry O'Brien trophy image from Wikimedia Commons
 const LARRY_OBRIEN_TROPHY_URL = 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Larry_O%27Brien_Championship_Trophy.png'; 
 
 // --- Utility Functions ---
-// Function to generate a random number from a normal distribution (Box-Muller transform)
 function gaussianRandom(mean = 0, stdev = 1) {
     let u = 0, v = 0;
-    while (u === 0) u = Math.random(); // Converting [0,1) to (0,1)
+    while (u === 0) u = Math.random();
     while (v === 0) v = Math.random();
-    // Corrected Math.2 to Math.PI
     let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
     return num * stdev + mean;
 }
 
 // --- Components ---
-// PlayerCard: Displays a single player available for drafting
 const PlayerCard = ({ player, onDraft, isDrafted, isCurrentPick, isPositionTaken }) => (
     <div
         onClick={() => !isDrafted && isCurrentPick && !isPositionTaken && onDraft(player)}
@@ -151,7 +147,7 @@ const PlayerCard = ({ player, onDraft, isDrafted, isCurrentPick, isPositionTaken
                 src={player.logo} 
                 alt={`${player.team} logo`}
                 className="w-10 h-10 object-contain"
-                onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/40x40/1f2937/ffffff?text=?'; }}
+                onError={(e) => { e.target.onerror = null; e.target.src='https://via.placeholder.com/40'; }}
             />
             <div className="flex-grow">
                 <h3 className="text-lg font-bold text-white">{player.name}</h3>
@@ -175,13 +171,12 @@ const PlayerCard = ({ player, onDraft, isDrafted, isCurrentPick, isPositionTaken
     </div>
 );
 
-// TeamSlot: A slot in the user's drafted team
 const TeamSlot = ({ player, pickNumber, requiredPosition }) => (
     <div className="bg-gray-800 p-3 rounded-lg flex items-center justify-between shadow-inner">
         {player ? (
             <>
                 <div className="flex items-center space-x-3">
-                    <img src={player.logo} alt={`${player.team} logo`} className="w-8 h-8 object-contain" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/32x32/1f2937/ffffff?text=?'; }}/>
+                    <img src={player.logo} alt={`${player.team} logo`} className="w-8 h-8 object-contain" onError={(e) => { e.target.onerror = null; e.target.src='https://via.placeholder.com/32'; }}/>
                     <div>
                         <p className="font-semibold text-white">{player.name}</p>
                         <p className="text-xs text-gray-400">{player.position} - {player.team}</p>
@@ -195,14 +190,10 @@ const TeamSlot = ({ player, pickNumber, requiredPosition }) => (
     </div>
 );
 
-// DraftScreen: The main drafting interface
 const DraftScreen = ({ myTeam, setMyTeam, setGameState, currentPick, setCurrentPick }) => {
-    // Determine which positions have been drafted
     const draftedPositions = new Set(myTeam.map(p => p.position));
     const draftedPlayerIds = new Set(myTeam.map(p => p.id));
-
-    // Determine the position required for the current pick
-    const requiredPositionForCurrentPick = POSITIONS[myTeam.length]; // Each pick corresponds to a specific position
+    const requiredPositionForCurrentPick = POSITIONS[myTeam.length];
 
     const handleDraftPlayer = (player) => {
         const isAlreadyDrafted = draftedPlayerIds.has(player.id);
@@ -210,18 +201,16 @@ const DraftScreen = ({ myTeam, setMyTeam, setGameState, currentPick, setCurrentP
 
         if (myTeam.length < TEAM_SIZE && !isAlreadyDrafted && !isPositionAlreadyTaken) {
             setMyTeam(prevTeam => [...prevTeam, player]);
-            // Only advance the pick if the team is not yet full
             if (myTeam.length + 1 < TEAM_SIZE) {
                 setCurrentPick(prevPick => prevPick + 1);
             } else {
-                setCurrentPick(TEAM_SIZE); // Cap the pick number at TEAM_SIZE
+                setCurrentPick(TEAM_SIZE);
             }
         }
     };
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-4 md:p-8">
-            {/* Player List */}
             <div className="lg:col-span-2">
                 <h2 className="text-3xl font-bold text-white mb-4 border-b-2 border-indigo-500 pb-2">
                     {myTeam.length < TEAM_SIZE ? `Available ${requiredPositionForCurrentPick}s` : 'Draft Complete'}
@@ -230,24 +219,22 @@ const DraftScreen = ({ myTeam, setMyTeam, setGameState, currentPick, setCurrentP
                     Current Pick: <span className="font-bold">{currentPick}</span> / {TEAM_SIZE} ({myTeam.length < TEAM_SIZE ? `Draft a ${requiredPositionForCurrentPick}` : 'Team Full'})
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[65vh] overflow-y-auto pr-2">
-                    {ALL_PLAYERS.sort((a, b) => b.overall - a.overall).map(player => ( // Always map all players for consistent display
+                    {ALL_PLAYERS.sort((a, b) => b.overall - a.overall).map(player => (
                         <PlayerCard
                             key={player.id}
                             player={player}
                             onDraft={handleDraftPlayer}
                             isDrafted={draftedPlayerIds.has(player.id)}
-                            isCurrentPick={player.position === requiredPositionForCurrentPick && myTeam.length + 1 === currentPick} // Highlight if matches current pick position
-                            isPositionTaken={draftedPositions.has(player.position)} // Indicate if position is already taken
+                            isCurrentPick={player.position === requiredPositionForCurrentPick && myTeam.length + 1 === currentPick}
+                            isPositionTaken={draftedPositions.has(player.position)}
                         />
                     ))}
                 </div>
             </div>
-
-            {/* Your Team */}
             <div>
                 <h2 className="text-3xl font-bold text-white mb-4 border-b-2 border-indigo-500 pb-2">Your Team</h2>
                 <div className="bg-gray-900 p-4 rounded-lg space-y-3">
-                    {POSITIONS.map((pos, i) => ( // Use POSITIONS to ensure correct order of slots
+                    {POSITIONS.map((pos, i) => (
                         <TeamSlot 
                             key={pos} 
                             player={myTeam.find(p => p.position === pos)} 
@@ -256,7 +243,7 @@ const DraftScreen = ({ myTeam, setMyTeam, setGameState, currentPick, setCurrentP
                         />
                     ))}
                     {myTeam.length === TEAM_SIZE && (
-                         <button
+                        <button
                             onClick={() => setGameState('simulation')}
                             className="w-full mt-4 bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 text-lg shadow-lg"
                         >
@@ -272,33 +259,28 @@ const DraftScreen = ({ myTeam, setMyTeam, setGameState, currentPick, setCurrentP
     );
 };
 
-// SimulationScreen: Shows the season simulation progress
 const SimulationScreen = ({ myTeam, setSeasonResults, setGameState }) => {
     const [progress, setProgress] = useState(0);
     const [wins, setWins] = useState(0);
     const [losses, setLosses] = useState(0);
     const [currentGame, setCurrentGame] = useState(0);
 
-    const myTeamOverallStrength = myTeam.reduce((sum, player) => sum + player.overall, 0);
+    const myTeamOverallStrength = myTeam.length > 0 ? myTeam.reduce((sum, player) => sum + player.overall, 0) : AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE;
 
     useEffect(() => {
         if (currentGame >= SEASON_GAMES) {
-            setSeasonResults({ wins, losses, regularSeasonComplete: true }); // Mark regular season complete
+            setSeasonResults({ wins, losses, regularSeasonComplete: true });
             setTimeout(() => setGameState('results'), 1000);
             return;
         }
 
         const simTimeout = setTimeout(() => {
-            // Simulate opponent strength: vary opponents around the average NBA team strength
             const opponentTeamStrength = gaussianRandom(AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE, 15);
-
             const strengthDifference = myTeamOverallStrength - opponentTeamStrength;
             const winProbability = 0.5 + (strengthDifference / (AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE * 2));
             const clampedWinProbability = Math.min(Math.max(winProbability, 0.1), 0.9);
-
             const gameRandomness = gaussianRandom(0, 0.1);
             const finalWinChance = clampedWinProbability + gameRandomness;
-
             const result = Math.random();
 
             if (result < finalWinChance) {
@@ -307,8 +289,8 @@ const SimulationScreen = ({ myTeam, setSeasonResults, setGameState }) => {
                 setLosses(l => l + 1);
             }
             setCurrentGame(g => g + 1);
-            setProgress((p) => (currentGame + 1) / SEASON_GAMES * 100);
-        }, 30); // Speed of simulation (faster for more games)
+            setProgress((currentGame + 1) / SEASON_GAMES * 100);
+        }, 30);
 
         return () => clearTimeout(simTimeout);
     }, [currentGame, losses, wins, myTeamOverallStrength, setSeasonResults, setGameState]);
@@ -328,26 +310,27 @@ const SimulationScreen = ({ myTeam, setSeasonResults, setGameState }) => {
             <div className="mt-4 text-5xl font-bold tracking-wider">
                 <span className="text-green-500">{wins}</span> - <span className="text-red-500">{losses}</span>
             </div>
+            {!myTeam.length && (
+                <p className="text-red-500 mt-4">Warning: No team drafted. Using average team strength.</p>
+            )}
         </div>
     );
 };
 
-// PlayoffSimulationScreen: Simulates the playoffs
 const PlayoffSimulationScreen = ({ myTeam, setSeasonResults, setGameState }) => {
     const [currentRound, setCurrentRound] = useState(1);
     const [mySeriesWins, setMySeriesWins] = useState(0);
     const [opponentSeriesWins, setOpponentSeriesWins] = useState(0);
-    const [seriesProgress, setSeriesProgress] = useState(0); // For visualizing game by game in a series
-    const [playoffStatus, setPlayoffStatus] = useState('In Progress'); // 'In Progress', 'Won Championship', 'Eliminated'
+    const [seriesProgress, setSeriesProgress] = useState(0);
+    const [playoffStatus, setPlayoffStatus] = useState('In Progress');
 
-    const myTeamOverallStrength = myTeam.reduce((sum, player) => sum + player.overall, 0);
+    const myTeamOverallStrength = myTeam.length > 0 ? myTeam.reduce((sum, player) => sum + player.overall, 0) : AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE;
 
-    // Opponent strengths increase per round
     const playoffOpponentStrengths = {
-        1: AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE + 10, // Round 1
-        2: AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE + 20, // Round 2
-        3: AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE + 30, // Round 3 (Conference Finals)
-        4: AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE + 40, // Round 4 (NBA Finals)
+        1: AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE + 10,
+        2: AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE + 20,
+        3: AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE + 30,
+        4: AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE + 40,
     };
 
     const playoffRoundNames = {
@@ -359,32 +342,30 @@ const PlayoffSimulationScreen = ({ myTeam, setSeasonResults, setGameState }) => 
 
     const simulateGame = useCallback((myStrength, opponentStrength) => {
         const strengthDifference = myStrength - opponentStrength;
-        const winProbability = 0.5 + (strengthDifference / (AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE * 2.5)); // Adjusted sensitivity for playoffs
-        const clampedWinProbability = Math.min(Math.max(winProbability, 0.05), 0.95); // More extreme clamping for playoff drama
-
-        return Math.random() < clampedWinProbability; // True if my team wins
+        const winProbability = 0.5 + (strengthDifference / (AVERAGE_NBA_TEAM_OVERALL * TEAM_SIZE * 2.5));
+        const clampedWinProbability = Math.min(Math.max(winProbability, 0.05), 0.95);
+        return Math.random() < clampedWinProbability;
     }, []);
 
     useEffect(() => {
         if (playoffStatus !== 'In Progress') {
-            // Playoffs concluded, transition back to results screen with final status
             setTimeout(() => {
                 setSeasonResults(prev => ({
                     ...prev,
                     playoffOutcome: playoffStatus,
-                    wins: prev.wins + (playoffStatus === 'Won Championship' ? 16 : 0), // Add playoff wins for display
+                    wins: prev.wins + (playoffStatus === 'Won Championship' ? 16 : 0),
                 }));
                 setGameState('results');
-            }, 2000); // Give time to see final playoff status
+            }, 2000);
             return;
         }
 
-        if (currentRound > 4) { // All 4 rounds complete, we won!
+        if (currentRound > 4) {
             setPlayoffStatus('Won Championship');
             return;
         }
 
-        if (mySeriesWins === 4) { // Current series won
+        if (mySeriesWins === 4) {
             setMySeriesWins(0);
             setOpponentSeriesWins(0);
             setSeriesProgress(0);
@@ -392,31 +373,28 @@ const PlayoffSimulationScreen = ({ myTeam, setSeasonResults, setGameState }) => 
             return;
         }
 
-        if (opponentSeriesWins === 4) { // Current series lost
+        if (opponentSeriesWins === 4) {
             setPlayoffStatus('Eliminated in ' + playoffRoundNames[currentRound]);
             return;
         }
 
-        // Simulate next game in current series
         const simGameTimeout = setTimeout(() => {
-            const opponentStrength = gaussianRandom(playoffOpponentStrengths[currentRound], 10); // Stdev 10 for opponent strength variability in playoffs
+            const opponentStrength = gaussianRandom(playoffOpponentStrengths[currentRound], 10);
             if (simulateGame(myTeamOverallStrength, opponentStrength)) {
                 setMySeriesWins(prev => prev + 1);
             } else {
                 setOpponentSeriesWins(prev => prev + 1);
             }
-            setSeriesProgress(prev => prev + 1); // Increment game count for series progress
-        }, 150); // Speed of playoff game simulation
+            setSeriesProgress(prev => prev + 1);
+        }, 150);
 
         return () => clearTimeout(simGameTimeout);
     }, [currentRound, mySeriesWins, opponentSeriesWins, playoffStatus, myTeamOverallStrength, setSeasonResults, setGameState, simulateGame]);
-
 
     return (
         <div className="flex flex-col items-center justify-center h-full p-8 text-white">
             <h2 className="text-4xl font-bold mb-4">Playoffs: {playoffRoundNames[currentRound]}</h2>
             <p className="text-xl text-indigo-400 mb-6">Best of 7 Series</p>
-
             {playoffStatus === 'In Progress' && (
                 <div className="w-full max-w-2xl bg-gray-700 rounded-full h-8 shadow-inner mb-4">
                     <div
@@ -425,7 +403,6 @@ const PlayoffSimulationScreen = ({ myTeam, setSeasonResults, setGameState }) => 
                     ></div>
                 </div>
             )}
-            
             <div className="mt-4 text-5xl font-bold tracking-wider">
                 <span className="text-blue-400">{mySeriesWins}</span> - <span className="text-red-400">{opponentSeriesWins}</span>
             </div>
@@ -434,43 +411,37 @@ const PlayoffSimulationScreen = ({ myTeam, setSeasonResults, setGameState }) => 
                     {playoffStatus === 'Won Championship' ? '🏆 NBA Champions! 🏆' : `😭 ${playoffStatus} 😭`}
                 </p>
             )}
-            {!myTeamOverallStrength && ( // Fallback if somehow team strength is 0
-                 <p className="text-red-500 mt-4">Error: Team strength could not be calculated. Please draft a team.</p>
+            {!myTeam.length && (
+                <p className="text-red-500 mt-4">Warning: No team drafted. Using average team strength.</p>
             )}
         </div>
     );
 };
 
-
-// ResultsScreen: Displays the final outcome
 const ResultsScreen = ({ seasonResults, onReset, onStartPlayoffs }) => {
     const { wins, losses, playoffOutcome, regularSeasonComplete } = seasonResults;
     const winPercentage = ((wins / SEASON_GAMES) * 100).toFixed(1);
     const madePlayoffs = wins >= PLAYOFF_QUALIFYING_WINS;
     let verdict = '';
 
-    const confettiRef = useRef(null); // Ref for the confetti canvas
+    const confettiRef = useRef(null);
 
     useEffect(() => {
         if (playoffOutcome === 'Won Championship' && confettiRef.current) {
-            // Only import and run confetti if on client-side and championship won
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.0/dist/confetti.browser.min.js';
             script.onload = () => {
                 if (window.confetti) {
-                    // Confetti from top
                     window.confetti({
                         particleCount: 150,
                         spread: 180,
                         origin: { y: 0.2, x: 0.5 },
-                        colors: ['#FFD700', '#800080', '#FFFFFF', '#000000'], // Gold, Purple, White, Black (Lakers colors + common)
+                        colors: ['#FFD700', '#800080', '#FFFFFF', '#000000'],
                         scalar: 1.2,
                         gravity: 0.8,
-                        ticks: 200 // How long particles remain
+                        ticks: 200
                     });
-
-                     // Confetti from left
-                     window.confetti({
+                    window.confetti({
                         particleCount: 100,
                         angle: 60,
                         spread: 55,
@@ -480,8 +451,6 @@ const ResultsScreen = ({ seasonResults, onReset, onStartPlayoffs }) => {
                         gravity: 0.8,
                         ticks: 200
                     });
-
-                    // Confetti from right
                     window.confetti({
                         particleCount: 100,
                         angle: 120,
@@ -494,6 +463,9 @@ const ResultsScreen = ({ seasonResults, onReset, onStartPlayoffs }) => {
                     });
                 }
             };
+            script.onerror = () => {
+                console.warn('Confetti library failed to load.');
+            };
             document.body.appendChild(script);
 
             return () => {
@@ -502,14 +474,13 @@ const ResultsScreen = ({ seasonResults, onReset, onStartPlayoffs }) => {
         }
     }, [playoffOutcome]);
 
-
-    if (playoffOutcome) { // If playoff outcome exists, it means playoffs were simulated
+    if (playoffOutcome) {
         if (playoffOutcome === 'Won Championship') {
             verdict = 'NBA Champions!';
         } else if (playoffOutcome.startsWith('Eliminated')) {
             verdict = playoffOutcome;
         }
-    } else { // Regular season verdict
+    } else {
         if (wins >= 60) verdict = 'Championship Contender!';
         else if (wins >= 50) verdict = 'Playoff Bound!';
         else if (wins >= 41) verdict = 'Solid Season.';
@@ -517,27 +488,21 @@ const ResultsScreen = ({ seasonResults, onReset, onStartPlayoffs }) => {
         else verdict = 'Back to the drawing board!';
     }
 
-
     return (
         <div className="relative flex flex-col items-center justify-center h-full p-8 text-white text-center overflow-hidden">
-            {/* Confetti canvas will be rendered here by the library */}
             <canvas ref={confettiRef} className="absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
-
             <h2 className="text-5xl font-extrabold mb-2 z-20">Season Complete!</h2>
             <p className="text-2xl text-indigo-400 mb-8 z-20">{verdict}</p>
-            
             {playoffOutcome === 'Won Championship' && (
                 <div className="my-8 z-20">
                     <img 
                         src={LARRY_OBRIEN_TROPHY_URL} 
                         alt="Larry O'Brien Championship Trophy" 
-                        className="w-48 h-auto mx-auto drop-shadow-lg animate-bounce-subtle" 
-                        // Removed onError fallback text to just avoid display
-                        onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/192x192/1f2937/ffffff'; }} 
+                        className="w-48 h-auto mx-auto drop-shadow-lg animate-bounce" 
+                        onError={(e) => { e.target.onerror = null; e.target.src='https://via.placeholder.com/192'; }} 
                     />
                 </div>
             )}
-
             <div className="bg-gray-800 p-8 rounded-xl shadow-2xl border-2 border-indigo-500 z-20">
                 <p className="text-lg text-gray-400">Final Regular Season Record</p>
                 <div className="text-8xl font-bold my-4">
@@ -547,7 +512,6 @@ const ResultsScreen = ({ seasonResults, onReset, onStartPlayoffs }) => {
                 </div>
                 <p className="text-xl text-gray-300">Win Percentage: {winPercentage}%</p>
             </div>
-            
             {regularSeasonComplete && madePlayoffs && !playoffOutcome && (
                 <button
                     onClick={() => onStartPlayoffs()}
@@ -556,7 +520,6 @@ const ResultsScreen = ({ seasonResults, onReset, onStartPlayoffs }) => {
                     Start Playoff Simulation
                 </button>
             )}
-
             <button
                 onClick={onReset}
                 className="mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-8 rounded-lg transition-colors duration-300 text-xl shadow-lg z-20"
@@ -565,4 +528,70 @@ const ResultsScreen = ({ seasonResults, onReset, onStartPlayoffs }) => {
             </button>
         </div>
     );
-}
+};
+
+// --- Main App Component ---
+const App = () => {
+    const [gameState, setGameState] = useState('draft'); // 'draft', 'simulation', 'playoffs', 'results'
+    const [myTeam, setMyTeam] = useState([]);
+    const [currentPick, setCurrentPick] = useState(1);
+    const [seasonResults, setSeasonResults] = useState({
+        wins: 0,
+        losses: 0,
+        regularSeasonComplete: false,
+        playoffOutcome: null,
+    });
+
+    const resetGame = () => {
+        setGameState('draft');
+        setMyTeam([]);
+        setCurrentPick(1);
+        setSeasonResults({
+            wins: 0,
+            losses: 0,
+            regularSeasonComplete: false,
+            playoffOutcome: null,
+        });
+    };
+
+    const startPlayoffs = () => {
+        setGameState('playoffs');
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-900">
+            {gameState === 'draft' && (
+                <DraftScreen
+                    myTeam={myTeam}
+                    setMyTeam={setMyTeam}
+                    setGameState={setGameState}
+                    currentPick={currentPick}
+                    setCurrentPick={setCurrentPick}
+                />
+            )}
+            {gameState === 'simulation' && (
+                <SimulationScreen
+                    myTeam={myTeam}
+                    setSeasonResults={setSeasonResults}
+                    setGameState={setGameState}
+                />
+            )}
+            {gameState === 'playoffs' && (
+                <PlayoffSimulationScreen
+                    myTeam={myTeam}
+                    setSeasonResults={setSeasonResults}
+                    setGameState={setGameState}
+                />
+            )}
+            {gameState === 'results' && (
+                <ResultsScreen
+                    seasonResults={seasonResults}
+                    onReset={resetGame}
+                    onStartPlayoffs={startPlayoffs}
+                />
+            )}
+        </div>
+    );
+};
+
+export default App;
