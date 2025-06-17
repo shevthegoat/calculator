@@ -312,15 +312,18 @@
                     `;
                 }
                 simPlayoffsBtn.style.display = 'none';
+                resetBtn.style.display = 'inline-block';
             });
 
             resetBtn.addEventListener('click', () => {
+                gameContainer.style.display = 'none';
+                startScreen.style.display = 'flex';
                 yourTeam = [];
-                renderPlayers();
                 resultsDisplay.innerHTML = 'Draft your 5-player team to begin!';
                 simSeasonBtn.style.display = 'inline-block';
                 simPlayoffsBtn.style.display = 'none';
                 resetBtn.style.display = 'none';
+                confettiContainer.innerHTML = '';
             });
 
             function triggerConfetti() {
