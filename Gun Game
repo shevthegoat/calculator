@@ -238,14 +238,14 @@
                     <p class="text-xl font-bold">Regular Season Finished!</p>
                     <p>Your team's record: <span class="text-green-400">${wins}</span> - <span class="text-red-400">${losses}</span></p>
                 `;
-                if (wins >= 40) {
+                if (wins >= 50) {
                     resultsDisplay.innerHTML += '<p class="text-yellow-400 mt-2">Congratulations, you made the playoffs!</p>';
                     simPlayoffsBtn.style.display = 'inline-block';
                 } else {
                     resultsDisplay.innerHTML += '<p class="text-gray-400 mt-2">You missed the playoffs. Better luck next year!</p>';
-                    simSeasonBtn.style.display = 'none';
-                    resetBtn.style.display = 'inline-block';
                 }
+                simSeasonBtn.style.display = 'none';
+                resetBtn.style.display = 'inline-block';
             });
             simPlayoffsBtn.addEventListener('click', () => {
                 const totalRating = yourTeam.reduce((acc, p) => acc + p.rating, 0);
@@ -268,7 +268,6 @@
                     `;
                 }
                 simPlayoffsBtn.style.display = 'none';
-                resetBtn.style.display = 'inline-block';
             });
             resetBtn.addEventListener('click', () => {
                 yourTeam = [];
