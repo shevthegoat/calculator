@@ -35,20 +35,30 @@
                 opacity: 0;
             }
         }
+        /* Style for disabled buttons within player cards */
+        .player-card-button:disabled {
+            background-color: #4b5563 !important; /* Tailwind gray-600 */
+            cursor: not-allowed !important;
+            pointer-events: none; /* Disable interaction entirely */
+        }
     </style>
 </head>
 <body class="text-white">
+    <!-- Start Screen -->
     <div id="start-screen" class="flex flex-col justify-center items-center h-screen bg-blue-950">
         <h1 class="text-4xl font-bold text-yellow-400 mb-8">NBA Draft & Season Simulator</h1>
         <button id="start-btn" class="bg-yellow-500 hover:bg-yellow-600 text-blue-900 font-bold py-3 px-6 rounded-lg text-xl transition duration-300 shadow-lg hover:shadow-xl">Start Game</button>
     </div>
 
+    <!-- Team Selection Screen (hidden initially) -->
     <div id="team-selection-screen" class="hidden flex flex-col justify-center items-center min-h-screen bg-blue-950 p-4">
         <h2 class="text-3xl font-bold text-yellow-400 mb-8 text-center">Choose Your Team</h2>
         <div id="team-logos-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 sm:gap-6 max-w-6xl w-full">
-            </div>
+            <!-- Team logos will be injected here by JavaScript -->
+        </div>
     </div>
 
+    <!-- Game Container (hidden initially) -->
     <div id="game-container" class="hidden">
         <div id="confetti-container" class="absolute top-0 left-0 w-full h-full pointer-events-none z-50 overflow-hidden"></div>
         <div class="container mx-auto p-4 bg-blue-900 rounded-lg shadow-2xl my-8">
@@ -63,10 +73,12 @@
                     <div id="your-team" class="bg-blue-800 rounded-lg p-4 min-h-[24rem] shadow-inner"></div>
                 </div>
             </div>
+            <!-- New section for Bot Drafted Players -->
             <div id="bot-drafted-section" class="mt-8">
-                <h2 class="text-2xl font-semibold mb-4 text-yellow-300">Other Teams' Drafted Players</h2>
+                <h2 id="bot-drafted-header" class="text-2xl font-semibold mb-4 text-yellow-300">Other Teams' Drafted Players</h2>
                 <div id="bot-drafted-players" class="bg-blue-800 rounded-lg p-4 h-48 overflow-y-auto shadow-inner grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    </div>
+                    <!-- Bot drafted players will be injected here -->
+                </div>
             </div>
             <div id="controls" class="text-center mt-8">
                 <button id="sim-season-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed shadow-md hover:shadow-lg">Simulate Season</button>
@@ -237,10 +249,23 @@
             const teamLogosContainer = document.getElementById('team-logos-container'); // New
             const yourTeamNameEl = document.getElementById('your-team-name'); // New
             const botDraftedPlayersEl = document.getElementById('bot-drafted-players'); // New element for bot picks
+            const botDraftedHeaderEl = document.getElementById('bot-drafted-header'); // New element for bot drafted section header
+            const botDraftedSectionEl = document.getElementById('bot-drafted-section'); // NEW: Reference to the entire bot drafted section
 
             let yourTeam = []; // Array to hold drafted players
             let selectedTeamName = ''; // Variable to store the chosen NBA team name
             let draftedPlayers = []; // NEW: Array to hold all players drafted by bots
+
+            /**
+             * Shuffles an array in place.
+             * @param {Array} array - The array to shuffle.
+             */
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
 
             /**
              * Generates a random hexadecimal color code.
@@ -315,11 +340,12 @@
                     </div>
                     <div class="text-right">
                         <p class="font-bold text-xl text-yellow-300">${player.rating}</p>
-                        <button class="draft-btn mt-1 text-sm ${inTeam ? 'bg-red-500 hover:bg-red-600 py-1 px-2' : 'bg-green-500 hover:bg-green-600 py-2 px-4'} text-white rounded transition duration-300 shadow-sm">${inTeam ? 'Remove' : 'Draft'}</button>
+                        <button class="draft-btn mt-1 text-sm ${inTeam ? 'bg-red-500 hover:bg-red-600 py-1 px-2' : 'bg-green-500 hover:bg-green-600 py-2 px-4'} text-white rounded transition duration-300 shadow-sm player-card-button">${inTeam ? 'Remove' : 'Draft'}</button>
                     </div>
                 `;
                 // Add event listener to the draft/remove button
-                card.querySelector('.draft-btn').addEventListener('click', (e) => {
+                const draftButton = card.querySelector('.draft-btn');
+                draftButton.addEventListener('click', (e) => {
                     e.stopPropagation(); // Prevent card click event if any
                     if (inTeam) {
                         removePlayerFromTeam(player);
@@ -327,6 +353,14 @@
                         draftPlayer(player);
                     }
                 });
+
+                // NEW: Disable button if team is full and it's a 'Draft' button
+                if (yourTeam.length === TEAM_SIZE) {
+                    draftButton.disabled = true;
+                } else if (inTeam && yourTeam.length === TEAM_SIZE) { // If player is in team and team is full, allow remove (for now, will be disabled later)
+                    // No change here for now, button will be disabled globally
+                }
+
                 return card;
             }
 
@@ -349,43 +383,90 @@
 
             /**
              * Simulates other bot teams drafting players.
-             * Bots will draft based on position need and player rating.
+             * Bots will draft based on position need and player rating, with more randomness.
              */
             function simulateBotDraft() {
                 // Get all players and make a copy to work with
                 let availablePlayersForBots = [...players];
                 draftedPlayers = []; // Reset drafted players
 
-                // For each bot team, simulate drafting TEAM_SIZE players across positions
+                // Shuffle the entire player pool once to randomize pick order for bots
+                shuffleArray(availablePlayersForBots);
+
+                // Simulate each bot team drafting their full roster
                 for (let i = 0; i < NUM_BOT_TEAMS; i++) {
-                    // Try to draft for each position in order
-                    for (const { position } of DRAFT_ORDER) {
-                        const eligiblePlayers = availablePlayersForBots
-                            .filter(p => p.position.split('/').includes(position))
-                            .sort((a, b) => b.rating - a.rating); // Sort by rating, highest first
+                    const botTeamRoster = []; // Roster for current bot team
+                    // Keep track of positions needed for this bot team
+                    let positionsNeeded = [...DRAFT_ORDER.map(d => d.position)];
 
-                        if (eligiblePlayers.length > 0) {
-                            // Bots prioritize higher rated players, but with some randomness
-                            const pickIndex = Math.floor(Math.random() * Math.min(eligiblePlayers.length, 5)); // Pick from top 5 (or fewer if not enough)
-                            const playerToDraft = eligiblePlayers[pickIndex];
+                    // Loop until the bot team has a player for each position or runs out of players
+                    while (botTeamRoster.length < TEAM_SIZE && availablePlayersForBots.length > 0 && positionsNeeded.length > 0) {
+                        // Prioritize positions needed, if any are still available
+                        let playerToDraft = null;
+                        let eligiblePlayersForCurrentPos = [];
 
+                        // Find a player for the current 'most needed' position, if applicable
+                        if (positionsNeeded.length > 0) {
+                            const targetPosition = positionsNeeded[0]; // Take the first position as the target
+                            eligiblePlayersForCurrentPos = availablePlayersForBots
+                                .filter(p => p.position.split('/').includes(targetPosition))
+                                .sort((a, b) => b.rating - a.rating); // Still sort by rating for a slight preference
+
+                            if (eligiblePlayersForCurrentPos.length > 0) {
+                                // Pick from the top N players, to maintain some quality but introduce variety
+                                const pickRange = Math.min(eligiblePlayersForCurrentPos.length, 7); // Pick from top 7, for example
+                                const pickIndex = Math.floor(Math.random() * pickRange);
+                                playerToDraft = eligiblePlayersForCurrentPos[pickIndex];
+                                positionsNeeded = positionsNeeded.filter(pos => pos !== targetPosition); // Remove this position from needed list
+                            }
+                        }
+
+                        // If no specific position player was picked, just pick a general high-rated available player
+                        if (!playerToDraft && availablePlayersForBots.length > 0) {
+                            // Sort remaining players by rating and pick somewhat randomly from top
+                            const sortedRemainingPlayers = [...availablePlayersForBots].sort((a, b) => b.rating - a.rating);
+                            const pickRange = Math.min(sortedRemainingPlayers.length, 10); // Pick from top 10 general players
+                            const pickIndex = Math.floor(Math.random() * pickRange);
+                            playerToDraft = sortedRemainingPlayers[pickIndex];
+
+                            // Remove any position fulfilled by this general pick from positionsNeeded
+                            if (playerToDraft) {
+                                positionsNeeded = positionsNeeded.filter(pos => !playerToDraft.position.split('/').includes(pos));
+                            }
+                        }
+
+                        if (playerToDraft) {
+                            botTeamRoster.push(playerToDraft);
                             draftedPlayers.push(playerToDraft);
                             availablePlayersForBots = availablePlayersForBots.filter(p => p.name !== playerToDraft.name);
+                        } else {
+                            // If no player could be drafted for this bot team, break to prevent infinite loop
+                            break;
                         }
                     }
                 }
-                renderBotDraftedPlayers(); // Display the players drafted by bots
             }
 
             /**
-             * Renders the players drafted by other bots.
+             * Renders the players drafted by other bots, filtered by the current drafting position.
+             * @param {string} currentPosition - The position currently being drafted by the user.
+             * @param {string} currentLabel - The label for the current position (e.g., "Point Guards").
              */
-            function renderBotDraftedPlayers() {
+            function renderBotDraftedPlayers(currentPosition, currentLabel) {
                 botDraftedPlayersEl.innerHTML = '';
-                // Sort bot drafted players by rating for better readability
-                draftedPlayers.sort((a, b) => b.rating - a.rating).forEach(p => {
-                    botDraftedPlayersEl.appendChild(createBotDraftedPlayerCard(p));
-                });
+                botDraftedHeaderEl.textContent = `Other Teams' Drafted ${currentLabel}`; // Dynamic header
+
+                const relevantBotDraftedPlayers = draftedPlayers
+                    .filter(p => p.position.split('/').includes(currentPosition))
+                    .sort((a, b) => b.rating - a.rating); // Sort by rating for display
+
+                if (relevantBotDraftedPlayers.length > 0) {
+                    relevantBotDraftedPlayers.forEach(p => {
+                        botDraftedPlayersEl.appendChild(createBotDraftedPlayerCard(p));
+                    });
+                } else {
+                    botDraftedPlayersEl.innerHTML = `<p class="text-center text-gray-400">No ${currentLabel} have been drafted by other teams yet.</p>`;
+                }
             }
 
 
@@ -395,6 +476,8 @@
              */
             function renderPlayers() {
                 playerPoolEl.innerHTML = ''; // Clear player pool display
+                yourTeamEl.innerHTML = ''; // Clear your team display
+
                 // Determine the current required position for drafting
                 const currentPositionInfo = DRAFT_ORDER[yourTeam.length];
                 const currentPosition = currentPositionInfo?.position;
@@ -403,7 +486,7 @@
                 // Filter available players: not in your team AND not drafted by bots AND match the current required position
                 const availablePlayers = players
                     .filter(p => !yourTeam.some(teamPlayer => teamPlayer.name === p.name))
-                    .filter(p => !draftedPlayers.some(botPlayer => botPlayer.name === p.name)) // NEW: Filter out bot drafted players
+                    .filter(p => !draftedPlayers.some(botPlayer => botPlayer.name === p.name)) // Filter out bot drafted players
                     .filter(p => currentPosition ? p.position.split('/').includes(currentPosition) : true)
                     .sort((a, b) => b.rating - a.rating); // Sort by rating descending
 
@@ -412,7 +495,6 @@
                     playerPoolEl.appendChild(createPlayerCard(p, false));
                 });
 
-                yourTeamEl.innerHTML = ''; // Clear your team display
                 // Append player cards to your team, sorted by rating
                 yourTeam.sort((a, b) => b.rating - a.rating).forEach(p => {
                     yourTeamEl.appendChild(createPlayerCard(p, true));
@@ -422,10 +504,29 @@
                 teamCountEl.textContent = `${yourTeam.length}`; // Number of players in your team
                 playerCountEl.textContent = `${availablePlayers.length}`; // Number of available players
                 positionLabelEl.textContent = currentLabel; // Current position being drafted
+
                 // Enable simulate season button only when team is full
-                simSeasonBtn.disabled = yourTeam.length !== TEAM_SIZE;
+                const isTeamFull = yourTeam.length === TEAM_SIZE;
+                simSeasonBtn.disabled = !isTeamFull;
+
                 // Update draft header text based on draft progress
                 draftHeaderEl.textContent = yourTeam.length < TEAM_SIZE ? `Draft ${currentPositionInfo.label.slice(0, -1)}` : 'NBA Draft & Season Simulator';
+
+                // NEW: Hide bot drafted section if team is full
+                if (isTeamFull) {
+                    botDraftedSectionEl.classList.add('hidden');
+                } else {
+                    botDraftedSectionEl.classList.remove('hidden');
+                    // Call renderBotDraftedPlayers with current position info
+                    renderBotDraftedPlayers(currentPosition, currentLabel);
+                }
+
+                // NEW: Disable all draft/remove buttons once team is full
+                if (isTeamFull) {
+                    document.querySelectorAll('.player-card-button').forEach(button => {
+                        button.disabled = true;
+                    });
+                }
             }
 
             /**
@@ -454,6 +555,11 @@
              * @param {object} player - The player object to remove.
              */
             function removePlayerFromTeam(player) {
+                // Prevent removal if team is already full and the season simulation hasn't happened.
+                if (yourTeam.length === TEAM_SIZE && simSeasonBtn.style.display !== 'none') {
+                     resultsDisplay.textContent = "You cannot remove players once your team is complete for drafting.";
+                     return;
+                }
                 yourTeam = yourTeam.filter(p => p.name !== player.name); // Filter out the player
                 renderPlayers(); // Re-render displays
                 resultsDisplay.textContent = `Removed ${player.name} from your team.`; // Update status message
@@ -485,30 +591,52 @@
                 }
                 simSeasonBtn.style.display = 'none'; // Hide season button
                 resetBtn.style.display = 'inline-block'; // Show reset button
+                // Store wins for playoff simulation
+                simSeasonBtn.dataset.regularSeasonWins = wins;
             });
 
             /**
-             * Simulates the playoff rounds based on team's average rating.
+             * Simulates the playoff rounds based on team's average rating and regular season wins.
              * @param {number} avgRating - The average rating of the user's team.
+             * @param {number} regularSeasonWins - The number of wins the user's team achieved in the regular season.
              * @returns {object} An object indicating if the team won the championship or was eliminated.
              */
-            function simulatePlayoffs(avgRating) {
-                // Playoff rounds with increasing opponent difficulty
-                const rounds = [
-                    { name: "First Round", opponentRating: 85 + Math.random() * 5 }, // Opponent rating for First Round
-                    { name: "Conference Semifinals", opponentRating: 90 + Math.random() * 5 }, // Opponent rating for Conference Semifinals
-                    { name: "Conference Finals", opponentRating: 95 + Math.random() * 3 }, // Opponent rating for Conference Finals
-                    { name: "NBA Finals", opponentRating: 98 + Math.random() * 2 } // Opponent rating for NBA Finals
+            function simulatePlayoffs(avgRating, regularSeasonWins) {
+                // Base opponent ratings for each round, adjusted for randomness
+                const baseOpponentRatings = [
+                    83, // First Round (lower rated playoff team)
+                    88, // Conference Semifinals
+                    92, // Conference Finals
+                    96  // NBA Finals (top team)
                 ];
 
-                for (let round of rounds) {
-                    const ratingDiff = avgRating - round.opponentRating; // Difference in rating
+                for (let i = 0; i < baseOpponentRatings.length; i++) {
+                    const roundName = ["First Round", "Conference Semifinals", "Conference Finals", "NBA Finals"][i];
+                    let opponentRating = baseOpponentRatings[i];
+
+                    // Adjust opponent rating based on user's regular season wins (simulating seeding)
+                    // Higher wins means potentially facing a slightly weaker opponent in early rounds,
+                    // or a stronger one later if the general talent pool is high.
+                    // This creates a subtle advantage for better regular season teams.
+                    const winAdvantage = (regularSeasonWins - PLAYOFF_WIN_THRESHOLD) / 5; // e.g., for every 5 wins above threshold, a slight edge
+                    opponentRating -= winAdvantage * (0.5 + i * 0.1); // More impact in earlier rounds
+
+                    // Add more significant randomness to opponent's actual rating for variety
+                    opponentRating += (Math.random() * 10) - 5; // +/- 5 points randomness
+
+                    // Ensure opponent rating stays within reasonable bounds
+                    opponentRating = Math.max(70, Math.min(99, opponentRating));
+
+                    const ratingDiff = avgRating - opponentRating; // Difference in rating
+
                     // Logistic function to determine win probability (higher ratingDiff = higher probability)
+                    // The '0.1' factor controls the steepness of the win probability curve.
                     const probability = 1 / (1 + Math.exp(-0.1 * ratingDiff));
+
                     if (Math.random() < probability) {
                         continue; // Win the round, proceed to next
                     } else {
-                        return { eliminatedIn: round.name }; // Lose the round, return elimination info
+                        return { eliminatedIn: roundName }; // Lose the round, return elimination info
                     }
                 }
                 return { champion: true }; // Won all rounds, champion!
@@ -518,7 +646,8 @@
             simPlayoffsBtn.addEventListener('click', () => {
                 const totalRating = yourTeam.reduce((acc, p) => acc + p.rating, 0);
                 const avgRating = totalRating / TEAM_SIZE;
-                const playoffResult = simulatePlayoffs(avgRating); // Simulate playoffs
+                const regularSeasonWins = parseInt(simSeasonBtn.dataset.regularSeasonWins || 0); // Retrieve wins
+                const playoffResult = simulatePlayoffs(avgRating, regularSeasonWins); // Pass wins to simulation
 
                 if (playoffResult.champion) {
                     resultsDisplay.innerHTML = `
