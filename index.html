@@ -38,21 +38,17 @@
     </style>
 </head>
 <body class="text-white">
-    <!-- Start Screen -->
     <div id="start-screen" class="flex flex-col justify-center items-center h-screen bg-blue-950">
         <h1 class="text-4xl font-bold text-yellow-400 mb-8">NBA Draft & Season Simulator</h1>
         <button id="start-btn" class="bg-yellow-500 hover:bg-yellow-600 text-blue-900 font-bold py-3 px-6 rounded-lg text-xl transition duration-300 shadow-lg hover:shadow-xl">Start Game</button>
     </div>
 
-    <!-- Team Selection Screen (hidden initially) -->
     <div id="team-selection-screen" class="hidden flex flex-col justify-center items-center min-h-screen bg-blue-950 p-4">
         <h2 class="text-3xl font-bold text-yellow-400 mb-8 text-center">Choose Your Team</h2>
         <div id="team-logos-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 sm:gap-6 max-w-6xl w-full">
-            <!-- Team logos will be injected here by JavaScript -->
-        </div>
+            </div>
     </div>
 
-    <!-- Game Container (hidden initially) -->
     <div id="game-container" class="hidden">
         <div id="confetti-container" class="absolute top-0 left-0 w-full h-full pointer-events-none z-50 overflow-hidden"></div>
         <div class="container mx-auto p-4 bg-blue-900 rounded-lg shadow-2xl my-8">
@@ -66,6 +62,11 @@
                     <h2 class="text-2xl font-semibold mb-4 text-yellow-300">Your Team: <span id="your-team-name" class="text-yellow-400"></span> (<span id="team-count">0</span>/5)</h2>
                     <div id="your-team" class="bg-blue-800 rounded-lg p-4 min-h-[24rem] shadow-inner"></div>
                 </div>
+            </div>
+            <div id="bot-drafted-section" class="mt-8">
+                <h2 class="text-2xl font-semibold mb-4 text-yellow-300">Other Teams' Drafted Players</h2>
+                <div id="bot-drafted-players" class="bg-blue-800 rounded-lg p-4 h-48 overflow-y-auto shadow-inner grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
             </div>
             <div id="controls" class="text-center mt-8">
                 <button id="sim-season-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed shadow-md hover:shadow-lg">Simulate Season</button>
@@ -86,6 +87,7 @@
             // Constants for game logic
             const PLAYOFF_WIN_THRESHOLD = 40; // Minimum wins to make playoffs
             const TEAM_SIZE = 5; // Number of players required for a full team
+            const NUM_BOT_TEAMS = 10; // Number of bot teams to simulate drafting
             // Draft order by position
             const DRAFT_ORDER = [
                 { position: "PG", label: "Point Guards" },
@@ -234,10 +236,11 @@
             const teamSelectionScreen = document.getElementById('team-selection-screen'); // New
             const teamLogosContainer = document.getElementById('team-logos-container'); // New
             const yourTeamNameEl = document.getElementById('your-team-name'); // New
-
+            const botDraftedPlayersEl = document.getElementById('bot-drafted-players'); // New element for bot picks
 
             let yourTeam = []; // Array to hold drafted players
             let selectedTeamName = ''; // Variable to store the chosen NBA team name
+            let draftedPlayers = []; // NEW: Array to hold all players drafted by bots
 
             /**
              * Generates a random hexadecimal color code.
@@ -284,6 +287,7 @@
                 teamSelectionScreen.classList.add('hidden'); // Hide team selection
                 teamSelectionScreen.classList.remove('flex'); // Remove flex for proper hiding
                 gameContainer.classList.remove('hidden'); // Show game container
+                simulateBotDraft(); // NEW: Simulate bot drafts before user's turn
                 renderPlayers(); // Render players for drafting
             }
 
@@ -326,6 +330,65 @@
                 return card;
             }
 
+            // NEW: Function to create a read-only player card for bot drafted players
+            function createBotDraftedPlayerCard(player) {
+                const card = document.createElement('div');
+                card.className = 'bg-gray-700 p-3 rounded-lg flex justify-between items-center shadow-md';
+                card.innerHTML = `
+                    <div>
+                        <p class="font-semibold text-lg text-white">${player.name}</p>
+                        <p class="text-sm text-gray-300">POS: ${player.position}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-xl text-yellow-300">${player.rating}</p>
+                        <p class="text-xs text-gray-400 mt-1">Drafted by AI</p>
+                    </div>
+                `;
+                return card;
+            }
+
+            /**
+             * Simulates other bot teams drafting players.
+             * Bots will draft based on position need and player rating.
+             */
+            function simulateBotDraft() {
+                // Get all players and make a copy to work with
+                let availablePlayersForBots = [...players];
+                draftedPlayers = []; // Reset drafted players
+
+                // For each bot team, simulate drafting TEAM_SIZE players across positions
+                for (let i = 0; i < NUM_BOT_TEAMS; i++) {
+                    // Try to draft for each position in order
+                    for (const { position } of DRAFT_ORDER) {
+                        const eligiblePlayers = availablePlayersForBots
+                            .filter(p => p.position.split('/').includes(position))
+                            .sort((a, b) => b.rating - a.rating); // Sort by rating, highest first
+
+                        if (eligiblePlayers.length > 0) {
+                            // Bots prioritize higher rated players, but with some randomness
+                            const pickIndex = Math.floor(Math.random() * Math.min(eligiblePlayers.length, 5)); // Pick from top 5 (or fewer if not enough)
+                            const playerToDraft = eligiblePlayers[pickIndex];
+
+                            draftedPlayers.push(playerToDraft);
+                            availablePlayersForBots = availablePlayersForBots.filter(p => p.name !== playerToDraft.name);
+                        }
+                    }
+                }
+                renderBotDraftedPlayers(); // Display the players drafted by bots
+            }
+
+            /**
+             * Renders the players drafted by other bots.
+             */
+            function renderBotDraftedPlayers() {
+                botDraftedPlayersEl.innerHTML = '';
+                // Sort bot drafted players by rating for better readability
+                draftedPlayers.sort((a, b) => b.rating - a.rating).forEach(p => {
+                    botDraftedPlayersEl.appendChild(createBotDraftedPlayerCard(p));
+                });
+            }
+
+
             /**
              * Renders players in the player pool and the user's team.
              * Updates counts and button states.
@@ -337,9 +400,10 @@
                 const currentPosition = currentPositionInfo?.position;
                 const currentLabel = currentPositionInfo?.label || "Players";
 
-                // Filter available players: not in your team and match the current required position
+                // Filter available players: not in your team AND not drafted by bots AND match the current required position
                 const availablePlayers = players
                     .filter(p => !yourTeam.some(teamPlayer => teamPlayer.name === p.name))
+                    .filter(p => !draftedPlayers.some(botPlayer => botPlayer.name === p.name)) // NEW: Filter out bot drafted players
                     .filter(p => currentPosition ? p.position.split('/').includes(currentPosition) : true)
                     .sort((a, b) => b.rating - a.rating); // Sort by rating descending
 
@@ -464,76 +528,48 @@
                     triggerConfetti(); // Trigger confetti for championship win
                 } else {
                     resultsDisplay.innerHTML = `
-                        <p class="text-xl font-bold text-red-300">Playoffs Result</p>
-                        <p class="text-red-200">Your team was eliminated in the ${playoffResult.eliminatedIn}. Tough break!</p>
+                        <p class="text-2xl font-bold text-red-400">Eliminated!</p>
+                        <p class="mt-2 text-red-200">Your team was eliminated in the ${playoffResult.eliminatedIn}. Better luck next season!</p>
                     `;
                 }
                 simPlayoffsBtn.style.display = 'none'; // Hide playoffs button
-                resetBtn.style.display = 'inline-block'; // Show reset button
             });
 
-            // Event listener for "Draft Again" (Reset) button
+            // Event listener for "Draft Again" button (reset game)
             resetBtn.addEventListener('click', () => {
-                gameContainer.classList.add('hidden'); // Hide game container
-                startScreen.style.display = 'flex'; // Show start screen (which leads to team selection)
-                yourTeam = []; // Reset your team
-                selectedTeamName = ''; // Reset selected team
-                yourTeamNameEl.textContent = ''; // Clear team name display
-                resultsDisplay.innerHTML = 'Draft your 5-player team to begin!'; // Reset results message
-                simSeasonBtn.style.display = 'inline-block'; // Show season button
+                yourTeam = []; // Clear your team
+                draftedPlayers = []; // Clear bot drafted players
+                resultsDisplay.textContent = 'Draft your 5-player team to begin!'; // Reset results message
                 simPlayoffsBtn.style.display = 'none'; // Hide playoffs button
+                simSeasonBtn.style.display = 'inline-block'; // Show season button
                 resetBtn.style.display = 'none'; // Hide reset button
-                confettiContainer.innerHTML = ''; // Clear confetti
+                // Go back to team selection or directly to draft after re-drafting bots
+                teamSelectionScreen.classList.remove('hidden');
+                teamSelectionScreen.classList.add('flex');
+                gameContainer.classList.add('hidden');
+                renderTeams();
             });
 
             /**
-             * Triggers a confetti animation for celebratory moments.
-             * Dynamically creates confetti elements with random positions, colors, and animations.
+             * Triggers a confetti animation.
              */
             function triggerConfetti() {
-                let styleSheet = document.getElementById('confetti-styles');
-                // Create a stylesheet for dynamic keyframes if it doesn't exist
-                if (!styleSheet) {
-                    styleSheet = document.createElement('style');
-                    styleSheet.id = 'confetti-styles';
-                    document.head.appendChild(styleSheet);
-                } else {
-                    styleSheet.innerHTML = ''; // Clear previous keyframes
-                }
-
-                // Generate multiple confetti pieces
-                for (let i = 0; i < 200; i++) {
+                const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722', '#795548', '#9E9E9E', '#607D8B'];
+                for (let i = 0; i < 100; i++) {
                     const confetti = document.createElement('div');
-                    confetti.classList.add('confetti');
-                    const x = Math.random() * 100; // Random horizontal position (viewport width)
-                    const rotation = Math.random() * 360; // Initial random rotation
-                    const animationName = `fall-${i}`; // Unique animation name for each confetti
-                    confetti.style.left = `${x}vw`;
-                    confetti.style.animationName = animationName;
-                    confetti.style.animationDuration = `${4 + Math.random() * 2}s`; // Random duration
-                    confetti.style.animationDelay = `${Math.random() * 2}s`; // Random delay
-                    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`; // Random bright color
+                    confetti.className = 'confetti';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = `${Math.random() * 100}vw`;
+                    confetti.style.top = `${-Math.random() * 20}px`; // Start slightly above the viewport
+                    confetti.style.animationDelay = `${Math.random() * 0.5}s`; // Stagger animation
+                    confetti.style.animationDuration = `${3 + Math.random() * 3}s`; // Random duration
+                    confetti.style.transform = `rotate(${Math.random() * 360}deg)`; // Initial random rotation
+                    confettiContainer.appendChild(confetti);
 
-                    // Define unique keyframes for each confetti for varied fall paths and rotations
-                    const keyframes = `
-                        @keyframes ${animationName} {
-                            0% {
-                                transform: translateY(-10vh) translateX(0) rotate(${rotation}deg);
-                                opacity: 1;
-                            }
-                            100% {
-                                transform: translateY(110vh) translateX(${(Math.random() - 0.5) * 30}vw) rotate(${rotation + (Math.random() > 0.5 ? 1 : -1) * 720}deg);
-                                opacity: 0;
-                            }
-                        }
-                    `;
-                    styleSheet.innerHTML += keyframes; // Add keyframes to the stylesheet
-                    confettiContainer.appendChild(confetti); // Append confetti to the container
-
-                    // Remove confetti after its animation completes to clean up DOM
-                    setTimeout(() => {
+                    // Remove confetti after animation to prevent DOM bloat
+                    confetti.addEventListener('animationend', () => {
                         confetti.remove();
-                    }, 7000); // Remove after 7 seconds (max animation duration + buffer)
+                    });
                 }
             }
         });
