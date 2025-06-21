@@ -6,44 +6,32 @@
     <title>NBA Draft and Season Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Import Inter font from Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
-            font-family: 'Inter', sans-serif; /* Apply Inter font to the body */
-            overflow-x: hidden; /* Prevent horizontal scroll */
-            background-color: #F8FAFC; /* Tailwind gray-100 - mostly white */
-            color: #1F2937; /* Tailwind gray-800 - dark text */
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background-color: #F8FAFC;
+            color: #1F2937;
         }
-        /* Confetti animation styles */
         .confetti {
             position: absolute;
             width: 10px;
             height: 20px;
             opacity: 1;
             transform: rotate(0deg);
-            animation: fall 5s linear forwards; /* Default animation, will be overridden by JS */
-            border-radius: 2px; /* Small rounded corners for confetti */
+            animation: fall 5s linear forwards;
+            border-radius: 2px;
         }
-        /* Base fall animation keyframes */
         @keyframes fall {
-            0% {
-                transform: translateY(0) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) rotate(720deg);
-                opacity: 0;
-            }
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
         }
-        /* Style for disabled buttons within player cards */
         .player-card-button:disabled {
-            background-color: #9CA3AF !important; /* Tailwind gray-400 */
+            background-color: #9CA3AF !important;
             cursor: not-allowed !important;
-            pointer-events: none; /* Disable interaction entirely */
-            color: #D1D5DB !important; /* Tailwind gray-300 text for disabled buttons */
+            pointer-events: none;
+            color: #D1D5DB !important;
         }
-
-        /* Custom Modal Styles */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -73,24 +61,24 @@
             width: 400px;
             transform: translateY(-20px);
             transition: transform 0.3s ease-in-out;
-            color: #1F2937; /* Dark text for modal content */
+            color: #1F2937;
         }
         .modal-overlay.show .modal-content {
             transform: translateY(0);
         }
         .modal-content h3 {
             font-weight: 700;
-            font-size: 1.5rem; /* text-2xl */
+            font-size: 1.5rem;
             margin-bottom: 1rem;
-            color: #DC2626; /* Tailwind red-600 */
+            color: #DC2626;
         }
         .modal-content p {
             margin-bottom: 1.5rem;
             font-size: 1rem;
-            color: #374151; /* Tailwind gray-700 */
+            color: #374151;
         }
         .modal-content button {
-            background-color: #2563EB; /* Tailwind blue-600 */
+            background-color: #2563EB;
             color: white;
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
@@ -98,12 +86,11 @@
             transition: background-color 0.2s ease-in-out;
         }
         .modal-content button:hover {
-            background-color: #1D4ED8; /* Tailwind blue-700 */
+            background-color: #1D4ED8;
         }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900">
-    <!-- Custom Modal for Messages -->
     <div id="custom-modal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="modal-title"></h3>
@@ -112,21 +99,16 @@
         </div>
     </div>
 
-    <!-- Start Screen -->
     <div id="start-screen" class="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-blue-700 to-red-600 text-white">
         <h1 class="text-4xl font-bold text-white mb-8">NBA Draft & Season Simulator</h1>
         <button id="start-btn" class="bg-white hover:bg-gray-200 text-blue-800 font-bold py-3 px-6 rounded-lg text-xl transition duration-300 shadow-lg hover:shadow-xl">Start Game</button>
     </div>
 
-    <!-- Team Selection Screen (hidden initially) -->
     <div id="team-selection-screen" class="hidden flex flex-col justify-center items-center min-h-screen bg-gray-100 p-4">
         <h2 class="text-3xl font-bold text-blue-700 mb-8 text-center">Choose Your Team</h2>
-        <div id="team-logos-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 sm:gap-6 max-w-6xl w-full">
-            <!-- Team logos will be injected here by JavaScript -->
-        </div>
+        <div id="team-logos-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 sm:gap-6 max-w-6xl w-full"></div>
     </div>
 
-    <!-- Game Container (hidden initially) -->
     <div id="game-container" class="hidden">
         <div id="confetti-container" class="absolute top-0 left-0 w-full h-full pointer-events-none z-50 overflow-hidden"></div>
         <div class="container mx-auto p-4 bg-white rounded-lg shadow-2xl my-8">
@@ -142,12 +124,9 @@
                     <div id="your-team" class="bg-gray-200 rounded-lg p-4 min-h-[24rem] shadow-inner"></div>
                 </div>
             </div>
-            <!-- New section for Bot Drafted Players -->
             <div id="bot-drafted-section" class="mt-8">
                 <h2 id="bot-drafted-header" class="text-2xl font-semibold mb-4 text-blue-600">Other Teams' Drafted Players</h2>
-                <div id="bot-drafted-players" class="bg-gray-200 rounded-lg p-4 h-48 overflow-y-auto shadow-inner grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Bot drafted players will be injected here -->
-                </div>
+                <div id="bot-drafted-players" class="bg-gray-200 rounded-lg p-4 h-48 overflow-y-auto shadow-inner grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
             <div id="controls" class="text-center mt-8">
                 <button id="sim-season-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg">Simulate Season</button>
@@ -165,12 +144,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Constants for game logic
-            const PLAYOFF_WIN_THRESHOLD = 40; // Minimum wins to make playoffs
-            const TEAM_SIZE = 5; // Number of players required for a full team
-            const NUM_BOT_TEAMS = 10; // Number of bot teams to simulate drafting
-            const STARTING_CAP_SPACE = 178; // in millions USD
-            // Draft order by position
+            const PLAYOFF_WIN_THRESHOLD = 40;
+            const TEAM_SIZE = 5;
+            const NUM_BOT_TEAMS = 10;
+            const STARTING_CAP_SPACE = 178;
             const DRAFT_ORDER = [
                 { position: "PG", label: "Point Guards" },
                 { position: "SG", label: "Shooting Guards" },
@@ -179,7 +156,6 @@
                 { position: "C", label: "Centers" }
             ];
 
-            // Player data with name, rating, and position
             let players = [
                 { name: "Nikola Jokic", rating: 98, position: "C" },
                 { name: "Luka Dončić", rating: 97, position: "PG" },
@@ -265,7 +241,6 @@
                 { name: "Marcus Smart", rating: 77, position: "PG" }
             ];
 
-            // Manually pre-processed salary data from the user's provided list
             const playerSalariesData = [
                 { name: "Stephen Curry", salary: 55.761216 },
                 { name: "Joel Embiid", salary: 51.415938 },
@@ -419,26 +394,13 @@
                 { name: "Matisse Thybulle", salary: 11.025000 }
             ];
 
-            // Create a map for quick salary lookup by player name
             const customSalaryMap = new Map();
-            playerSalariesData.forEach(p => {
-                customSalaryMap.set(p.name, p.salary);
-            });
+            playerSalariesData.forEach(p => customSalaryMap.set(p.name, p.salary));
+            players = players.map(player => ({
+                ...player,
+                salary: customSalaryMap.get(player.name) || Math.floor(Math.random() * (7 - 2 + 1)) + 2
+            }));
 
-            // Update the existing 'players' array with the custom salaries
-            players = players.map(player => {
-                const customSalary = customSalaryMap.get(player.name);
-                if (customSalary !== undefined) {
-                    return { ...player, salary: customSalary };
-                } else {
-                    // Assign a reasonable default salary for players not in the provided list
-                    // (e.g., lower tier salaries for unlisted players to prevent them from being too cheap)
-                    return { ...player, salary: Math.floor(Math.random() * (7 - 2 + 1)) + 2 }; // 2-7M default
-                }
-            });
-
-
-            // List of all 30 NBA teams with their logo URLs
             const nbaTeams = [
                 { name: "Atlanta Hawks", initials: "ATL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/2/24/Atlanta_Hawks_logo.svg" },
                 { name: "Boston Celtics", initials: "BOS", logoUrl: "https://upload.wikimedia.org/wikipedia/en/8/8f/Boston_Celtics.svg" },
@@ -472,8 +434,6 @@
                 { name: "Washington Wizards", initials: "WAS", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Washington_Wizards_logo.svg/512px-Washington_Wizards_logo.svg.png" }
             ];
 
-
-            // Get DOM elements
             const playerPoolEl = document.getElementById('player-pool');
             const yourTeamEl = document.getElementById('your-team');
             const simSeasonBtn = document.getElementById('sim-season-btn');
@@ -488,52 +448,36 @@
             const startBtn = document.getElementById('start-btn');
             const startScreen = document.getElementById('start-screen');
             const gameContainer = document.getElementById('game-container');
-            const teamSelectionScreen = document.getElementById('team-selection-screen'); // New
-            const teamLogosContainer = document.getElementById('team-logos-container'); // New
-            const yourTeamNameEl = document.getElementById('your-team-name'); // New
-            const botDraftedPlayersEl = document.getElementById('bot-drafted-players'); // New element for bot picks
-            const botDraftedHeaderEl = document.getElementById('bot-drafted-header'); // New element for bot drafted section header
-            const botDraftedSectionEl = document.getElementById('bot-drafted-section'); // NEW: Reference to the entire bot drafted section
-            const capSpaceEl = document.getElementById('cap-space'); // NEW: Element to display cap space
-
-            // Modal elements
+            const teamSelectionScreen = document.getElementById('team-selection-screen');
+            const teamLogosContainer = document.getElementById('team-logos-container');
+            const yourTeamNameEl = document.getElementById('your-team-name');
+            const botDraftedPlayersEl = document.getElementById('bot-drafted-players');
+            const botDraftedHeaderEl = document.getElementById('bot-drafted-header');
+            const botDraftedSectionEl = document.getElementById('bot-drafted-section');
+            const capSpaceEl = document.getElementById('cap-space');
             const customModal = document.getElementById('custom-modal');
             const modalTitle = document.getElementById('modal-title');
             const modalMessage = document.getElementById('modal-message');
             const modalCloseBtn = document.getElementById('modal-close-btn');
 
-            let yourTeam = []; // Array to hold drafted players
-            let selectedTeamName = ''; // Variable to store the chosen NBA team name
-            let draftedPlayers = []; // NEW: Array to hold all players drafted by bots
-            let currentCapSpace = STARTING_CAP_SPACE; // NEW: Initialize current cap space
+            let yourTeam = [];
+            let botTeams = [];
+            let selectedTeamName = '';
+            let draftedPlayers = [];
+            let currentCapSpace = STARTING_CAP_SPACE;
 
-            // Event listener for modal close button
-            modalCloseBtn.addEventListener('click', () => {
-                hideModal();
-            });
+            modalCloseBtn.addEventListener('click', () => hideModal());
 
-            /**
-             * Shows the custom modal with a given title and message.
-             * @param {string} title - The title for the modal.
-             * @param {string} message - The message content for the modal.
-             */
             function showModal(title, message) {
                 modalTitle.textContent = title;
                 modalMessage.textContent = message;
                 customModal.classList.add('show');
             }
 
-            /**
-             * Hides the custom modal.
-             */
             function hideModal() {
                 customModal.classList.remove('show');
             }
 
-            /**
-             * Shuffles an array in place.
-             * @param {Array} array - The array to shuffle.
-             */
             function shuffleArray(array) {
                 for (let i = array.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -541,11 +485,6 @@
                 }
             }
 
-            /**
-             * Generates a random hexadecimal color code.
-             * This function is now mostly for the fallback background if a logo doesn't load.
-             * @returns {string} A 6-character hexadecimal color string.
-             */
             function getRandomColor() {
                 const letters = '0123456789ABCDEF';
                 let color = '';
@@ -555,16 +494,11 @@
                 return color;
             }
 
-            /**
-             * Creates and appends team logo cards to the team selection screen.
-             */
             function renderTeams() {
-                teamLogosContainer.innerHTML = ''; // Clear previous logos
+                teamLogosContainer.innerHTML = '';
                 nbaTeams.forEach(team => {
                     const teamCard = document.createElement('div');
-                    // Use the actual logoUrl, with a fallback to a generic NBA placeholder if the image fails
                     const imageUrl = team.logoUrl;
-                    // Updated fallback: Use team initials as text
                     const fallbackImageUrl = `https://placehold.co/100x100/333333/ffffff?text=${team.initials}`;
                     teamCard.className = 'flex flex-col items-center p-3 bg-white rounded-lg shadow-md cursor-pointer hover:bg-gray-200 transition-colors duration-200 border border-blue-200';
                     teamCard.innerHTML = `
@@ -576,36 +510,25 @@
                 });
             }
 
-            /**
-             * Handles team selection, updates UI, and transitions to the game screen.
-             * @param {string} teamName - The name of the selected team.
-             */
             function selectTeam(teamName) {
                 selectedTeamName = teamName;
-                yourTeamNameEl.textContent = selectedTeamName; // Display the selected team name
-                currentCapSpace = STARTING_CAP_SPACE; // Reset cap space for a new game
-                capSpaceEl.textContent = currentCapSpace.toFixed(1); // Update cap space display
-                teamSelectionScreen.classList.add('hidden'); // Hide team selection
-                teamSelectionScreen.classList.remove('flex'); // Remove flex for proper hiding
-                gameContainer.classList.remove('hidden'); // Show game container
-                simulateBotDraft(); // NEW: Simulate bot drafts before user's turn
-                renderPlayers(); // Render players for drafting
+                yourTeamNameEl.textContent = selectedTeamName;
+                currentCapSpace = STARTING_CAP_SPACE;
+                capSpaceEl.textContent = currentCapSpace.toFixed(1);
+                teamSelectionScreen.classList.add('hidden');
+                teamSelectionScreen.classList.remove('flex');
+                gameContainer.classList.remove('hidden');
+                simulateBotDraft();
+                renderPlayers();
             }
 
-            // Event listener for the initial "Start Game" button
             startBtn.addEventListener('click', () => {
-                startScreen.style.display = 'none'; // Hide start screen
-                teamSelectionScreen.classList.remove('hidden'); // Show team selection screen
-                teamSelectionScreen.classList.add('flex'); // Add flex for proper display
-                renderTeams(); // Populate team logos
+                startScreen.style.display = 'none';
+                teamSelectionScreen.classList.remove('hidden');
+                teamSelectionScreen.classList.add('flex');
+                renderTeams();
             });
 
-            /**
-             * Creates an HTML card for a player.
-             * @param {object} player - The player object.
-             * @param {boolean} inTeam - True if the player is in the user's team, false otherwise.
-             * @returns {HTMLElement} The player card div element.
-             */
             function createPlayerCard(player, inTeam) {
                 const card = document.createElement('div');
                 card.className = 'bg-white p-3 rounded-lg flex justify-between items-center mb-2 shadow-md hover:bg-gray-100 transition-colors duration-200 border border-blue-200';
@@ -613,43 +536,33 @@
                     <div>
                         <p class="font-semibold text-lg text-gray-800">${player.name}</p>
                         <p class="text-sm text-gray-600">POS: ${player.position}</p>
-                        <p class="text-lg font-bold text-blue-500">SAL: $${player.salary.toFixed(2)}M</p> <!-- NEW: Display salary with 2 decimal places, larger font, blue color -->
+                        <p class="text-lg font-bold text-blue-500">SAL: $${player.salary.toFixed(2)}M</p>
                     </div>
                     <div class="text-right">
                         <p class="font-bold text-xl text-red-500">${player.rating}</p>
                         <button class="draft-btn mt-1 text-sm ${inTeam ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded transition duration-300 shadow-sm player-card-button">${inTeam ? 'Remove' : 'Draft'}</button>
                     </div>
                 `;
-                // Add event listener to the draft/remove button
                 const draftButton = card.querySelector('.draft-btn');
                 draftButton.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent card click event if any
-                    if (inTeam) {
-                        removePlayerFromTeam(player);
-                    } else {
-                        draftPlayer(player);
-                    }
+                    e.stopPropagation();
+                    if (inTeam) removePlayerFromTeam(player);
+                    else draftPlayer(player);
                 });
-
-                // NEW: Disable button if team is full OR if not enough cap space
                 if (yourTeam.length === TEAM_SIZE || (!inTeam && player.salary > currentCapSpace)) {
                     draftButton.disabled = true;
-                } else if (inTeam && yourTeam.length === TEAM_SIZE) { // If player is in team and team is full, allow remove (for now, will be disabled globally)
-                    // This case is implicitly handled by the global disable
                 }
-
                 return card;
             }
 
-            // NEW: Function to create a read-only player card for bot drafted players
             function createBotDraftedPlayerCard(player) {
                 const card = document.createElement('div');
-                card.className = 'bg-gray-300 p-3 rounded-lg flex justify-between items-center shadow-md border border-blue-200'; /* Adjusted color */
+                card.className = 'bg-gray-300 p-3 rounded-lg flex justify-between items-center shadow-md border border-blue-200';
                 card.innerHTML = `
                     <div>
                         <p class="font-semibold text-lg text-gray-800">${player.name}</p>
                         <p class="text-sm text-gray-600">POS: ${player.position}</p>
-                        <p class="text-lg font-bold text-blue-500">SAL: $${player.salary.toFixed(2)}M</p> <!-- Display salary -->
+                        <p class="text-lg font-bold text-blue-500">SAL: $${player.salary.toFixed(2)}M</p>
                     </div>
                     <div class="text-right">
                         <p class="font-bold text-xl text-red-500">${player.rating}</p>
@@ -659,64 +572,44 @@
                 return card;
             }
 
-            /**
-             * Simulates other bot teams drafting players.
-             * Bots will draft based on position need and player rating, with more randomness.
-             */
             function simulateBotDraft() {
-                // Get all players and make a copy to work with, excluding those already drafted by the user in a previous session
+                botTeams = [];
                 let availablePlayersForBots = players.filter(p => !yourTeam.some(teamPlayer => teamPlayer.name === p.name));
-                draftedPlayers = []; // Reset drafted players
-
-                // Shuffle the entire player pool once to randomize pick order for bots
+                draftedPlayers = [];
                 shuffleArray(availablePlayersForBots);
 
-                // Simulate each bot team drafting their full roster
                 for (let i = 0; i < NUM_BOT_TEAMS; i++) {
-                    const botTeamRoster = []; // Roster for current bot team
-                    // A bot team's cap space (for more realistic bot drafting, though not strictly required by prompt)
+                    const botTeamRoster = [];
                     let botCapSpace = STARTING_CAP_SPACE;
-
-                    // Keep track of positions needed for this bot team
                     let positionsNeeded = [...DRAFT_ORDER.map(d => d.position)];
-                    shuffleArray(positionsNeeded); // Randomize the order bots seek positions
+                    shuffleArray(positionsNeeded);
 
-                    // Loop until the bot team has a player for each position or runs out of players
-                    for(let k = 0; k < TEAM_SIZE && availablePlayersForBots.length > 0; k++) { // Draft 5 players per bot team
+                    for (let k = 0; k < TEAM_SIZE && availablePlayersForBots.length > 0; k++) {
                         let playerToDraft = null;
                         let eligiblePlayersForCurrentPos = [];
                         let foundPlayer = false;
 
-                        // Try to find a player for a needed position with available cap
                         for (const targetPosition of positionsNeeded) {
                             eligiblePlayersForCurrentPos = availablePlayersForBots
                                 .filter(p => p.position.split('/').includes(targetPosition) && p.salary <= botCapSpace)
-                                .sort((a, b) => b.rating - a.rating); // Still sort by rating for a slight preference
-
+                                .sort((a, b) => b.rating - a.rating);
                             if (eligiblePlayersForCurrentPos.length > 0) {
-                                const pickRange = Math.min(eligiblePlayersForCurrentPos.length, 7); // Pick from top 7, for example
-                                const pickIndex = Math.floor(Math.random() * pickRange);
+                                const pickIndex = Math.floor(Math.random() * Math.min(eligiblePlayersForCurrentPos.length, 7));
                                 playerToDraft = eligiblePlayersForCurrentPos[pickIndex];
                                 foundPlayer = true;
-                                positionsNeeded = positionsNeeded.filter(pos => pos !== targetPosition); // Remove this position from needed list
-                                break; // Found a player for a needed position, move to next bot pick
+                                positionsNeeded = positionsNeeded.filter(pos => pos !== targetPosition);
+                                break;
                             }
                         }
 
-                        // If no specific position player was picked (or couldn't be afforded for a needed position),
-                        // try to pick any high-rated available player with available cap
                         if (!foundPlayer && availablePlayersForBots.length > 0) {
                             const sortedRemainingPlayers = availablePlayersForBots
                                 .filter(p => p.salary <= botCapSpace)
                                 .sort((a, b) => b.rating - a.rating);
-
                             if (sortedRemainingPlayers.length > 0) {
-                                const pickRange = Math.min(sortedRemainingPlayers.length, 10); // Pick from top 10 general players
-                                const pickIndex = Math.floor(Math.random() * pickRange);
+                                const pickIndex = Math.floor(Math.random() * Math.min(sortedRemainingPlayers.length, 10));
                                 playerToDraft = sortedRemainingPlayers[pickIndex];
                                 foundPlayer = true;
-
-                                // Remove any position fulfilled by this general pick from positionsNeeded
                                 if (playerToDraft) {
                                     positionsNeeded = positionsNeeded.filter(pos => !playerToDraft.position.split('/').includes(pos));
                                 }
@@ -729,108 +622,66 @@
                             botCapSpace -= playerToDraft.salary;
                             availablePlayersForBots = availablePlayersForBots.filter(p => p.name !== playerToDraft.name);
                         } else {
-                            // If no player could be drafted for this bot team in this pick, break
-                            // This bot team might not fill all 5 spots if choices are too limited
                             break;
                         }
                     }
+                    botTeams.push(botTeamRoster);
                 }
             }
 
-
-            /**
-             * Renders the players drafted by other bots, filtered by the current drafting position.
-             * @param {string} currentPosition - The position currently being drafted by the user.
-             * @param {string} currentLabel - The label for the current position (e.g., "Point Guards").
-             */
             function renderBotDraftedPlayers(currentPosition, currentLabel) {
                 botDraftedPlayersEl.innerHTML = '';
-                botDraftedHeaderEl.textContent = `Other Teams' Drafted ${currentLabel}`; // Dynamic header
-
+                botDraftedHeaderEl.textContent = `Other Teams' Drafted ${currentLabel}`;
                 const relevantBotDraftedPlayers = draftedPlayers
                     .filter(p => p.position.split('/').includes(currentPosition))
-                    .sort((a, b) => b.rating - a.rating); // Sort by rating for display
-
+                    .sort((a, b) => b.rating - a.rating);
                 if (relevantBotDraftedPlayers.length > 0) {
-                    relevantBotDraftedPlayers.forEach(p => {
-                        botDraftedPlayersEl.appendChild(createBotDraftedPlayerCard(p));
-                    });
+                    relevantBotDraftedPlayers.forEach(p => botDraftedPlayersEl.appendChild(createBotDraftedPlayerCard(p)));
                 } else {
                     botDraftedPlayersEl.innerHTML = `<p class="text-center text-gray-500">No ${currentLabel} have been drafted by other teams yet.</p>`;
                 }
             }
 
-
-            /**
-             * Renders players in the player pool and the user's team.
-             * Updates counts and button states.
-             */
             function renderPlayers() {
-                playerPoolEl.innerHTML = ''; // Clear player pool display
-                yourTeamEl.innerHTML = ''; // Clear your team display
-                capSpaceEl.textContent = currentCapSpace.toFixed(1); // Update cap space display
-
-                // Determine the current required position for drafting
+                playerPoolEl.innerHTML = '';
+                yourTeamEl.innerHTML = '';
+                capSpaceEl.textContent = currentCapSpace.toFixed(1);
                 const currentPositionInfo = DRAFT_ORDER[yourTeam.length];
                 const currentPosition = currentPositionInfo?.position;
                 const currentLabel = currentPositionInfo?.label || "Players";
-
-                // Filter available players: not in your team AND not drafted by bots AND match the current required position
-                // Also, filter by cap space
                 const availablePlayers = players
                     .filter(p => !yourTeam.some(teamPlayer => teamPlayer.name === p.name))
-                    .filter(p => !draftedPlayers.some(botPlayer => botPlayer.name === p.name)) // Filter out bot drafted players
+                    .filter(p => !draftedPlayers.some(botPlayer => botPlayer.name === p.name))
                     .filter(p => currentPosition ? p.position.split('/').includes(currentPosition) : true)
-                    .sort((a, b) => b.rating - a.rating); // Sort by rating descending
+                    .sort((a, b) => b.rating - a.rating);
 
-                // Append player cards to the player pool
                 availablePlayers.forEach(p => {
                     const card = createPlayerCard(p, false);
                     const draftButton = card.querySelector('.draft-btn');
-                    // Disable draft button if not enough cap or if team is full
-                    if (p.salary > currentCapSpace || yourTeam.length === TEAM_SIZE) {
-                        draftButton.disabled = true;
-                    }
+                    if (p.salary > currentCapSpace || yourTeam.length === TEAM_SIZE) draftButton.disabled = true;
                     playerPoolEl.appendChild(card);
                 });
 
-                // Append player cards to your team, sorted by rating
                 yourTeam.sort((a, b) => b.rating - a.rating).forEach(p => {
                     const card = createPlayerCard(p, true);
-                    const removeButton = card.querySelector('.draft-btn'); // This is the 'remove' button
-                    // Disable remove button if team is full AND simulation hasn't started
-                    if (yourTeam.length === TEAM_SIZE && simSeasonBtn.style.display !== 'none') {
-                        removeButton.disabled = true;
-                    }
+                    const removeButton = card.querySelector('.draft-btn');
+                    if (yourTeam.length === TEAM_SIZE && simSeasonBtn.style.display !== 'none') removeButton.disabled = true;
                     yourTeamEl.appendChild(card);
                 });
 
-                // Update UI elements
-                teamCountEl.textContent = `${yourTeam.length}`; // Number of players in your team
-                playerCountEl.textContent = `${availablePlayers.length}`; // Number of available players
-                positionLabelEl.textContent = currentLabel; // Current position being drafted
-
-                // Enable simulate season button only when team is full
-                const isTeamFull = yourTeam.length === TEAM_SIZE;
-                simSeasonBtn.disabled = !isTeamFull;
-
-                // Update draft header text based on draft progress
+                teamCountEl.textContent = `${yourTeam.length}`;
+                playerCountEl.textContent = `${availablePlayers.length}`;
+                positionLabelEl.textContent = currentLabel;
+                simSeasonBtn.disabled = yourTeam.length !== TEAM_SIZE;
                 draftHeaderEl.textContent = yourTeam.length < TEAM_SIZE ? `Draft ${currentPositionInfo.label.slice(0, -1)}` : 'NBA Draft & Season Simulator';
 
-                // NEW: Hide bot drafted section if team is full
-                if (isTeamFull) {
-                    botDraftedSectionEl.classList.add('hidden');
-                } else {
+                if (yourTeam.length === TEAM_SIZE) botDraftedSectionEl.classList.add('hidden');
+                else {
                     botDraftedSectionEl.classList.remove('hidden');
-                    // Call renderBotDraftedPlayers with current position info
                     renderBotDraftedPlayers(currentPosition, currentLabel);
                 }
             }
 
-            /**
-             * Adds a player to the user's team.
-             * @param {object} player - The player object to draft.
-             */
             function draftPlayer(player) {
                 if (yourTeam.length >= TEAM_SIZE) {
                     resultsDisplay.textContent = "Your team is full! Remove a player to draft another.";
@@ -840,171 +691,120 @@
                     showModal("Insufficient Cap Space!", `You need $${player.salary.toFixed(2)}M to draft ${player.name}, but you only have $${currentCapSpace.toFixed(1)}M remaining.`);
                     return;
                 }
-
                 const currentPositionInfo = DRAFT_ORDER[yourTeam.length];
-                const currentPosition = currentPositionInfo.position;
-                // Check if the player's position matches the required draft position
-                if (!player.position.split('/').includes(currentPosition)) {
+                if (!player.position.split('/').includes(currentPositionInfo.position)) {
                     resultsDisplay.textContent = `Please draft a ${currentPositionInfo.label.slice(0, -1)}.`;
                     return;
                 }
-                yourTeam.push(player); // Add player to team
-                currentCapSpace -= player.salary; // Deduct salary
-                renderPlayers(); // Re-render displays
-                resultsDisplay.textContent = `You drafted ${player.name} as your ${currentPositionInfo.label.slice(0, -1)}. Remaining Cap: $${currentCapSpace.toFixed(1)}M.`; // Update status message
+                yourTeam.push(player);
+                currentCapSpace -= player.salary;
+                renderPlayers();
+                resultsDisplay.textContent = `You drafted ${player.name} as your ${currentPositionInfo.label.slice(0, -1)}. Remaining Cap: $${currentCapSpace.toFixed(1)}M.`;
             }
 
-            /**
-             * Removes a player from the user's team.
-             * @param {object} player - The player object to remove.
-             */
             function removePlayerFromTeam(player) {
-                // Prevent removal if team is already full and the season simulation hasn't happened.
                 if (yourTeam.length === TEAM_SIZE && simSeasonBtn.style.display !== 'none') {
-                     resultsDisplay.textContent = "You cannot remove players once your team is complete for drafting.";
-                     return;
+                    resultsDisplay.textContent = "You cannot remove players once your team is complete for drafting.";
+                    return;
                 }
-                yourTeam = yourTeam.filter(p => p.name !== player.name); // Filter out the player
-                currentCapSpace += player.salary; // Add salary back
-                renderPlayers(); // Re-render displays
-                resultsDisplay.textContent = `Removed ${player.name} from your team. Remaining Cap: $${currentCapSpace.toFixed(1)}M.`; // Update status message
+                yourTeam = yourTeam.filter(p => p.name !== player.name);
+                currentCapSpace += player.salary;
+                renderPlayers();
+                resultsDisplay.textContent = `Removed ${player.name} from your team. Remaining Cap: $${currentCapSpace.toFixed(1)}M.`;
             }
 
-            // Event listener for "Simulate Season" button
             simSeasonBtn.addEventListener('click', () => {
-                const totalRating = yourTeam.reduce((acc, p) => acc + p.rating, 0); // Sum of all player ratings
-                const avgRating = totalRating / TEAM_SIZE; // Average team rating
-                const baseWins = 10; // Base wins for a very low-rated team
-                const winsPerRatingPoint = 0.9; // How many wins per rating point above 80
-                // Calculate wins based on average rating, scaled by team size
-                let wins = Math.round(baseWins + (avgRating - 80) * winsPerRatingPoint * (TEAM_SIZE / 2));
-                // Add some randomness to wins
-                wins += Math.floor(Math.random() * 15) - 7; // +/- 7 wins randomly
-                wins = Math.max(0, Math.min(82, wins)); // Cap wins between 0 and 82 (total games in NBA season)
-                const losses = 82 - wins; // Calculate losses
+                const playerTotalRating = yourTeam.reduce((sum, p) => sum + p.rating, 0);
+                const botTotalRatings = botTeams.map(team => team.reduce((sum, p) => sum + p.rating, 0));
+                const avgBotRating = botTotalRatings.reduce((sum, rating) => sum + rating, 0) / botTeams.length;
+                const ratingDiff = playerTotalRating - avgBotRating;
+                const winProb = 0.5 + 0.01 * ratingDiff;
+                const clampedWinProb = Math.max(0, Math.min(1, winProb));
+                const expectedWins = 82 * clampedWinProb;
+                const wins = Math.round(expectedWins + (Math.random() * 10 - 5));
+                const finalWins = Math.max(0, Math.min(82, wins));
+                const losses = 82 - finalWins;
 
                 resultsDisplay.innerHTML = `
                     <p class="text-xl font-bold text-green-600">Regular Season Finished!</p>
-                    <p>Your team's record: <span class="text-green-600">${wins}</span> - <span class="text-red-600">${losses}</span></p>
+                    <p>Your team's record: <span class="text-green-600">${finalWins}</span> - <span class="text-red-600">${losses}</span></p>
                 `;
-                // Check if the team made the playoffs
-                if (wins >= PLAYOFF_WIN_THRESHOLD) {
+                if (finalWins >= PLAYOFF_WIN_THRESHOLD) {
                     resultsDisplay.innerHTML += '<p class="text-blue-500 mt-2">Congratulations, you made the playoffs!</p>';
-                    simPlayoffsBtn.style.display = 'inline-block'; // Show playoffs button
+                    simPlayoffsBtn.style.display = 'inline-block';
                 } else {
                     resultsDisplay.innerHTML += '<p class="text-gray-600 mt-2">You missed the playoffs. Better luck next year!</p>';
                 }
-                simSeasonBtn.style.display = 'none'; // Hide season button
-                resetBtn.style.display = 'inline-block'; // Show reset button
-                // Store wins for playoff simulation
-                simSeasonBtn.dataset.regularSeasonWins = wins;
+                simSeasonBtn.style.display = 'none';
+                resetBtn.style.display = 'inline-block';
+                simSeasonBtn.dataset.regularSeasonWins = finalWins;
             });
 
-            /**
-             * Simulates the playoff rounds based on team's average rating and regular season wins.
-             * @param {number} avgRating - The average rating of the user's team.
-             * @param {number} regularSeasonWins - The number of wins the user's team achieved in the regular season.
-             * @returns {object} An object indicating if the team won the championship or was eliminated.
-             */
             function simulatePlayoffs(avgRating, regularSeasonWins) {
-                // Base opponent ratings for each round, adjusted for randomness
-                const baseOpponentRatings = [
-                    83, // First Round (lower rated playoff team)
-                    88, // Conference Semifinals
-                    92, // Conference Finals
-                    96  // NBA Finals (top team)
-                ];
-
+                const baseOpponentRatings = [83, 88, 92, 96];
                 for (let i = 0; i < baseOpponentRatings.length; i++) {
                     const roundName = ["First Round", "Conference Semifinals", "Conference Finals", "NBA Finals"][i];
                     let opponentRating = baseOpponentRatings[i];
-
-                    // Adjust opponent rating based on user's regular season wins (simulating seeding)
-                    // Higher wins means potentially facing a slightly weaker opponent in early rounds,
-                    // or a stronger one later if the general talent pool is high.
-                    // This creates a subtle advantage for better regular season teams.
-                    const winAdvantage = (regularSeasonWins - PLAYOFF_WIN_THRESHOLD) / 5; // e.g., for every 5 wins above threshold, a slight edge
-                    opponentRating -= winAdvantage * (0.5 + i * 0.1); // More impact in earlier rounds
-
-                    // Add more significant randomness to opponent's actual rating for variety
-                    opponentRating += (Math.random() * 10) - 5; // +/- 5 points randomness
-
-                    // Ensure opponent rating stays within reasonable bounds
+                    const winAdvantage = (regularSeasonWins - PLAYOFF_WIN_THRESHOLD) / 5;
+                    opponentRating -= winAdvantage * (0.5 + i * 0.1);
+                    opponentRating += (Math.random() * 10) - 5;
                     opponentRating = Math.max(70, Math.min(99, opponentRating));
-
-                    const ratingDiff = avgRating - opponentRating; // Difference in rating
-
-                    // Logistic function to determine win probability (higher ratingDiff = higher probability)
-                    // The '0.1' factor controls the steepness of the win probability curve.
+                    const ratingDiff = avgRating - opponentRating;
                     const probability = 1 / (1 + Math.exp(-0.1 * ratingDiff));
-
-                    if (Math.random() < probability) {
-                        continue; // Win the round, proceed to next
-                    } else {
-                        return { eliminatedIn: roundName }; // Lose the round, return elimination info
-                    }
+                    if (Math.random() < probability) continue;
+                    else return { eliminatedIn: roundName };
                 }
-                return { champion: true }; // Won all rounds, champion!
+                return { champion: true };
             }
 
-            // Event listener for "Simulate Playoffs" button
             simPlayoffsBtn.addEventListener('click', () => {
                 const totalRating = yourTeam.reduce((acc, p) => acc + p.rating, 0);
                 const avgRating = totalRating / TEAM_SIZE;
-                const regularSeasonWins = parseInt(simSeasonBtn.dataset.regularSeasonWins || 0); // Retrieve wins
-                const playoffResult = simulatePlayoffs(avgRating, regularSeasonWins); // Pass wins to simulation
-
+                const regularSeasonWins = parseInt(simSeasonBtn.dataset.regularSeasonWins || 0);
+                const playoffResult = simulatePlayoffs(avgRating, regularSeasonWins);
                 if (playoffResult.champion) {
                     resultsDisplay.innerHTML = `
                         <p class="text-3xl font-bold text-blue-700 animate-pulse">🏆 CHAMPIONSHIP WON! 🏆</p>
                         <p class="mt-2 text-blue-600">Your team battled through the playoffs and emerged victorious!</p>
                     `;
-                    triggerConfetti(); // Trigger confetti for championship win
+                    triggerConfetti();
                 } else {
                     resultsDisplay.innerHTML = `
                         <p class="text-2xl font-bold text-red-600">Eliminated!</p>
                         <p class="mt-2 text-gray-700">Your team was eliminated in the ${playoffResult.eliminatedIn}. Better luck next season!</p>
                     `;
                 }
-                simPlayoffsBtn.style.display = 'none'; // Hide playoffs button
+                simPlayoffsBtn.style.display = 'none';
             });
 
-            // Event listener for "Draft Again" button (reset game)
             resetBtn.addEventListener('click', () => {
-                yourTeam = []; // Clear your team
-                draftedPlayers = []; // Clear bot drafted players
-                currentCapSpace = STARTING_CAP_SPACE; // Reset cap space
-                resultsDisplay.textContent = 'Draft your 5-player team to begin!'; // Reset results message
-                simPlayoffsBtn.style.display = 'none'; // Hide playoffs button
-                simSeasonBtn.style.display = 'inline-block'; // Show season button
-                resetBtn.style.display = 'none'; // Hide reset button
-                // Go back to team selection or directly to draft after re-drafting bots
+                yourTeam = [];
+                botTeams = [];
+                draftedPlayers = [];
+                currentCapSpace = STARTING_CAP_SPACE;
+                resultsDisplay.textContent = 'Draft your 5-player team to begin!';
+                simPlayoffsBtn.style.display = 'none';
+                simSeasonBtn.style.display = 'inline-block';
+                resetBtn.style.display = 'none';
                 teamSelectionScreen.classList.remove('hidden');
                 teamSelectionScreen.classList.add('flex');
                 gameContainer.classList.add('hidden');
                 renderTeams();
             });
 
-            /**
-             * Triggers a confetti animation.
-             */
             function triggerConfetti() {
-                const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#6366F1']; // Red, Blue, Green, Yellow, Indigo
+                const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#6366F1'];
                 for (let i = 0; i < 100; i++) {
                     const confetti = document.createElement('div');
                     confetti.className = 'confetti';
                     confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
                     confetti.style.left = `${Math.random() * 100}vw`;
-                    confetti.style.top = `${-Math.random() * 20}px`; // Start slightly above the viewport
-                    confetti.style.animationDelay = `${Math.random() * 0.5}s`; // Stagger animation
-                    confetti.style.animationDuration = `${3 + Math.random() * 3}s`; // Random duration
-                    confetti.style.transform = `rotate(${Math.random() * 360}deg)`; // Initial random rotation
+                    confetti.style.top = `${-Math.random() * 20}px`;
+                    confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+                    confetti.style.animationDuration = `${3 + Math.random() * 3}s`;
+                    confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
                     confettiContainer.appendChild(confetti);
-
-                    // Remove confetti after animation to prevent DOM bloat
-                    confetti.addEventListener('animationend', () => {
-                        confetti.remove();
-                    });
+                    confetti.addEventListener('animationend', () => confetti.remove());
                 }
             }
         });
