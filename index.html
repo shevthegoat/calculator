@@ -11,8 +11,8 @@
         body {
             font-family: 'Inter', sans-serif; /* Apply Inter font to the body */
             overflow-x: hidden; /* Prevent horizontal scroll */
-            /* New gradient background for the body */
-            background: linear-gradient(to bottom right, #0F172A, #4B0082); /* from-blue-950 to-purple-950 equivalent */
+            background-color: #F8FAFC; /* Tailwind gray-100 - mostly white */
+            color: #1F2937; /* Tailwind gray-800 - dark text */
         }
         /* Confetti animation styles */
         .confetti {
@@ -37,22 +37,90 @@
         }
         /* Style for disabled buttons within player cards */
         .player-card-button:disabled {
-            background-color: #4b5563 !important; /* Tailwind gray-600 */
+            background-color: #9CA3AF !important; /* Tailwind gray-400 */
             cursor: not-allowed !important;
             pointer-events: none; /* Disable interaction entirely */
+            color: #D1D5DB !important; /* Tailwind gray-300 text for disabled buttons */
+        }
+
+        /* Custom Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s ease-in-out;
+        }
+        .modal-overlay.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+            color: #1F2937; /* Dark text for modal content */
+        }
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+        .modal-content h3 {
+            font-weight: 700;
+            font-size: 1.5rem; /* text-2xl */
+            margin-bottom: 1rem;
+            color: #DC2626; /* Tailwind red-600 */
+        }
+        .modal-content p {
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            color: #374151; /* Tailwind gray-700 */
+        }
+        .modal-content button {
+            background-color: #2563EB; /* Tailwind blue-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .modal-content button:hover {
+            background-color: #1D4ED8; /* Tailwind blue-700 */
         }
     </style>
 </head>
-<body class="text-white">
+<body class="bg-gray-100 text-gray-900">
+    <!-- Custom Modal for Messages -->
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title"></h3>
+            <p id="modal-message"></p>
+            <button id="modal-close-btn">OK</button>
+        </div>
+    </div>
+
     <!-- Start Screen -->
-    <div id="start-screen" class="flex flex-col justify-center items-center h-screen bg-blue-950">
-        <h1 class="text-4xl font-bold text-yellow-400 mb-8">NBA Draft & Season Simulator</h1>
-        <button id="start-btn" class="bg-yellow-500 hover:bg-yellow-600 text-blue-900 font-bold py-3 px-6 rounded-lg text-xl transition duration-300 shadow-lg hover:shadow-xl">Start Game</button>
+    <div id="start-screen" class="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-blue-700 to-red-600 text-white">
+        <h1 class="text-4xl font-bold text-white mb-8">NBA Draft & Season Simulator</h1>
+        <button id="start-btn" class="bg-white hover:bg-gray-200 text-blue-800 font-bold py-3 px-6 rounded-lg text-xl transition duration-300 shadow-lg hover:shadow-xl">Start Game</button>
     </div>
 
     <!-- Team Selection Screen (hidden initially) -->
-    <div id="team-selection-screen" class="hidden flex flex-col justify-center items-center min-h-screen bg-blue-950 p-4">
-        <h2 class="text-3xl font-bold text-yellow-400 mb-8 text-center">Choose Your Team</h2>
+    <div id="team-selection-screen" class="hidden flex flex-col justify-center items-center min-h-screen bg-gray-100 p-4">
+        <h2 class="text-3xl font-bold text-blue-700 mb-8 text-center">Choose Your Team</h2>
         <div id="team-logos-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 sm:gap-6 max-w-6xl w-full">
             <!-- Team logos will be injected here by JavaScript -->
         </div>
@@ -61,34 +129,34 @@
     <!-- Game Container (hidden initially) -->
     <div id="game-container" class="hidden">
         <div id="confetti-container" class="absolute top-0 left-0 w-full h-full pointer-events-none z-50 overflow-hidden"></div>
-        <div class="container mx-auto p-4 bg-blue-900 rounded-lg shadow-2xl my-8">
-            <h1 id="draft-header" class="text-4xl font-bold text-yellow-400 text-center mb-8">Draft Point Guard</h1>
+        <div class="container mx-auto p-4 bg-white rounded-lg shadow-2xl my-8">
+            <h1 id="draft-header" class="text-4xl font-bold text-blue-700 text-center mb-8">Draft Point Guard</h1>
             <div id="draft-section" class="grid grid-cols-1 md:grid-cols-5 gap-8">
                 <div class="md:col-span-3">
-                    <h2 class="text-2xl font-semibold mb-4 text-yellow-300">Player Pool: <span id="player-count">0</span> <span id="position-label">Point Guards</span> Available</h2>
-                    <div id="player-pool" class="bg-blue-800 rounded-lg p-4 h-96 overflow-y-auto shadow-inner"></div>
+                    <h2 class="text-2xl font-semibold mb-4 text-blue-600">Player Pool: <span id="player-count">0</span> <span id="position-label">Point Guards</span> Available</h2>
+                    <div id="player-pool" class="bg-gray-200 rounded-lg p-4 h-96 overflow-y-auto shadow-inner"></div>
                 </div>
                 <div class="md:col-span-2">
-                    <h2 class="text-2xl font-semibold mb-4 text-yellow-300">Your Team: <span id="your-team-name" class="text-yellow-400"></span> (<span id="team-count">0</span>/5)</h2>
-                    <p class="text-lg font-semibold mb-4 text-yellow-300">Cap Space Remaining: $<span id="cap-space">178</span>M</p>
-                    <div id="your-team" class="bg-blue-800 rounded-lg p-4 min-h-[24rem] shadow-inner"></div>
+                    <h2 class="text-2xl font-semibold mb-4 text-blue-600">Your Team: <span id="your-team-name" class="text-red-600"></span> (<span id="team-count">0</span>/5)</h2>
+                    <p class="text-lg font-semibold mb-4 text-blue-600">Cap Space Remaining: $<span id="cap-space">178</span>M</p>
+                    <div id="your-team" class="bg-gray-200 rounded-lg p-4 min-h-[24rem] shadow-inner"></div>
                 </div>
             </div>
             <!-- New section for Bot Drafted Players -->
             <div id="bot-drafted-section" class="mt-8">
-                <h2 id="bot-drafted-header" class="text-2xl font-semibold mb-4 text-yellow-300">Other Teams' Drafted Players</h2>
-                <div id="bot-drafted-players" class="bg-blue-800 rounded-lg p-4 h-48 overflow-y-auto shadow-inner grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <h2 id="bot-drafted-header" class="text-2xl font-semibold mb-4 text-blue-600">Other Teams' Drafted Players</h2>
+                <div id="bot-drafted-players" class="bg-gray-200 rounded-lg p-4 h-48 overflow-y-auto shadow-inner grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Bot drafted players will be injected here -->
                 </div>
             </div>
             <div id="controls" class="text-center mt-8">
-                <button id="sim-season-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed shadow-md hover:shadow-lg">Simulate Season</button>
-                <button id="sim-playoffs-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 ml-4 disabled:bg-gray-600 shadow-md hover:shadow-lg" style="display: none;">Simulate Playoffs</button>
-                <button id="reset-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 ml-4 shadow-md hover:shadow-lg" style="display: none;">Draft Again</button>
+                <button id="sim-season-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg">Simulate Season</button>
+                <button id="sim-playoffs-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 ml-4 disabled:bg-gray-400 shadow-md hover:shadow-lg" style="display: none;">Simulate Playoffs</button>
+                <button id="reset-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 ml-4 shadow-md hover:shadow-lg" style="display: none;">Draft Again</button>
             </div>
             <div id="results-section" class="text-center mt-8">
-                <h2 class="text-2xl font-semibold mb-4 text-yellow-300">Results</h2>
-                <div id="results-display" class="bg-blue-800 rounded-lg p-4 min-h-[100px] text-lg shadow-inner">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-600">Results</h2>
+                <div id="results-display" class="bg-gray-200 rounded-lg p-4 min-h-[100px] text-lg shadow-inner text-gray-800">
                     Draft your 5-player team to begin!
                 </div>
             </div>
@@ -112,7 +180,6 @@
             ];
 
             // Player data with name, rating, and position
-            // Salaries will be assigned dynamically based on rating for varied games
             let players = [
                 { name: "Nikola Jokic", rating: 98, position: "C" },
                 { name: "Luka Dončić", rating: 97, position: "PG" },
@@ -198,29 +265,178 @@
                 { name: "Marcus Smart", rating: 77, position: "PG" }
             ];
 
-            // Function to assign salaries based on rating
-            function assignSalaries(playerList) {
-                return playerList.map(player => {
-                    let salary;
-                    if (player.rating >= 95) {
-                        salary = Math.floor(Math.random() * (45 - 38 + 1)) + 38; // 38-45M
-                    } else if (player.rating >= 90) {
-                        salary = Math.floor(Math.random() * (37 - 30 + 1)) + 30; // 30-37M
-                    } else if (player.rating >= 85) {
-                        salary = Math.floor(Math.random() * (29 - 22 + 1)) + 22; // 22-29M
-                    } else if (player.rating >= 80) {
-                        salary = Math.floor(Math.random() * (21 - 15 + 1)) + 15; // 15-21M
-                    } else if (player.rating >= 75) {
-                        salary = Math.floor(Math.random() * (14 - 8 + 1)) + 8;   // 8-14M
-                    } else {
-                        salary = Math.floor(Math.random() * (7 - 3 + 1)) + 3;    // 3-7M
-                    }
-                    return { ...player, salary };
-                });
-            }
+            // Manually pre-processed salary data from the user's provided list
+            const playerSalariesData = [
+                { name: "Stephen Curry", salary: 55.761216 },
+                { name: "Joel Embiid", salary: 51.415938 },
+                { name: "Nikola Jokic", salary: 51.415938 },
+                { name: "Kevin Durant", salary: 51.179021 },
+                { name: "Bradley Beal", salary: 50.203930 },
+                { name: "Jaylen Brown", salary: 49.205800 },
+                { name: "Devin Booker", salary: 49.205800 },
+                { name: "Karl-Anthony Towns", salary: 49.205800 },
+                { name: "Paul George", salary: 49.205800 },
+                { name: "Kawhi Leonard", salary: 49.205800 },
+                { name: "Jimmy Butler", salary: 48.798677 },
+                { name: "Giannis Antetokounmpo", salary: 48.787676 },
+                { name: "Damian Lillard", salary: 48.787676 },
+                { name: "LeBron James", salary: 48.728845 },
+                { name: "Zach LaVine", salary: 44.531940 },
+                { name: "Rudy Gobert", salary: 43.827586 },
+                { name: "Anthony Davis", salary: 43.219440 },
+                { name: "Luka Dončić", salary: 43.031940 },
+                { name: "Trae Young", salary: 43.031940 },
+                { name: "Fred VanVleet", salary: 42.846615 },
+                { name: "Anthony Edwards", salary: 42.176400 },
+                { name: "Tyrese Haliburton", salary: 42.176400 },
+                { name: "Lauri Markkanen", salary: 42.176400 },
+                { name: "Pascal Siakam", salary: 42.176400 },
+                { name: "Kyrie Irving", salary: 41.000000 },
+                { name: "Domantas Sabonis", salary: 40.500000 },
+                { name: "Ben Simmons", salary: 40.011909 },
+                { name: "Zion Williamson", salary: 36.725670 },
+                { name: "Ja Morant", salary: 36.725670 },
+                { name: "Darius Garland", salary: 36.725670 },
+                { name: "OG Anunoby", salary: 36.637932 },
+                { name: "Jamal Murray", salary: 36.016200 },
+                { name: "Brandon Ingram", salary: 36.016200 },
+                { name: "Shai Gilgeous-Alexander", salary: 35.859950 },
+                { name: "Michael Porter Jr.", salary: 35.859950 },
+                { name: "Donovan Mitchell", salary: 35.410310 },
+                { name: "Tyrese Maxey", salary: 35.147000 },
+                { name: "LaMelo Ball", salary: 35.147000 },
+                { name: "Jayson Tatum", salary: 34.848340 },
+                { name: "Bam Adebayo", salary: 34.848340 },
+                { name: "De'Aaron Fox", salary: 34.848340 },
+                { name: "Desmond Bane", salary: 34.005250 },
+                { name: "Deandre Ayton", salary: 34.005126 },
+                { name: "James Harden", salary: 33.653846 },
+                { name: "CJ McCollum", salary: 33.333333 },
+                { name: "Julius Randle", salary: 33.073920 },
+                { name: "Immanuel Quickley", salary: 32.500000 },
+                { name: "Khris Middleton", salary: 31.000000 },
+                { name: "Jrue Holiday", salary: 30.000000 },
+                { name: "Isaiah Hartenstein", salary: 30.000000 },
+                { name: "Jerami Grant", salary: 29.793104 },
+                { name: "Jordan Poole", salary: 29.651786 },
+                { name: "Dejounte Murray", salary: 29.517135 },
+                { name: "Devin Vassell", salary: 29.347826 },
+                { name: "Kristaps Porziņģis", salary: 29.268293 },
+                { name: "Tyler Herro", salary: 29.000000 },
+                { name: "Nic Claxton", salary: 27.556817 },
+                { name: "Miles Bridges", salary: 27.173913 },
+                { name: "John Collins", salary: 26.580000 },
+                { name: "Andrew Wiggins", salary: 26.276786 },
+                { name: "Anfernee Simons", salary: 25.892857 },
+                { name: "RJ Barrett", salary: 25.794643 },
+                { name: "Tobias Harris", salary: 25.365854 },
+                { name: "Jaren Jackson Jr.", salary: 25.257798 },
+                { name: "Jonathan Isaac", salary: 25.000000 },
+                { name: "Jalen Brunson", salary: 24.960001 },
+                { name: "Terry Rozier", salary: 24.924126 },
+                { name: "Kyle Kuzma", salary: 24.456061 },
+                { name: "Draymond Green", salary: 24.107143 },
+                { name: "DeMar DeRozan", salary: 23.400000 },
+                { name: "Mikal Bridges", salary: 23.300000 },
+                { name: "Jaden McDaniels", salary: 23.017242 },
+                { name: "Bruce Brown", salary: 23.000000 },
+                { name: "Brook Lopez", salary: 23.000000 },
+                { name: "Aaron Gordon", salary: 22.841455 },
+                { name: "Kentavious Caldwell-Pope", salary: 22.757000 },
+                { name: "Cameron Johnson", salary: 22.500000 },
+                { name: "Malcolm Brogdon", salary: 22.500000 },
+                { name: "Clint Capela", salary: 22.265280 },
+                { name: "Dillon Brooks", salary: 22.255493 },
+                { name: "De'Andre Hunter", salary: 21.696429 },
+                { name: "Lonzo Ball", salary: 21.395348 },
+                { name: "Marcus Smart", salary: 20.210284 },
+                { name: "Derrick White", salary: 20.071429 },
+                { name: "Jarrett Allen", salary: 20.000000 },
+                { name: "Nikola Vučević", salary: 20.000000 },
+                { name: "Myles Turner", salary: 19.928500 },
+                { name: "Jakob Poeltl", salary: 19.500000 },
+                { name: "Duncan Robinson", salary: 19.406000 },
+                { name: "Norman Powell", salary: 19.241379 },
+                { name: "Bojan Bogdanović", salary: 19.032850 },
+                { name: "Keldon Johnson", salary: 19.000000 },
+                { name: "D'Angelo Russell", salary: 18.692307 },
+                { name: "Collin Sexton", salary: 18.350000 },
+                { name: "Josh Hart", salary: 18.144000 },
+                { name: "Jusuf Nurkić", salary: 18.125000 },
+                { name: "Patrick Williams", salary: 18.000000 },
+                { name: "Harrison Barnes", salary: 18.000000 },
+                { name: "Malik Monk", salary: 17.405203 },
+                { name: "Bogdan Bogdanović", salary: 17.260000 },
+                { name: "Rui Hachimura", salary: 17.000000 },
+                { name: "Kevin Huerter", salary: 16.830357 },
+                { name: "Zach Collins", salary: 16.741200 },
+                { name: "Caris LeVert", salary: 16.615384 },
+                { name: "Luguentz Dort", salary: 16.500000 },
+                { name: "Tim Hardaway Jr.", salary: 16.193183 },
+                { name: "Klay Thompson", salary: 15.873016 },
+                { name: "Deni Avdija", salary: 15.625000 },
+                { name: "Grayson Allen", salary: 15.625000 },
+                { name: "P.J. Washington", salary: 15.500000 },
+                { name: "Max Strus", salary: 15.212068 },
+                { name: "Isaiah Stewart", salary: 15.000000 },
+                { name: "Dorian Finney-Smith", salary: 14.924167 },
+                { name: "Mitchell Robinson", salary: 14.318182 },
+                { name: "Jordan Clarkson", salary: 14.092577 },
+                { name: "Onyeka Okongwu", salary: 14.000000 },
+                { name: "Naz Reid", salary: 13.986432 },
+                { name: "Cade Cunningham", salary: 13.940809 },
+                { name: "Daniel Gafford", salary: 13.394160 },
+                { name: "Grant Williams", salary: 13.025250 },
+                { name: "Dennis Schröder", salary: 13.025250 },
+                { name: "Isaiah Joe", salary: 12.991650 },
+                { name: "Herbert Jones", salary: 12.976362 },
+                { name: "Austin Reaves", salary: 12.976362 },
+                { name: "Obi Toppin", salary: 12.975000 },
+                { name: "Cole Anthony", salary: 12.900000 },
+                { name: "De'Anthony Melton", salary: 12.822000 },
+                { name: "Kelly Olynyk", salary: 12.804878 },
+                { name: "Victor Wembanyama", salary: 12.768960 },
+                { name: "Josh Green", salary: 12.654321 },
+                { name: "Richaun Holmes", salary: 12.648321 },
+                { name: "Steven Adams", salary: 12.600000 },
+                { name: "Bobby Portis", salary: 12.578286 },
+                { name: "Zaccharie Risacher", salary: 12.569040 },
+                { name: "Brandon Clarke", salary: 12.500000 },
+                { name: "Marvin Bagley III", salary: 12.500000 },
+                { name: "Jalen Green", salary: 12.483048 },
+                { name: "Robert Williams", salary: 12.428571 },
+                { name: "Paolo Banchero", salary: 12.160800 },
+                { name: "Coby White", salary: 12.000000 },
+                { name: "Wendell Carter Jr.", salary: 11.950000 },
+                { name: "Ivica Zubac", salary: 11.743210 },
+                { name: "P.J. Tucker", salary: 12.025777 },
+                { name: "Donte DiVincenzo", salary: 11.445000 },
+                { name: "Brandon Miller", salary: 11.424600 },
+                { name: "Terance Mann", salary: 11.423077 },
+                { name: "Alex Sarr", salary: 11.245680 },
+                { name: "Evan Mobley", salary: 11.227657 },
+                { name: "Larry Nance Jr.", salary: 11.205000 },
+                { name: "Matisse Thybulle", salary: 11.025000 }
+            ];
 
-            // Assign salaries once at the start
-            players = assignSalaries(players);
+            // Create a map for quick salary lookup by player name
+            const customSalaryMap = new Map();
+            playerSalariesData.forEach(p => {
+                customSalaryMap.set(p.name, p.salary);
+            });
+
+            // Update the existing 'players' array with the custom salaries
+            players = players.map(player => {
+                const customSalary = customSalaryMap.get(player.name);
+                if (customSalary !== undefined) {
+                    return { ...player, salary: customSalary };
+                } else {
+                    // Assign a reasonable default salary for players not in the provided list
+                    // (e.g., lower tier salaries for unlisted players to prevent them from being too cheap)
+                    return { ...player, salary: Math.floor(Math.random() * (7 - 2 + 1)) + 2 }; // 2-7M default
+                }
+            });
+
 
             // List of all 30 NBA teams with their logo URLs
             const nbaTeams = [
@@ -280,10 +496,39 @@
             const botDraftedSectionEl = document.getElementById('bot-drafted-section'); // NEW: Reference to the entire bot drafted section
             const capSpaceEl = document.getElementById('cap-space'); // NEW: Element to display cap space
 
+            // Modal elements
+            const customModal = document.getElementById('custom-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+
             let yourTeam = []; // Array to hold drafted players
             let selectedTeamName = ''; // Variable to store the chosen NBA team name
             let draftedPlayers = []; // NEW: Array to hold all players drafted by bots
             let currentCapSpace = STARTING_CAP_SPACE; // NEW: Initialize current cap space
+
+            // Event listener for modal close button
+            modalCloseBtn.addEventListener('click', () => {
+                hideModal();
+            });
+
+            /**
+             * Shows the custom modal with a given title and message.
+             * @param {string} title - The title for the modal.
+             * @param {string} message - The message content for the modal.
+             */
+            function showModal(title, message) {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                customModal.classList.add('show');
+            }
+
+            /**
+             * Hides the custom modal.
+             */
+            function hideModal() {
+                customModal.classList.remove('show');
+            }
 
             /**
              * Shuffles an array in place.
@@ -321,10 +566,10 @@
                     const imageUrl = team.logoUrl;
                     // Updated fallback: Use team initials as text
                     const fallbackImageUrl = `https://placehold.co/100x100/333333/ffffff?text=${team.initials}`;
-                    teamCard.className = 'flex flex-col items-center p-3 bg-blue-800 rounded-lg shadow-md cursor-pointer hover:bg-blue-700 transition-colors duration-200';
+                    teamCard.className = 'flex flex-col items-center p-3 bg-white rounded-lg shadow-md cursor-pointer hover:bg-gray-200 transition-colors duration-200 border border-blue-200';
                     teamCard.innerHTML = `
                         <img src="${imageUrl}" alt="${team.name} Logo" class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full mb-2 object-contain" onerror="this.onerror=null;this.src='${fallbackImageUrl}'; this.style.backgroundColor = '#333333';">
-                        <p class="text-sm sm:text-base font-semibold text-center text-yellow-100">${team.name}</p>
+                        <p class="text-sm sm:text-base font-semibold text-center text-blue-700">${team.name}</p>
                     `;
                     teamCard.addEventListener('click', () => selectTeam(team.name));
                     teamLogosContainer.appendChild(teamCard);
@@ -339,7 +584,7 @@
                 selectedTeamName = teamName;
                 yourTeamNameEl.textContent = selectedTeamName; // Display the selected team name
                 currentCapSpace = STARTING_CAP_SPACE; // Reset cap space for a new game
-                capSpaceEl.textContent = currentCapSpace; // Update cap space display
+                capSpaceEl.textContent = currentCapSpace.toFixed(1); // Update cap space display
                 teamSelectionScreen.classList.add('hidden'); // Hide team selection
                 teamSelectionScreen.classList.remove('flex'); // Remove flex for proper hiding
                 gameContainer.classList.remove('hidden'); // Show game container
@@ -363,16 +608,16 @@
              */
             function createPlayerCard(player, inTeam) {
                 const card = document.createElement('div');
-                card.className = 'bg-blue-700 p-3 rounded-lg flex justify-between items-center mb-2 shadow-md hover:bg-blue-600 transition-colors duration-200';
+                card.className = 'bg-white p-3 rounded-lg flex justify-between items-center mb-2 shadow-md hover:bg-gray-100 transition-colors duration-200 border border-blue-200';
                 card.innerHTML = `
                     <div>
-                        <p class="font-semibold text-lg text-white">${player.name}</p>
-                        <p class="text-sm text-blue-200">POS: ${player.position}</p>
-                        <p class="text-sm text-yellow-100">SAL: $${player.salary}M</p> <!-- NEW: Display salary -->
+                        <p class="font-semibold text-lg text-gray-800">${player.name}</p>
+                        <p class="text-sm text-gray-600">POS: ${player.position}</p>
+                        <p class="text-lg font-bold text-blue-500">SAL: $${player.salary.toFixed(2)}M</p> <!-- NEW: Display salary with 2 decimal places, larger font, blue color -->
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-xl text-yellow-300">${player.rating}</p>
-                        <button class="draft-btn mt-1 text-sm ${inTeam ? 'bg-red-500 hover:bg-red-600 py-1 px-2' : 'bg-green-500 hover:bg-green-600 py-2 px-4'} text-white rounded transition duration-300 shadow-sm player-card-button">${inTeam ? 'Remove' : 'Draft'}</button>
+                        <p class="font-bold text-xl text-red-500">${player.rating}</p>
+                        <button class="draft-btn mt-1 text-sm ${inTeam ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded transition duration-300 shadow-sm player-card-button">${inTeam ? 'Remove' : 'Draft'}</button>
                     </div>
                 `;
                 // Add event listener to the draft/remove button
@@ -399,16 +644,16 @@
             // NEW: Function to create a read-only player card for bot drafted players
             function createBotDraftedPlayerCard(player) {
                 const card = document.createElement('div');
-                card.className = 'bg-gray-700 p-3 rounded-lg flex justify-between items-center shadow-md';
+                card.className = 'bg-gray-300 p-3 rounded-lg flex justify-between items-center shadow-md border border-blue-200'; /* Adjusted color */
                 card.innerHTML = `
                     <div>
-                        <p class="font-semibold text-lg text-white">${player.name}</p>
-                        <p class="text-sm text-gray-300">POS: ${player.position}</p>
-                        <p class="text-sm text-gray-400">SAL: $${player.salary}M</p> <!-- Display salary -->
+                        <p class="font-semibold text-lg text-gray-800">${player.name}</p>
+                        <p class="text-sm text-gray-600">POS: ${player.position}</p>
+                        <p class="text-lg font-bold text-blue-500">SAL: $${player.salary.toFixed(2)}M</p> <!-- Display salary -->
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-xl text-yellow-300">${player.rating}</p>
-                        <p class="text-xs text-gray-400 mt-1">Drafted by AI</p>
+                        <p class="font-bold text-xl text-red-500">${player.rating}</p>
+                        <p class="text-xs text-gray-700 mt-1">Drafted by AI</p>
                     </div>
                 `;
                 return card;
@@ -511,7 +756,7 @@
                         botDraftedPlayersEl.appendChild(createBotDraftedPlayerCard(p));
                     });
                 } else {
-                    botDraftedPlayersEl.innerHTML = `<p class="text-center text-gray-400">No ${currentLabel} have been drafted by other teams yet.</p>`;
+                    botDraftedPlayersEl.innerHTML = `<p class="text-center text-gray-500">No ${currentLabel} have been drafted by other teams yet.</p>`;
                 }
             }
 
@@ -592,7 +837,7 @@
                     return;
                 }
                 if (player.salary > currentCapSpace) {
-                    resultsDisplay.textContent = `Not enough cap space to draft ${player.name}! You need $${player.salary}M, but only have $${currentCapSpace.toFixed(1)}M.`;
+                    showModal("Insufficient Cap Space!", `You need $${player.salary.toFixed(2)}M to draft ${player.name}, but you only have $${currentCapSpace.toFixed(1)}M remaining.`);
                     return;
                 }
 
@@ -639,15 +884,15 @@
                 const losses = 82 - wins; // Calculate losses
 
                 resultsDisplay.innerHTML = `
-                    <p class="text-xl font-bold text-green-300">Regular Season Finished!</p>
-                    <p>Your team's record: <span class="text-green-300">${wins}</span> - <span class="text-red-300">${losses}</span></p>
+                    <p class="text-xl font-bold text-green-600">Regular Season Finished!</p>
+                    <p>Your team's record: <span class="text-green-600">${wins}</span> - <span class="text-red-600">${losses}</span></p>
                 `;
                 // Check if the team made the playoffs
                 if (wins >= PLAYOFF_WIN_THRESHOLD) {
-                    resultsDisplay.innerHTML += '<p class="text-yellow-200 mt-2">Congratulations, you made the playoffs!</p>';
+                    resultsDisplay.innerHTML += '<p class="text-blue-500 mt-2">Congratulations, you made the playoffs!</p>';
                     simPlayoffsBtn.style.display = 'inline-block'; // Show playoffs button
                 } else {
-                    resultsDisplay.innerHTML += '<p class="text-gray-400 mt-2">You missed the playoffs. Better luck next year!</p>';
+                    resultsDisplay.innerHTML += '<p class="text-gray-600 mt-2">You missed the playoffs. Better luck next year!</p>';
                 }
                 simSeasonBtn.style.display = 'none'; // Hide season button
                 resetBtn.style.display = 'inline-block'; // Show reset button
@@ -711,14 +956,14 @@
 
                 if (playoffResult.champion) {
                     resultsDisplay.innerHTML = `
-                        <p class="text-3xl font-bold text-yellow-100 animate-pulse">🏆 CHAMPIONSHIP WON! 🏆</p>
-                        <p class="mt-2 text-yellow-200">Your team battled through the playoffs and emerged victorious!</p>
+                        <p class="text-3xl font-bold text-blue-700 animate-pulse">🏆 CHAMPIONSHIP WON! 🏆</p>
+                        <p class="mt-2 text-blue-600">Your team battled through the playoffs and emerged victorious!</p>
                     `;
                     triggerConfetti(); // Trigger confetti for championship win
                 } else {
                     resultsDisplay.innerHTML = `
-                        <p class="text-2xl font-bold text-red-400">Eliminated!</p>
-                        <p class="mt-2 text-red-200">Your team was eliminated in the ${playoffResult.eliminatedIn}. Better luck next season!</p>
+                        <p class="text-2xl font-bold text-red-600">Eliminated!</p>
+                        <p class="mt-2 text-gray-700">Your team was eliminated in the ${playoffResult.eliminatedIn}. Better luck next season!</p>
                     `;
                 }
                 simPlayoffsBtn.style.display = 'none'; // Hide playoffs button
@@ -744,7 +989,7 @@
              * Triggers a confetti animation.
              */
             function triggerConfetti() {
-                const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722', '#795548', '#9E9E9E', '#607D8B'];
+                const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#6366F1']; // Red, Blue, Green, Yellow, Indigo
                 for (let i = 0; i < 100; i++) {
                     const confetti = document.createElement('div');
                     confetti.className = 'confetti';
