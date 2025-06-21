@@ -9,9 +9,111 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                container: {
+                    center: true,
+                    padding: "2rem",
+                    screens: {
+                        "2xl": "1400px",
+                    },
+                },
+                extend: {
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        destructive: {
+                            DEFAULT: "hsl(var(--destructive))",
+                            foreground: "hsl(var(--destructive-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(var(--accent))",
+                            foreground: "hsl(var(--accent-foreground))",
+                        },
+                        popover: {
+                            DEFAULT: "hsl(var(--popover))",
+                            foreground: "hsl(var(--popover-foreground))",
+                        },
+                        card: {
+                            DEFAULT: "hsl(var(--card))",
+                            foreground: "hsl(var(--card-foreground))",
+                        },
+                    },
+                    borderRadius: {
+                        lg: "var(--radius)",
+                        md: "calc(var(--radius) - 2px)",
+                        sm: "calc(var(--radius) - 4px)",
+                    },
+                    keyframes: {
+                        "accordion-down": {
+                            from: { height: 0 },
+                            to: { height: "var(--radix-accordion-content-height)" },
+                        },
+                        "accordion-up": {
+                            from: { height: "var(--radix-accordion-content-height)" },
+                            to: { height: 0 },
+                        },
+                        fall: {
+                            '0%': { transform: 'translateY(0) rotate(0deg)', opacity: '1' },
+                            '100%': { transform: 'translateY(100vh) rotate(720deg)', opacity: '0' },
+                        }
+                    },
+                    animation: {
+                        "accordion-down": "accordion-down 0.2s ease-out",
+                        "accordion-up": "accordion-up 0.2s ease-out",
+                        fall: 'fall 5s linear forwards',
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 47.4% 11.2%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 47.4% 11.2%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 47.4% 11.2%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96.1%;
+            --accent-foreground: 222.2 47.4% 11.2%;
+            --destructive: 0 100% 50%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 47.4% 11.2%;
+            --radius: 0.5rem;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
             overflow-x: hidden;
-            background-color: #F8FAFC;
-            color: #1F2937;
         }
         .confetti {
             position: absolute;
@@ -22,15 +124,11 @@
             animation: fall 5s linear forwards;
             border-radius: 2px;
         }
-        @keyframes fall {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
         .player-card-button:disabled {
-            background-color: #9CA3AF !important;
+            background-color: hsl(var(--muted)) !important;
+            color: hsl(var(--muted-foreground)) !important;
             cursor: not-allowed !important;
             pointer-events: none;
-            color: #D1D5DB !important;
         }
         .modal-overlay {
             position: fixed;
@@ -52,16 +150,16 @@
             opacity: 1;
         }
         .modal-content {
-            background-color: white;
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
             padding: 2rem;
-            border-radius: 0.5rem;
+            border-radius: var(--radius);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             text-align: center;
             max-width: 90%;
             width: 400px;
             transform: translateY(-20px);
             transition: transform 0.3s ease-in-out;
-            color: #1F2937;
         }
         .modal-overlay.show .modal-content {
             transform: translateY(0);
@@ -70,27 +168,27 @@
             font-weight: 700;
             font-size: 1.5rem;
             margin-bottom: 1rem;
-            color: #DC2626;
+            color: hsl(var(--destructive));
         }
         .modal-content p {
             margin-bottom: 1.5rem;
             font-size: 1rem;
-            color: #374151;
+            color: hsl(var(--muted-foreground));
         }
         .modal-content button {
-            background-color: #2563EB;
-            color: white;
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
             padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
+            border-radius: var(--radius);
             font-weight: 600;
             transition: background-color 0.2s ease-in-out;
         }
         .modal-content button:hover {
-            background-color: #1D4ED8;
+            background-color: hsl(var(--primary) / 0.9);
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-900">
+<body class="bg-background text-foreground">
     <div id="custom-modal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="modal-title"></h3>
@@ -99,43 +197,52 @@
         </div>
     </div>
 
-    <div id="start-screen" class="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-blue-700 to-red-600 text-white">
-        <h1 class="text-4xl font-bold text-white mb-8">NBA Draft & Season Simulator</h1>
-        <button id="start-btn" class="bg-white hover:bg-gray-200 text-blue-800 font-bold py-3 px-6 rounded-lg text-xl transition duration-300 shadow-lg hover:shadow-xl">Start Game</button>
+    <div id="start-screen" class="flex flex-col justify-center items-center h-screen bg-background">
+        <h1 class="text-4xl font-bold mb-8">NBA Draft & Season Simulator</h1>
+        <button id="start-btn" class="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-6 rounded-lg text-xl transition duration-300 shadow-lg hover:shadow-xl">Start Game</button>
     </div>
 
-    <div id="team-selection-screen" class="hidden flex flex-col justify-center items-center min-h-screen bg-gray-100 p-4">
-        <h2 class="text-3xl font-bold text-blue-700 mb-8 text-center">Choose Your Team</h2>
+    <div id="team-selection-screen" class="hidden flex flex-col justify-center items-center min-h-screen bg-background p-4">
+        <h2 class="text-3xl font-bold mb-8 text-center">Choose Your Team</h2>
         <div id="team-logos-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 sm:gap-6 max-w-6xl w-full"></div>
     </div>
 
     <div id="game-container" class="hidden">
         <div id="confetti-container" class="absolute top-0 left-0 w-full h-full pointer-events-none z-50 overflow-hidden"></div>
-        <div class="container mx-auto p-4 bg-white rounded-lg shadow-2xl my-8">
-            <h1 id="draft-header" class="text-4xl font-bold text-blue-700 text-center mb-8">Draft Point Guard</h1>
+        <div class="container mx-auto p-4 my-8">
+            <h1 id="draft-header" class="text-4xl font-bold text-center mb-8">Draft Point Guard</h1>
             <div id="draft-section" class="grid grid-cols-1 md:grid-cols-5 gap-8">
                 <div class="md:col-span-3">
-                    <h2 class="text-2xl font-semibold mb-4 text-blue-600">Player Pool: <span id="player-count">0</span> <span id="position-label">Point Guards</span> Available</h2>
-                    <div id="player-pool" class="bg-gray-200 rounded-lg p-4 h-96 overflow-y-auto shadow-inner"></div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-semibold">Player Pool</h2>
+                        <div class="text-sm text-muted-foreground"><span id="player-count">0</span> <span id="position-label">Point Guards</span> Available</div>
+                    </div>
+                    <div id="player-pool" class="bg-card border rounded-lg p-4 h-96 overflow-y-auto shadow-sm"></div>
                 </div>
                 <div class="md:col-span-2">
-                    <h2 class="text-2xl font-semibold mb-4 text-blue-600">Your Team: <span id="your-team-name" class="text-red-600"></span> (<span id="team-count">0</span>/5)</h2>
-                    <p class="text-lg font-semibold mb-4 text-blue-600">Cap Space Remaining: $<span id="cap-space">178</span>M</p>
-                    <div id="your-team" class="bg-gray-200 rounded-lg p-4 min-h-[24rem] shadow-inner"></div>
+                     <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-semibold">Your Team</h2>
+                        <div class="text-sm text-muted-foreground"><span id="team-count">0</span>/5</div>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-lg font-semibold">Team: <span id="your-team-name" class="font-bold text-primary"></span></p>
+                        <p class="text-lg font-semibold">Cap Space Remaining: $<span id="cap-space">145</span>M</p>
+                    </div>
+                    <div id="your-team" class="bg-card border rounded-lg p-4 min-h-[24rem] shadow-sm"></div>
                 </div>
             </div>
             <div id="bot-drafted-section" class="mt-8">
-                <h2 id="bot-drafted-header" class="text-2xl font-semibold mb-4 text-blue-600">Other Teams' Drafted Players</h2>
-                <div id="bot-drafted-players" class="bg-gray-200 rounded-lg p-4 h-48 overflow-y-auto shadow-inner grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                <h2 id="bot-drafted-header" class="text-2xl font-semibold mb-4">Other Teams' Drafted Players</h2>
+                <div id="bot-drafted-players" class="bg-card border rounded-lg p-4 h-48 overflow-y-auto shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
-            <div id="controls" class="text-center mt-8">
-                <button id="sim-season-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg">Simulate Season</button>
-                <button id="sim-playoffs-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 ml-4 disabled:bg-gray-400 shadow-md hover:shadow-lg" style="display: none;">Simulate Playoffs</button>
-                <button id="reset-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 ml-4 shadow-md hover:shadow-lg" style="display: none;">Draft Again</button>
+            <div id="controls" class="text-center mt-8 space-x-4">
+                <button id="sim-season-btn" class="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed shadow-md hover:shadow-lg">Simulate Season</button>
+                <button id="sim-playoffs-btn" class="bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-muted disabled:text-muted-foreground shadow-md hover:shadow-lg" style="display: none;">Simulate Playoffs</button>
+                <button id="reset-btn" class="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold py-2 px-4 rounded-lg text-lg transition duration-300 shadow-md hover:shadow-lg" style="display: none;">Draft Again</button>
             </div>
             <div id="results-section" class="text-center mt-8">
-                <h2 class="text-2xl font-semibold mb-4 text-blue-600">Results</h2>
-                <div id="results-display" class="bg-gray-200 rounded-lg p-4 min-h-[100px] text-lg shadow-inner text-gray-800">
+                <h2 class="text-2xl font-semibold mb-4">Results</h2>
+                <div id="results-display" class="bg-card border rounded-lg p-4 min-h-[100px] text-lg shadow-sm">
                     Draft your 5-player team to begin!
                 </div>
             </div>
@@ -147,7 +254,7 @@
             const PLAYOFF_WIN_THRESHOLD = 40;
             const TEAM_SIZE = 5;
             const NUM_BOT_TEAMS = 10;
-            const STARTING_CAP_SPACE = 178;
+            const STARTING_CAP_SPACE = 145;
             const DRAFT_ORDER = [
                 { position: "PG", label: "Point Guards" },
                 { position: "SG", label: "Shooting Guards" },
@@ -404,30 +511,30 @@
             const nbaTeams = [
                 { name: "Atlanta Hawks", initials: "ATL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/2/24/Atlanta_Hawks_logo.svg" },
                 { name: "Boston Celtics", initials: "BOS", logoUrl: "https://upload.wikimedia.org/wikipedia/en/8/8f/Boston_Celtics.svg" },
-                { name: "Brooklyn Nets", initials: "BKN", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Brooklyn_Nets_Logo.svg/512px-Brooklyn_Nets_Logo.svg.png" },
+                { name: "Brooklyn Nets", initials: "BKN", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Brooklyn_Nets_Logo.svg/800px-Brooklyn_Nets_Logo.svg.png" },
                 { name: "Charlotte Hornets", initials: "CHA", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c4/Charlotte_Hornets_%282014%29.svg/512px-Charlotte_Hornets_%282014%29.svg.png" },
                 { name: "Chicago Bulls", initials: "CHI", logoUrl: "https://upload.wikimedia.org/wikipedia/en/6/67/Chicago_Bulls_logo.svg" },
-                { name: "Cleveland Cavaliers", initials: "CLE", logoUrl: "https://upload.wikimedia.org/wikipedia/en/4/4b/Cleveland_Cavaliers_logo.svg" },
+                { name: "Cleveland Cavaliers", initials: "CLE", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/4/4b/Cleveland_Cavaliers_logo.svg/800px-Cleveland_Cavaliers_logo.svg.png" },
                 { name: "Dallas Mavericks", initials: "DAL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/9/97/Dallas_Mavericks_logo.svg/512px-Dallas_Mavericks_logo.svg.png" },
-                { name: "Denver Nuggets", initials: "DEN", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/7/76/Denver_Nuggets_logo.svg/512px-Denver_Nuggets_logo.svg.png" },
-                { name: "Detroit Pistons", initials: "DET", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c9/Detroit_Pistons_logo.svg/512px-Detroit_Pistons_logo.svg.png" },
+                { name: "Denver Nuggets", initials: "DEN", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/7/76/Denver_Nuggets_logo.svg/800px-Denver_Nuggets_logo.svg.png" },
+                { name: "Detroit Pistons", initials: "DET", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Detroit_Pistons_logo.svg/800px-Detroit_Pistons_logo.svg.png" },
                 { name: "Golden State Warriors", initials: "GSW", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Golden_State_Warriors_logo.svg/512px-Golden_State_Warriors_logo.svg.png" },
                 { name: "Houston Rockets", initials: "HOU", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/2/28/Houston_Rockets.svg/512px-Houston_Rockets.svg.png" },
-                { name: "Indiana Pacers", initials: "IND", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/1/1e/Indiana_Pacers_logo.svg/512px-Indiana_Pacers_logo.svg.png" },
-                { name: "Los Angeles Clippers", initials: "LAC", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Los_Angeles_Clippers_logo.svg/512px-Los_Angeles_Clippers_logo.svg.png" },
+                { name: "Indiana Pacers", initials: "IND", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/1/1e/Indiana_Pacers_logo.svg/800px-Indiana_Pacers_logo.svg.png" },
+                { name: "Los Angeles Clippers", initials: "LAC", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Los_Angeles_Clippers_logo.svg/800px-Los_Angeles_Clippers_logo.svg.png" },
                 { name: "Los Angeles Lakers", initials: "LAL", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Los_Angeles_Lakers_logo.svg/512px-Los_Angeles_Lakers_logo.svg.png" },
                 { name: "Memphis Grizzlies", initials: "MEM", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f1/Memphis_Grizzlies.svg/512px-Memphis_Grizzlies.svg.png" },
-                { name: "Miami Heat", initials: "MIA", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Miami_Heat_logo.svg/512px-Miami_Heat_logo.svg.png" },
-                { name: "Milwaukee Bucks", initials: "MIL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/4/44/Milwaukee_Bucks_logo.svg/512px-Milwaukee_Bucks_logo.svg.png" },
-                { name: "Minnesota Timberwolves", initials: "MIN", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/d/d9/Minnesota_Timberwolves_logo.svg/512px-Minnesota_Timberwolves_logo.svg.png" },
+                { name: "Miami Heat", initials: "MIA", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Miami_Heat_logo.svg/800px-Miami_Heat_logo.svg.png" },
+                { name: "Milwaukee Bucks", initials: "MIL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/4/44/Milwaukee_Bucks_logo.svg/800px-Milwaukee_Bucks_logo.svg.png" },
+                { name: "Minnesota Timberwolves", initials: "MIN", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/d/d9/Minnesota_Timberwolves_logo.svg/800px-Minnesota_Timberwolves_logo.svg.png" },
                 { name: "New Orleans Pelicans", initials: "NOP", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/New_Orleans_Pelicans_logo.svg/512px-New_Orleans_Pelicans_logo.svg.png" },
                 { name: "New York Knicks", initials: "NYK", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/2/25/New_York_Knicks_logo.svg/512px-New_York_Knicks_logo.svg.png" },
                 { name: "Oklahoma City Thunder", initials: "OKC", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/5/5d/Oklahoma_City_Thunder.svg/512px-Oklahoma_City_Thunder.svg.png" },
                 { name: "Orlando Magic", initials: "ORL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/1/10/Orlando_Magic_logo.svg/512px-Orlando_Magic_logo.svg.png" },
                 { name: "Philadelphia 76ers", initials: "PHI", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Philadelphia_76ers_logo.svg/512px-Philadelphia_76ers_logo.svg.png" },
-                { name: "Phoenix Suns", initials: "PHX", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/5/57/Phoenix_Suns_logo.svg/512px-Phoenix_Suns_logo.svg.png" },
+                { name: "Phoenix Suns", initials: "PHX", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/5/57/Phoenix_Suns_logo.svg/800px-Phoenix_Suns_logo.svg.png" },
                 { name: "Portland Trail Blazers", initials: "POR", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/2/21/Portland_Trail_Blazers_logo.svg/512px-Portland_Trail_Blazers_logo.svg.png" },
-                { name: "Sacramento Kings", initials: "SAC", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Sacramento_Kings_logo.svg/512px-Sacramento_Kings_logo.svg.png" },
+                { name: "Sacramento Kings", initials: "SAC", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Sacramento_Kings_logo.svg/800px-Sacramento_Kings_logo.svg.png" },
                 { name: "San Antonio Spurs", initials: "SAS", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/San_Antonio_Spurs.svg/512px-San_Antonio_Spurs.svg.png" },
                 { name: "Toronto Raptors", initials: "TOR", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Toronto_Raptors_logo.svg/512px-Toronto_Raptors_logo.svg.png" },
                 { name: "Utah Jazz", initials: "UTA", logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/04/Utah_Jazz_logo_%282016%29.svg/512px-Utah_Jazz_logo_%282016%29.svg.png" },
@@ -465,6 +572,8 @@
             let selectedTeamName = '';
             let draftedPlayers = [];
             let currentCapSpace = STARTING_CAP_SPACE;
+            let currentPlayoffRound = 0;
+            let currentSeries = { userWins: 0, oppWins: 0, opponentRating: 0, opponentTeam: null };
 
             modalCloseBtn.addEventListener('click', () => hideModal());
 
@@ -500,10 +609,10 @@
                     const teamCard = document.createElement('div');
                     const imageUrl = team.logoUrl;
                     const fallbackImageUrl = `https://placehold.co/100x100/333333/ffffff?text=${team.initials}`;
-                    teamCard.className = 'flex flex-col items-center p-3 bg-white rounded-lg shadow-md cursor-pointer hover:bg-gray-200 transition-colors duration-200 border border-blue-200';
+                    teamCard.className = 'flex flex-col items-center p-3 bg-card border rounded-lg shadow-sm cursor-pointer hover:bg-accent transition-colors duration-200';
                     teamCard.innerHTML = `
                         <img src="${imageUrl}" alt="${team.name} Logo" class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full mb-2 object-contain" onerror="this.onerror=null;this.src='${fallbackImageUrl}'; this.style.backgroundColor = '#333333';">
-                        <p class="text-sm sm:text-base font-semibold text-center text-blue-700">${team.name}</p>
+                        <p class="text-sm sm:text-base font-semibold text-center">${team.name}</p>
                     `;
                     teamCard.addEventListener('click', () => selectTeam(team.name));
                     teamLogosContainer.appendChild(teamCard);
@@ -531,16 +640,15 @@
 
             function createPlayerCard(player, inTeam) {
                 const card = document.createElement('div');
-                card.className = 'bg-white p-3 rounded-lg flex justify-between items-center mb-2 shadow-md hover:bg-gray-100 transition-colors duration-200 border border-blue-200';
+                card.className = 'bg-card p-3 rounded-lg flex justify-between items-center mb-2 shadow-sm border hover:bg-accent transition-colors duration-200';
                 card.innerHTML = `
                     <div>
-                        <p class="font-semibold text-lg text-gray-800">${player.name}</p>
-                        <p class="text-sm text-gray-600">POS: ${player.position}</p>
-                        <p class="text-lg font-bold text-blue-500">SAL: $${player.salary.toFixed(2)}M</p>
+                        <p class="font-semibold text-lg">${player.name}</p>
+                        <p class="text-sm text-muted-foreground">POS: ${player.position}</p>
+                        <p class="text-lg font-bold text-primary">SAL: $${player.salary.toFixed(2)}M</p>
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-xl text-red-500">${player.rating}</p>
-                        <button class="draft-btn mt-1 text-sm ${inTeam ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded transition duration-300 shadow-sm player-card-button">${inTeam ? 'Remove' : 'Draft'}</button>
+                        <button class="draft-btn text-sm ${inTeam ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-primary hover:bg-primary/90 text-primary-foreground'} rounded transition duration-300 shadow-sm player-card-button px-3 py-1">${inTeam ? 'Remove' : 'Draft'}</button>
                     </div>
                 `;
                 const draftButton = card.querySelector('.draft-btn');
@@ -557,16 +665,15 @@
 
             function createBotDraftedPlayerCard(player) {
                 const card = document.createElement('div');
-                card.className = 'bg-gray-300 p-3 rounded-lg flex justify-between items-center shadow-md border border-blue-200';
+                card.className = 'bg-muted p-3 rounded-lg flex justify-between items-center shadow-sm border';
                 card.innerHTML = `
                     <div>
-                        <p class="font-semibold text-lg text-gray-800">${player.name}</p>
-                        <p class="text-sm text-gray-600">POS: ${player.position}</p>
-                        <p class="text-lg font-bold text-blue-500">SAL: $${player.salary.toFixed(2)}M</p>
+                        <p class="font-semibold text-lg">${player.name}</p>
+                        <p class="text-sm text-muted-foreground">POS: ${player.position}</p>
+                        <p class="text-lg font-bold text-primary">SAL: $${player.salary.toFixed(2)}M</p>
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-xl text-red-500">${player.rating}</p>
-                        <p class="text-xs text-gray-700 mt-1">Drafted by AI</p>
+                        <p class="text-xs text-muted-foreground">Drafted by AI</p>
                     </div>
                 `;
                 return card;
@@ -638,7 +745,7 @@
                 if (relevantBotDraftedPlayers.length > 0) {
                     relevantBotDraftedPlayers.forEach(p => botDraftedPlayersEl.appendChild(createBotDraftedPlayerCard(p)));
                 } else {
-                    botDraftedPlayersEl.innerHTML = `<p class="text-center text-gray-500">No ${currentLabel} have been drafted by other teams yet.</p>`;
+                    botDraftedPlayersEl.innerHTML = `<p class="text-center text-muted-foreground">No ${currentLabel} have been drafted by other teams yet.</p>`;
                 }
             }
 
@@ -673,7 +780,7 @@
                 playerCountEl.textContent = `${availablePlayers.length}`;
                 positionLabelEl.textContent = currentLabel;
                 simSeasonBtn.disabled = yourTeam.length !== TEAM_SIZE;
-                draftHeaderEl.textContent = yourTeam.length < TEAM_SIZE ? `Draft ${currentPositionInfo.label.slice(0, -1)}` : 'NBA Draft & Season Simulator';
+                draftHeaderEl.textContent = yourTeam.length < TEAM_SIZE ? `Draft ${currentPositionInfo.label.slice(0, -1)}` : 'Your Team is Ready';
 
                 if (yourTeam.length === TEAM_SIZE) botDraftedSectionEl.classList.add('hidden');
                 else {
@@ -732,6 +839,8 @@
                 if (finalWins >= PLAYOFF_WIN_THRESHOLD) {
                     resultsDisplay.innerHTML += '<p class="text-blue-500 mt-2">Congratulations, you made the playoffs!</p>';
                     simPlayoffsBtn.style.display = 'inline-block';
+                    currentPlayoffRound = 1;
+                    simPlayoffsBtn.textContent = 'Simulate First Round';
                 } else {
                     resultsDisplay.innerHTML += '<p class="text-gray-600 mt-2">You missed the playoffs. Better luck next year!</p>';
                 }
@@ -740,41 +849,164 @@
                 simSeasonBtn.dataset.regularSeasonWins = finalWins;
             });
 
-            function simulatePlayoffs(avgRating, regularSeasonWins) {
-                const baseOpponentRatings = [83, 88, 92, 96];
-                for (let i = 0; i < baseOpponentRatings.length; i++) {
-                    const roundName = ["First Round", "Conference Semifinals", "Conference Finals", "NBA Finals"][i];
-                    let opponentRating = baseOpponentRatings[i];
-                    const winAdvantage = (regularSeasonWins - PLAYOFF_WIN_THRESHOLD) / 5;
-                    opponentRating -= winAdvantage * (0.5 + i * 0.1);
-                    opponentRating += (Math.random() * 10) - 5;
-                    opponentRating = Math.max(70, Math.min(99, opponentRating));
-                    const ratingDiff = avgRating - opponentRating;
-                    const probability = 1 / (1 + Math.exp(-0.1 * ratingDiff));
-                    if (Math.random() < probability) continue;
-                    else return { eliminatedIn: roundName };
+            function getOpponentRating(round, regularSeasonWins) {
+                const baseOpponentRatings = [83, 88, 92, 96]; // R1, R2, CF, F
+                let opponentRating = baseOpponentRatings[round - 1];
+                const winAdvantage = (regularSeasonWins - PLAYOFF_WIN_THRESHOLD) / 5;
+                opponentRating -= winAdvantage * (0.5 + (round - 1) * 0.1);
+                opponentRating += (Math.random() * 10) - 5;
+                return Math.max(70, Math.min(99, opponentRating));
+            }
+
+            function sortTeamByPosition(team) {
+                const sortedTeam = [];
+                const usedPlayerNames = new Set();
+                DRAFT_ORDER.forEach(orderInfo => {
+                    const position = orderInfo.position;
+                    const availablePlayers = team.filter(p => !usedPlayerNames.has(p.name));
+                    let playerForPos = availablePlayers.find(p => p.position.split('/')[0] === position);
+                    if (!playerForPos) {
+                        playerForPos = availablePlayers.find(p => p.position.split('/').includes(position));
+                    }
+                    if (playerForPos) {
+                        sortedTeam.push(playerForPos);
+                        usedPlayerNames.add(playerForPos.name);
+                    } else {
+                        sortedTeam.push({ name: 'Empty', salary: 0, position: 'N/A' });
+                    }
+                });
+                team.forEach(p => {
+                    if (!usedPlayerNames.has(p.name)) {
+                        sortedTeam.push(p);
+                    }
+                });
+                return sortedTeam.slice(0, 5);
+            }
+
+            function buildComparisonHtml(userTeam, opponentTeam) {
+                if (!opponentTeam) return '';
+                const sortedOpponentTeam = sortTeamByPosition(opponentTeam);
+                let tableHtml = '<div class="mt-4 text-left"><h4 class="font-semibold text-lg mb-2 text-center">Positional Matchup</h4><table class="w-full">';
+                tableHtml += '<thead><tr class="text-muted-foreground"><th class="p-2">POS</th><th class="p-2 text-center">Your Team</th><th class="p-2 text-center">Opponent</th></tr></thead>';
+                tableHtml += '<tbody>';
+
+                for (let i = 0; i < DRAFT_ORDER.length; i++) {
+                    const position = DRAFT_ORDER[i].position;
+                    const userPlayer = userTeam[i];
+                    const opponentPlayer = sortedOpponentTeam[i];
+
+                    tableHtml += `<tr class="border-b">`;
+                    tableHtml += `<td class="p-2 font-bold">${position}</td>`;
+                    tableHtml += `<td class="p-2 text-center"><div>${userPlayer.name}</div><div class="text-sm text-muted-foreground">$${userPlayer.salary.toFixed(2)}M</div></td>`;
+                    tableHtml += `<td class="p-2 text-center"><div>${opponentPlayer.name}</div><div class="text-sm text-muted-foreground">$${opponentPlayer.salary.toFixed(2)}M</div></td>`;
+                    tableHtml += `</tr>`;
                 }
-                return { champion: true };
+                tableHtml += '</tbody></table></div>';
+                return tableHtml;
+            }
+
+            function simulateGame(userAvgRating, opponentRating) {
+                // This logic is designed to be consistent with the regular season's win probability calculation.
+                // It uses a linear model based on the difference in average ratings.
+                // The 0.05 multiplier is derived from the regular season's 0.01 multiplier on total rating difference (0.01 * 5 = 0.05).
+                const ratingDiff = userAvgRating - opponentRating;
+                const probability = 0.5 + 0.05 * ratingDiff;
+                const clampedProb = Math.max(0, Math.min(1, probability));
+                return Math.random() < clampedProb;
             }
 
             simPlayoffsBtn.addEventListener('click', () => {
                 const totalRating = yourTeam.reduce((acc, p) => acc + p.rating, 0);
                 const avgRating = totalRating / TEAM_SIZE;
                 const regularSeasonWins = parseInt(simSeasonBtn.dataset.regularSeasonWins || 0);
-                const playoffResult = simulatePlayoffs(avgRating, regularSeasonWins);
-                if (playoffResult.champion) {
+
+                const roundNames = ["First Round", "Conference Semifinals", "Conference Finals", "NBA Finals"];
+
+                if (currentPlayoffRound === 1 || currentPlayoffRound === 2) { // First Round & Semis
+                    const opponentRating = getOpponentRating(currentPlayoffRound, regularSeasonWins);
+                    const wonRound = simulateGame(avgRating, opponentRating);
+
+                    if (wonRound) {
+                        resultsDisplay.innerHTML = `<p class="text-xl font-bold text-green-600">Advanced!</p> <p>You won the ${roundNames[currentPlayoffRound - 1]}!</p>`;
+                        currentPlayoffRound++;
+                        if (currentPlayoffRound === 3) {
+                             simPlayoffsBtn.textContent = `Simulate Conference Finals Game 1`;
+                        } else {
+                            simPlayoffsBtn.textContent = `Simulate ${roundNames[currentPlayoffRound - 1]}`;
+                        }
+                    } else {
+                        resultsDisplay.innerHTML = `
+                            <p class="text-2xl font-bold text-red-600">Eliminated!</p>
+                            <p class="mt-2 text-gray-700">Your team was eliminated in the ${roundNames[currentPlayoffRound - 1]}. Better luck next season!</p>
+                        `;
+                        simPlayoffsBtn.style.display = 'none';
+                        currentPlayoffRound = 0;
+                    }
+                } else if (currentPlayoffRound === 3 || currentPlayoffRound === 4) { // Conference Finals & Finals
+                    const roundName = roundNames[currentPlayoffRound - 1];
+                    
+                    if (currentSeries.userWins === 0 && currentSeries.oppWins === 0) {
+                        currentSeries.opponentRating = getOpponentRating(currentPlayoffRound, regularSeasonWins);
+                        let closestTeam = botTeams[0];
+                        let minDiff = Infinity;
+                        botTeams.forEach(team => {
+                            if (team.length !== TEAM_SIZE) return;
+                            const avgRating = team.reduce((sum, p) => sum + p.rating, 0) / TEAM_SIZE;
+                            const diff = Math.abs(avgRating - currentSeries.opponentRating);
+                            if (diff < minDiff) {
+                                minDiff = diff;
+                                closestTeam = team;
+                            }
+                        });
+                        currentSeries.opponentTeam = closestTeam;
+                        resultsDisplay.innerHTML = `<p class="text-xl font-bold">Starting ${roundName}!</p><p>First to 4 wins.</p>`;
+                    }
+
+                    const userWonGame = simulateGame(avgRating, currentSeries.opponentRating);
+                    if (userWonGame) {
+                        currentSeries.userWins++;
+                    } else {
+                        currentSeries.oppWins++;
+                    }
+
+                    const gameResultMessage = userWonGame ? "You won the game!" : "You lost the game.";
+                    const comparisonHtml = buildComparisonHtml(yourTeam, currentSeries.opponentTeam);
+
                     resultsDisplay.innerHTML = `
-                        <p class="text-3xl font-bold text-blue-700 animate-pulse">🏆 CHAMPIONSHIP WON! 🏆</p>
-                        <p class="mt-2 text-blue-600">Your team battled through the playoffs and emerged victorious!</p>
+                        <p class="text-xl font-bold">${roundName} - Best of 7</p>
+                        <p>Your Team: <span class="text-green-600">${currentSeries.userWins}</span> | Opponent: <span class="text-red-600">${currentSeries.oppWins}</span></p>
+                        ${comparisonHtml}
+                        <p class="mt-4 font-semibold text-center">${gameResultMessage}</p>
                     `;
-                    triggerConfetti();
-                } else {
-                    resultsDisplay.innerHTML = `
-                        <p class="text-2xl font-bold text-red-600">Eliminated!</p>
-                        <p class="mt-2 text-gray-700">Your team was eliminated in the ${playoffResult.eliminatedIn}. Better luck next season!</p>
-                    `;
+
+                    if (currentSeries.userWins === 4) {
+                        if (currentPlayoffRound === 4) { // Won finals
+                            resultsDisplay.innerHTML = `
+                                <p class="text-3xl font-bold text-blue-700 animate-pulse">🏆 CHAMPIONSHIP WON! 🏆</p>
+                                <p class="mt-2 text-blue-600">Your team battled through the playoffs and emerged victorious!</p>
+                            `;
+                            triggerConfetti();
+                            simPlayoffsBtn.style.display = 'none';
+                            currentPlayoffRound = 0;
+                        } else { // Won Conference Finals
+                            resultsDisplay.innerHTML += `<p class="mt-4 text-green-600 font-bold">You won the Conference Finals and advanced to the NBA Finals!</p>`;
+                            currentPlayoffRound++;
+                            simPlayoffsBtn.textContent = 'Simulate NBA Finals Game 1';
+                        }
+                        currentSeries = { userWins: 0, oppWins: 0, opponentRating: 0, opponentTeam: null };
+                    } else if (currentSeries.oppWins === 4) {
+                        resultsDisplay.innerHTML = `
+                            <p class="text-2xl font-bold text-red-600">Eliminated!</p>
+                            <p class="mt-2 text-gray-700">Your team was eliminated in the ${roundName}. Better luck next season!</p>
+                        `;
+                        simPlayoffsBtn.style.display = 'none';
+                        currentPlayoffRound = 0;
+                        currentSeries = { userWins: 0, oppWins: 0, opponentRating: 0, opponentTeam: null };
+                    } else {
+                        const nextGame = currentSeries.userWins + currentSeries.oppWins + 1;
+                        simPlayoffsBtn.textContent = `Simulate ${roundName} Game ${nextGame}`;
+                    }
                 }
-                simPlayoffsBtn.style.display = 'none';
             });
 
             resetBtn.addEventListener('click', () => {
@@ -784,11 +1016,14 @@
                 currentCapSpace = STARTING_CAP_SPACE;
                 resultsDisplay.textContent = 'Draft your 5-player team to begin!';
                 simPlayoffsBtn.style.display = 'none';
+                simPlayoffsBtn.textContent = 'Simulate Playoffs';
                 simSeasonBtn.style.display = 'inline-block';
                 resetBtn.style.display = 'none';
                 teamSelectionScreen.classList.remove('hidden');
                 teamSelectionScreen.classList.add('flex');
                 gameContainer.classList.add('hidden');
+                currentPlayoffRound = 0;
+                currentSeries = { userWins: 0, oppWins: 0, opponentRating: 0, opponentTeam: null };
                 renderTeams();
             });
 
