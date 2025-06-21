@@ -70,6 +70,7 @@
                 </div>
                 <div class="md:col-span-2">
                     <h2 class="text-2xl font-semibold mb-4 text-yellow-300">Your Team: <span id="your-team-name" class="text-yellow-400"></span> (<span id="team-count">0</span>/5)</h2>
+                    <p class="text-lg font-semibold mb-4 text-yellow-300">Cap Space Remaining: $<span id="cap-space">178</span>M</p>
                     <div id="your-team" class="bg-blue-800 rounded-lg p-4 min-h-[24rem] shadow-inner"></div>
                 </div>
             </div>
@@ -100,6 +101,7 @@
             const PLAYOFF_WIN_THRESHOLD = 40; // Minimum wins to make playoffs
             const TEAM_SIZE = 5; // Number of players required for a full team
             const NUM_BOT_TEAMS = 10; // Number of bot teams to simulate drafting
+            const STARTING_CAP_SPACE = 178; // in millions USD
             // Draft order by position
             const DRAFT_ORDER = [
                 { position: "PG", label: "Point Guards" },
@@ -110,7 +112,8 @@
             ];
 
             // Player data with name, rating, and position
-            const players = [
+            // Salaries will be assigned dynamically based on rating for varied games
+            let players = [
                 { name: "Nikola Jokic", rating: 98, position: "C" },
                 { name: "Luka Dončić", rating: 97, position: "PG" },
                 { name: "Giannis Antetokounmpo", rating: 96, position: "PF" },
@@ -195,6 +198,30 @@
                 { name: "Marcus Smart", rating: 77, position: "PG" }
             ];
 
+            // Function to assign salaries based on rating
+            function assignSalaries(playerList) {
+                return playerList.map(player => {
+                    let salary;
+                    if (player.rating >= 95) {
+                        salary = Math.floor(Math.random() * (45 - 38 + 1)) + 38; // 38-45M
+                    } else if (player.rating >= 90) {
+                        salary = Math.floor(Math.random() * (37 - 30 + 1)) + 30; // 30-37M
+                    } else if (player.rating >= 85) {
+                        salary = Math.floor(Math.random() * (29 - 22 + 1)) + 22; // 22-29M
+                    } else if (player.rating >= 80) {
+                        salary = Math.floor(Math.random() * (21 - 15 + 1)) + 15; // 15-21M
+                    } else if (player.rating >= 75) {
+                        salary = Math.floor(Math.random() * (14 - 8 + 1)) + 8;   // 8-14M
+                    } else {
+                        salary = Math.floor(Math.random() * (7 - 3 + 1)) + 3;    // 3-7M
+                    }
+                    return { ...player, salary };
+                });
+            }
+
+            // Assign salaries once at the start
+            players = assignSalaries(players);
+
             // List of all 30 NBA teams with their logo URLs
             const nbaTeams = [
                 { name: "Atlanta Hawks", initials: "ATL", logoUrl: "https://upload.wikimedia.org/wikipedia/en/2/24/Atlanta_Hawks_logo.svg" },
@@ -251,10 +278,12 @@
             const botDraftedPlayersEl = document.getElementById('bot-drafted-players'); // New element for bot picks
             const botDraftedHeaderEl = document.getElementById('bot-drafted-header'); // New element for bot drafted section header
             const botDraftedSectionEl = document.getElementById('bot-drafted-section'); // NEW: Reference to the entire bot drafted section
+            const capSpaceEl = document.getElementById('cap-space'); // NEW: Element to display cap space
 
             let yourTeam = []; // Array to hold drafted players
             let selectedTeamName = ''; // Variable to store the chosen NBA team name
             let draftedPlayers = []; // NEW: Array to hold all players drafted by bots
+            let currentCapSpace = STARTING_CAP_SPACE; // NEW: Initialize current cap space
 
             /**
              * Shuffles an array in place.
@@ -309,6 +338,8 @@
             function selectTeam(teamName) {
                 selectedTeamName = teamName;
                 yourTeamNameEl.textContent = selectedTeamName; // Display the selected team name
+                currentCapSpace = STARTING_CAP_SPACE; // Reset cap space for a new game
+                capSpaceEl.textContent = currentCapSpace; // Update cap space display
                 teamSelectionScreen.classList.add('hidden'); // Hide team selection
                 teamSelectionScreen.classList.remove('flex'); // Remove flex for proper hiding
                 gameContainer.classList.remove('hidden'); // Show game container
@@ -337,6 +368,7 @@
                     <div>
                         <p class="font-semibold text-lg text-white">${player.name}</p>
                         <p class="text-sm text-blue-200">POS: ${player.position}</p>
+                        <p class="text-sm text-yellow-100">SAL: $${player.salary}M</p> <!-- NEW: Display salary -->
                     </div>
                     <div class="text-right">
                         <p class="font-bold text-xl text-yellow-300">${player.rating}</p>
@@ -354,11 +386,11 @@
                     }
                 });
 
-                // NEW: Disable button if team is full and it's a 'Draft' button
-                if (yourTeam.length === TEAM_SIZE) {
+                // NEW: Disable button if team is full OR if not enough cap space
+                if (yourTeam.length === TEAM_SIZE || (!inTeam && player.salary > currentCapSpace)) {
                     draftButton.disabled = true;
-                } else if (inTeam && yourTeam.length === TEAM_SIZE) { // If player is in team and team is full, allow remove (for now, will be disabled later)
-                    // No change here for now, button will be disabled globally
+                } else if (inTeam && yourTeam.length === TEAM_SIZE) { // If player is in team and team is full, allow remove (for now, will be disabled globally)
+                    // This case is implicitly handled by the global disable
                 }
 
                 return card;
@@ -372,6 +404,7 @@
                     <div>
                         <p class="font-semibold text-lg text-white">${player.name}</p>
                         <p class="text-sm text-gray-300">POS: ${player.position}</p>
+                        <p class="text-sm text-gray-400">SAL: $${player.salary}M</p> <!-- Display salary -->
                     </div>
                     <div class="text-right">
                         <p class="font-bold text-xl text-yellow-300">${player.rating}</p>
@@ -386,8 +419,8 @@
              * Bots will draft based on position need and player rating, with more randomness.
              */
             function simulateBotDraft() {
-                // Get all players and make a copy to work with
-                let availablePlayersForBots = [...players];
+                // Get all players and make a copy to work with, excluding those already drafted by the user in a previous session
+                let availablePlayersForBots = players.filter(p => !yourTeam.some(teamPlayer => teamPlayer.name === p.name));
                 draftedPlayers = []; // Reset drafted players
 
                 // Shuffle the entire player pool once to randomize pick order for bots
@@ -396,56 +429,69 @@
                 // Simulate each bot team drafting their full roster
                 for (let i = 0; i < NUM_BOT_TEAMS; i++) {
                     const botTeamRoster = []; // Roster for current bot team
+                    // A bot team's cap space (for more realistic bot drafting, though not strictly required by prompt)
+                    let botCapSpace = STARTING_CAP_SPACE;
+
                     // Keep track of positions needed for this bot team
                     let positionsNeeded = [...DRAFT_ORDER.map(d => d.position)];
+                    shuffleArray(positionsNeeded); // Randomize the order bots seek positions
 
                     // Loop until the bot team has a player for each position or runs out of players
-                    while (botTeamRoster.length < TEAM_SIZE && availablePlayersForBots.length > 0 && positionsNeeded.length > 0) {
-                        // Prioritize positions needed, if any are still available
+                    for(let k = 0; k < TEAM_SIZE && availablePlayersForBots.length > 0; k++) { // Draft 5 players per bot team
                         let playerToDraft = null;
                         let eligiblePlayersForCurrentPos = [];
+                        let foundPlayer = false;
 
-                        // Find a player for the current 'most needed' position, if applicable
-                        if (positionsNeeded.length > 0) {
-                            const targetPosition = positionsNeeded[0]; // Take the first position as the target
+                        // Try to find a player for a needed position with available cap
+                        for (const targetPosition of positionsNeeded) {
                             eligiblePlayersForCurrentPos = availablePlayersForBots
-                                .filter(p => p.position.split('/').includes(targetPosition))
+                                .filter(p => p.position.split('/').includes(targetPosition) && p.salary <= botCapSpace)
                                 .sort((a, b) => b.rating - a.rating); // Still sort by rating for a slight preference
 
                             if (eligiblePlayersForCurrentPos.length > 0) {
-                                // Pick from the top N players, to maintain some quality but introduce variety
                                 const pickRange = Math.min(eligiblePlayersForCurrentPos.length, 7); // Pick from top 7, for example
                                 const pickIndex = Math.floor(Math.random() * pickRange);
                                 playerToDraft = eligiblePlayersForCurrentPos[pickIndex];
+                                foundPlayer = true;
                                 positionsNeeded = positionsNeeded.filter(pos => pos !== targetPosition); // Remove this position from needed list
+                                break; // Found a player for a needed position, move to next bot pick
                             }
                         }
 
-                        // If no specific position player was picked, just pick a general high-rated available player
-                        if (!playerToDraft && availablePlayersForBots.length > 0) {
-                            // Sort remaining players by rating and pick somewhat randomly from top
-                            const sortedRemainingPlayers = [...availablePlayersForBots].sort((a, b) => b.rating - a.rating);
-                            const pickRange = Math.min(sortedRemainingPlayers.length, 10); // Pick from top 10 general players
-                            const pickIndex = Math.floor(Math.random() * pickRange);
-                            playerToDraft = sortedRemainingPlayers[pickIndex];
+                        // If no specific position player was picked (or couldn't be afforded for a needed position),
+                        // try to pick any high-rated available player with available cap
+                        if (!foundPlayer && availablePlayersForBots.length > 0) {
+                            const sortedRemainingPlayers = availablePlayersForBots
+                                .filter(p => p.salary <= botCapSpace)
+                                .sort((a, b) => b.rating - a.rating);
 
-                            // Remove any position fulfilled by this general pick from positionsNeeded
-                            if (playerToDraft) {
-                                positionsNeeded = positionsNeeded.filter(pos => !playerToDraft.position.split('/').includes(pos));
+                            if (sortedRemainingPlayers.length > 0) {
+                                const pickRange = Math.min(sortedRemainingPlayers.length, 10); // Pick from top 10 general players
+                                const pickIndex = Math.floor(Math.random() * pickRange);
+                                playerToDraft = sortedRemainingPlayers[pickIndex];
+                                foundPlayer = true;
+
+                                // Remove any position fulfilled by this general pick from positionsNeeded
+                                if (playerToDraft) {
+                                    positionsNeeded = positionsNeeded.filter(pos => !playerToDraft.position.split('/').includes(pos));
+                                }
                             }
                         }
 
                         if (playerToDraft) {
                             botTeamRoster.push(playerToDraft);
                             draftedPlayers.push(playerToDraft);
+                            botCapSpace -= playerToDraft.salary;
                             availablePlayersForBots = availablePlayersForBots.filter(p => p.name !== playerToDraft.name);
                         } else {
-                            // If no player could be drafted for this bot team, break to prevent infinite loop
+                            // If no player could be drafted for this bot team in this pick, break
+                            // This bot team might not fill all 5 spots if choices are too limited
                             break;
                         }
                     }
                 }
             }
+
 
             /**
              * Renders the players drafted by other bots, filtered by the current drafting position.
@@ -477,6 +523,7 @@
             function renderPlayers() {
                 playerPoolEl.innerHTML = ''; // Clear player pool display
                 yourTeamEl.innerHTML = ''; // Clear your team display
+                capSpaceEl.textContent = currentCapSpace.toFixed(1); // Update cap space display
 
                 // Determine the current required position for drafting
                 const currentPositionInfo = DRAFT_ORDER[yourTeam.length];
@@ -484,6 +531,7 @@
                 const currentLabel = currentPositionInfo?.label || "Players";
 
                 // Filter available players: not in your team AND not drafted by bots AND match the current required position
+                // Also, filter by cap space
                 const availablePlayers = players
                     .filter(p => !yourTeam.some(teamPlayer => teamPlayer.name === p.name))
                     .filter(p => !draftedPlayers.some(botPlayer => botPlayer.name === p.name)) // Filter out bot drafted players
@@ -492,12 +540,24 @@
 
                 // Append player cards to the player pool
                 availablePlayers.forEach(p => {
-                    playerPoolEl.appendChild(createPlayerCard(p, false));
+                    const card = createPlayerCard(p, false);
+                    const draftButton = card.querySelector('.draft-btn');
+                    // Disable draft button if not enough cap or if team is full
+                    if (p.salary > currentCapSpace || yourTeam.length === TEAM_SIZE) {
+                        draftButton.disabled = true;
+                    }
+                    playerPoolEl.appendChild(card);
                 });
 
                 // Append player cards to your team, sorted by rating
                 yourTeam.sort((a, b) => b.rating - a.rating).forEach(p => {
-                    yourTeamEl.appendChild(createPlayerCard(p, true));
+                    const card = createPlayerCard(p, true);
+                    const removeButton = card.querySelector('.draft-btn'); // This is the 'remove' button
+                    // Disable remove button if team is full AND simulation hasn't started
+                    if (yourTeam.length === TEAM_SIZE && simSeasonBtn.style.display !== 'none') {
+                        removeButton.disabled = true;
+                    }
+                    yourTeamEl.appendChild(card);
                 });
 
                 // Update UI elements
@@ -520,13 +580,6 @@
                     // Call renderBotDraftedPlayers with current position info
                     renderBotDraftedPlayers(currentPosition, currentLabel);
                 }
-
-                // NEW: Disable all draft/remove buttons once team is full
-                if (isTeamFull) {
-                    document.querySelectorAll('.player-card-button').forEach(button => {
-                        button.disabled = true;
-                    });
-                }
             }
 
             /**
@@ -538,6 +591,11 @@
                     resultsDisplay.textContent = "Your team is full! Remove a player to draft another.";
                     return;
                 }
+                if (player.salary > currentCapSpace) {
+                    resultsDisplay.textContent = `Not enough cap space to draft ${player.name}! You need $${player.salary}M, but only have $${currentCapSpace.toFixed(1)}M.`;
+                    return;
+                }
+
                 const currentPositionInfo = DRAFT_ORDER[yourTeam.length];
                 const currentPosition = currentPositionInfo.position;
                 // Check if the player's position matches the required draft position
@@ -546,8 +604,9 @@
                     return;
                 }
                 yourTeam.push(player); // Add player to team
+                currentCapSpace -= player.salary; // Deduct salary
                 renderPlayers(); // Re-render displays
-                resultsDisplay.textContent = `You drafted ${player.name} as your ${currentPositionInfo.label.slice(0, -1)}.`; // Update status message
+                resultsDisplay.textContent = `You drafted ${player.name} as your ${currentPositionInfo.label.slice(0, -1)}. Remaining Cap: $${currentCapSpace.toFixed(1)}M.`; // Update status message
             }
 
             /**
@@ -561,8 +620,9 @@
                      return;
                 }
                 yourTeam = yourTeam.filter(p => p.name !== player.name); // Filter out the player
+                currentCapSpace += player.salary; // Add salary back
                 renderPlayers(); // Re-render displays
-                resultsDisplay.textContent = `Removed ${player.name} from your team.`; // Update status message
+                resultsDisplay.textContent = `Removed ${player.name} from your team. Remaining Cap: $${currentCapSpace.toFixed(1)}M.`; // Update status message
             }
 
             // Event listener for "Simulate Season" button
@@ -668,6 +728,7 @@
             resetBtn.addEventListener('click', () => {
                 yourTeam = []; // Clear your team
                 draftedPlayers = []; // Clear bot drafted players
+                currentCapSpace = STARTING_CAP_SPACE; // Reset cap space
                 resultsDisplay.textContent = 'Draft your 5-player team to begin!'; // Reset results message
                 simPlayoffsBtn.style.display = 'none'; // Hide playoffs button
                 simSeasonBtn.style.display = 'inline-block'; // Show season button
