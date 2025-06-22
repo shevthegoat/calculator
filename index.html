@@ -9,6 +9,24 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            overflow-x: hidden;
+        }
+        .nba-gradient {
+            background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #60a5fa 100%);
+        }
+        .nba-gradient-text {
+            background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nba-red {
+            color: #dc2626;
+        }
+        .nba-blue {
+            color: #1d4ed8;
         }
     </style>
     <script>
@@ -89,24 +107,24 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         :root {
             --background: 0 0% 100%;
-            --foreground: 222.2 47.4% 11.2%;
+            --foreground: 220 13% 18%;
             --card: 0 0% 100%;
-            --card-foreground: 222.2 47.4% 11.2%;
+            --card-foreground: 220 13% 18%;
             --popover: 0 0% 100%;
-            --popover-foreground: 222.2 47.4% 11.2%;
-            --primary: 222.2 47.4% 11.2%;
-            --primary-foreground: 210 40% 98%;
-            --secondary: 210 40% 96.1%;
-            --secondary-foreground: 222.2 47.4% 11.2%;
-            --muted: 210 40% 96.1%;
-            --muted-foreground: 215.4 16.3% 46.9%;
-            --accent: 210 40% 96.1%;
-            --accent-foreground: 222.2 47.4% 11.2%;
-            --destructive: 0 100% 50%;
-            --destructive-foreground: 210 40% 98%;
-            --border: 214.3 31.8% 91.4%;
-            --input: 214.3 31.8% 91.4%;
-            --ring: 222.2 47.4% 11.2%;
+            --popover-foreground: 220 13% 18%;
+            --primary: 220 100% 50%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 220 13% 96%;
+            --secondary-foreground: 220 13% 18%;
+            --muted: 220 13% 96%;
+            --muted-foreground: 220 9% 46%;
+            --accent: 220 13% 96%;
+            --accent-foreground: 220 13% 18%;
+            --destructive: 0 84% 60%;
+            --destructive-foreground: 0 0% 100%;
+            --border: 220 13% 91%;
+            --input: 220 13% 91%;
+            --ring: 220 100% 50%;
             --radius: 0.5rem;
         }
         body {
@@ -198,19 +216,19 @@
     </div>
 
     <div id="start-screen" class="flex flex-col justify-center items-center h-screen bg-background">
-        <h1 class="text-4xl font-bold mb-8">NBA Draft & Season Simulator</h1>
-        <button id="start-btn" class="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-6 rounded-lg text-xl transition duration-300 shadow-lg hover:shadow-xl">Start Game</button>
+        <h1 class="text-4xl font-bold mb-8 nba-gradient-text">NBA Draft & Season Simulator</h1>
+        <button id="start-btn" class="nba-gradient hover:opacity-90 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300 shadow-lg hover:shadow-xl">Start Game</button>
     </div>
 
     <div id="team-selection-screen" class="hidden flex flex-col justify-center items-center min-h-screen bg-background p-4">
-        <h2 class="text-3xl font-bold mb-8 text-center">Choose Your Team</h2>
+        <h2 class="text-3xl font-bold mb-8 text-center nba-gradient-text">Choose Your Team</h2>
         <div id="team-logos-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 sm:gap-6 max-w-6xl w-full"></div>
     </div>
 
     <div id="game-container" class="hidden">
         <div id="confetti-container" class="absolute top-0 left-0 w-full h-full pointer-events-none z-50 overflow-hidden"></div>
         <div class="container mx-auto p-4 my-8">
-            <h1 id="draft-header" class="text-4xl font-bold text-center mb-8">Draft Point Guard</h1>
+            <h1 id="draft-header" class="text-4xl font-bold text-center mb-8 nba-gradient-text">Draft Point Guard</h1>
             <div id="draft-section" class="grid grid-cols-1 md:grid-cols-5 gap-8">
                 <div class="md:col-span-3">
                     <div class="flex items-center justify-between mb-4">
@@ -236,12 +254,12 @@
                 <div id="bot-drafted-players" class="bg-card border rounded-lg p-4 h-48 overflow-y-auto shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
             <div id="controls" class="text-center mt-8 space-x-4">
-                <button id="sim-season-btn" class="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed shadow-md hover:shadow-lg">Simulate Season</button>
-                <button id="sim-playoffs-btn" class="bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-muted disabled:text-muted-foreground shadow-md hover:shadow-lg" style="display: none;">Simulate Playoffs</button>
-                <button id="reset-btn" class="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold py-2 px-4 rounded-lg text-lg transition duration-300 shadow-md hover:shadow-lg" style="display: none;">Draft Again</button>
+                <button id="sim-season-btn" class="nba-gradient hover:opacity-90 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed shadow-md hover:shadow-lg">Simulate Season</button>
+                <button id="sim-playoffs-btn" class="nba-gradient hover:opacity-90 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 disabled:bg-muted disabled:text-muted-foreground shadow-md hover:shadow-lg" style="display: none;">Simulate Playoffs</button>
+                <button id="reset-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-lg transition duration-300 shadow-md hover:shadow-lg" style="display: none;">Draft Again</button>
             </div>
             <div id="results-section" class="text-center mt-8">
-                <h2 class="text-2xl font-semibold mb-4">Results</h2>
+                <h2 class="text-2xl font-semibold mb-4 nba-gradient-text">Results</h2>
                 <div id="results-display" class="bg-card border rounded-lg p-4 min-h-[100px] text-lg shadow-sm">
                     Draft your 5-player team to begin!
                 </div>
@@ -645,10 +663,10 @@
                     <div>
                         <p class="font-semibold text-lg">${player.name}</p>
                         <p class="text-sm text-muted-foreground">POS: ${player.position}</p>
-                        <p class="text-lg font-bold text-primary">SAL: $${player.salary.toFixed(2)}M</p>
+                        <p class="text-lg font-bold nba-blue">SAL: $${player.salary.toFixed(2)}M</p>
                     </div>
                     <div class="text-right">
-                        <button class="draft-btn text-sm ${inTeam ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-primary hover:bg-primary/90 text-primary-foreground'} rounded transition duration-300 shadow-sm player-card-button px-3 py-1">${inTeam ? 'Remove' : 'Draft'}</button>
+                        <button class="draft-btn text-sm ${inTeam ? 'bg-red-600 hover:bg-red-700 text-white' : 'nba-gradient hover:opacity-90 text-white'} rounded transition duration-300 shadow-sm player-card-button px-3 py-1">${inTeam ? 'Remove' : 'Draft'}</button>
                     </div>
                 `;
                 const draftButton = card.querySelector('.draft-btn');
@@ -670,7 +688,7 @@
                     <div>
                         <p class="font-semibold text-lg">${player.name}</p>
                         <p class="text-sm text-muted-foreground">POS: ${player.position}</p>
-                        <p class="text-lg font-bold text-primary">SAL: $${player.salary.toFixed(2)}M</p>
+                        <p class="text-lg font-bold nba-blue">SAL: $${player.salary.toFixed(2)}M</p>
                     </div>
                     <div class="text-right">
                         <p class="text-xs text-muted-foreground">Drafted by AI</p>
@@ -1028,7 +1046,7 @@
             });
 
             function triggerConfetti() {
-                const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#6366F1'];
+                const colors = ['#1d4ed8', '#3b82f6', '#60a5fa', '#dc2626', '#ef4444'];
                 for (let i = 0; i < 100; i++) {
                     const confetti = document.createElement('div');
                     confetti.className = 'confetti';
