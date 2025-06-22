@@ -117,7 +117,7 @@
             --secondary: 220 13% 96%;
             --secondary-foreground: 220 13% 18%;
             --muted: 220 13% 96%;
-            --muted-foreground: 220 9% 46%;
+            --muted-foreground: 220 13% 35%;
             --accent: 220 13% 96%;
             --accent-foreground: 220 13% 18%;
             --destructive: 0 84% 60%;
@@ -232,25 +232,25 @@
             <div id="draft-section" class="grid grid-cols-1 md:grid-cols-5 gap-8">
                 <div class="md:col-span-3">
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-2xl font-semibold">Player Pool</h2>
-                        <div class="text-sm text-muted-foreground"><span id="player-count">0</span> <span id="position-label">Point Guards</span> Available</div>
+                        <h2 class="text-2xl font-semibold text-gray-900">Player Pool</h2>
+                        <div class="text-sm text-gray-600"><span id="player-count">0</span> <span id="position-label">Point Guards</span> Available</div>
                     </div>
                     <div id="player-pool" class="bg-card border rounded-lg p-4 h-96 overflow-y-auto shadow-sm"></div>
                 </div>
                 <div class="md:col-span-2">
                      <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-2xl font-semibold">Your Team</h2>
-                        <div class="text-sm text-muted-foreground"><span id="team-count">0</span>/5</div>
+                        <h2 class="text-2xl font-semibold text-gray-900">Your Team</h2>
+                        <div class="text-sm text-gray-600"><span id="team-count">0</span>/5</div>
                     </div>
                     <div class="mb-4">
-                        <p class="text-lg font-semibold">Team: <span id="your-team-name" class="font-bold text-primary"></span></p>
-                        <p class="text-lg font-semibold">Cap Space Remaining: $<span id="cap-space">145</span>M</p>
+                        <p class="text-lg font-semibold text-gray-900">Team: <span id="your-team-name" class="font-bold text-primary"></span></p>
+                        <p class="text-lg font-semibold text-gray-900">Cap Space Remaining: $<span id="cap-space">145</span>M</p>
                     </div>
                     <div id="your-team" class="bg-card border rounded-lg p-4 min-h-[24rem] shadow-sm"></div>
                 </div>
             </div>
             <div id="bot-drafted-section" class="mt-8">
-                <h2 id="bot-drafted-header" class="text-2xl font-semibold mb-4">Other Teams' Drafted Players</h2>
+                <h2 id="bot-drafted-header" class="text-2xl font-semibold mb-4 text-gray-900">Other Teams' Drafted Players</h2>
                 <div id="bot-drafted-players" class="bg-card border rounded-lg p-4 h-48 overflow-y-auto shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
             <div id="controls" class="text-center mt-8 space-x-4">
@@ -661,8 +661,8 @@
                 card.className = 'bg-card p-3 rounded-lg flex justify-between items-center mb-2 shadow-sm border hover:bg-accent transition-colors duration-200';
                 card.innerHTML = `
                     <div>
-                        <p class="font-semibold text-lg">${player.name}</p>
-                        <p class="text-sm text-muted-foreground">POS: ${player.position}</p>
+                        <p class="font-semibold text-lg text-gray-900">${player.name}</p>
+                        <p class="text-sm text-gray-600">POS: ${player.position}</p>
                         <p class="text-lg font-bold nba-blue">SAL: $${player.salary.toFixed(2)}M</p>
                     </div>
                     <div class="text-right">
@@ -686,12 +686,12 @@
                 card.className = 'bg-muted p-3 rounded-lg flex justify-between items-center shadow-sm border';
                 card.innerHTML = `
                     <div>
-                        <p class="font-semibold text-lg">${player.name}</p>
-                        <p class="text-sm text-muted-foreground">POS: ${player.position}</p>
+                        <p class="font-semibold text-lg text-gray-900">${player.name}</p>
+                        <p class="text-sm text-gray-600">POS: ${player.position}</p>
                         <p class="text-lg font-bold nba-blue">SAL: $${player.salary.toFixed(2)}M</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-xs text-muted-foreground">Drafted by AI</p>
+                        <p class="text-xs text-gray-500">Drafted by AI</p>
                     </div>
                 `;
                 return card;
@@ -763,7 +763,7 @@
                 if (relevantBotDraftedPlayers.length > 0) {
                     relevantBotDraftedPlayers.forEach(p => botDraftedPlayersEl.appendChild(createBotDraftedPlayerCard(p)));
                 } else {
-                    botDraftedPlayersEl.innerHTML = `<p class="text-center text-muted-foreground">No ${currentLabel} have been drafted by other teams yet.</p>`;
+                    botDraftedPlayersEl.innerHTML = `<p class="text-center text-gray-600">No ${currentLabel} have been drafted by other teams yet.</p>`;
                 }
             }
 
@@ -859,11 +859,12 @@
                     simPlayoffsBtn.style.display = 'inline-block';
                     currentPlayoffRound = 1;
                     simPlayoffsBtn.textContent = 'Simulate First Round';
+                    resetBtn.style.display = 'none';
                 } else {
                     resultsDisplay.innerHTML += '<p class="text-gray-600 mt-2">You missed the playoffs. Better luck next year!</p>';
+                    resetBtn.style.display = 'inline-block';
                 }
                 simSeasonBtn.style.display = 'none';
-                resetBtn.style.display = 'inline-block';
                 simSeasonBtn.dataset.regularSeasonWins = finalWins;
             });
 
@@ -958,6 +959,7 @@
                             <p class="mt-2 text-gray-700">Your team was eliminated in the ${roundNames[currentPlayoffRound - 1]}. Better luck next season!</p>
                         `;
                         simPlayoffsBtn.style.display = 'none';
+                        resetBtn.style.display = 'inline-block';
                         currentPlayoffRound = 0;
                     }
                 } else if (currentPlayoffRound === 3 || currentPlayoffRound === 4) { // Conference Finals & Finals
@@ -1005,6 +1007,7 @@
                             `;
                             triggerConfetti();
                             simPlayoffsBtn.style.display = 'none';
+                            resetBtn.style.display = 'inline-block';
                             currentPlayoffRound = 0;
                         } else { // Won Conference Finals
                             resultsDisplay.innerHTML += `<p class="mt-4 text-green-600 font-bold">You won the Conference Finals and advanced to the NBA Finals!</p>`;
@@ -1018,6 +1021,7 @@
                             <p class="mt-2 text-gray-700">Your team was eliminated in the ${roundName}. Better luck next season!</p>
                         `;
                         simPlayoffsBtn.style.display = 'none';
+                        resetBtn.style.display = 'inline-block';
                         currentPlayoffRound = 0;
                         currentSeries = { userWins: 0, oppWins: 0, opponentRating: 0, opponentTeam: null };
                     } else {
