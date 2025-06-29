@@ -838,9 +838,28 @@
                 renderTeams();
             });
 
+            // ESPN headshot mapping for a few well-known players (add more as needed)
+            const espnHeadshotMap = {
+                "LeBron James": "https://a.espncdn.com/i/headshots/nba/players/full/1966.png",
+                "Stephen Curry": "https://a.espncdn.com/i/headshots/nba/players/full/3975.png",
+                "Kevin Durant": "https://a.espncdn.com/i/headshots/nba/players/full/3202.png",
+                "Nikola Jokic": "https://a.espncdn.com/i/headshots/nba/players/full/3112335.png",
+                "Joel Embiid": "https://a.espncdn.com/i/headshots/nba/players/full/3059318.png",
+                "Luka Dončić": "https://a.espncdn.com/i/headshots/nba/players/full/3945274.png",
+                "Giannis Antetokounmpo": "https://a.espncdn.com/i/headshots/nba/players/full/3032977.png",
+                "Jayson Tatum": "https://a.espncdn.com/i/headshots/nba/players/full/4065648.png",
+                "Anthony Davis": "https://a.espncdn.com/i/headshots/nba/players/full/6583.png",
+                "Damian Lillard": "https://a.espncdn.com/i/headshots/nba/players/full/6606.png"
+                // Add more as needed
+            };
+            const placeholderHeadshot = "https://a.espncdn.com/i/headshots/nophoto.png";
+
+            function getPlayerHeadshotUrl(playerName) {
+                return espnHeadshotMap[playerName] || placeholderHeadshot;
+            }
+
             function createPlayerCard(player, inTeam) {
                 const card = document.createElement('div');
-                
                 // Check for chemistry with current team
                 let chemistryIndicator = '';
                 if (!inTeam && yourTeam.length > 0) {
@@ -848,7 +867,6 @@
                     const chemistryWithTeam = chemistryPartners.filter(partner => 
                         yourTeam.some(teammate => teammate.name === partner)
                     );
-                    
                     if (chemistryWithTeam.length > 0) {
                         chemistryIndicator = `
                             <div class="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs">
@@ -858,14 +876,16 @@
                         `;
                     }
                 }
-                
                 card.className = 'bg-card p-3 rounded-lg flex justify-between items-center mb-2 shadow-sm border hover:bg-accent transition-colors duration-200';
                 card.innerHTML = `
-                    <div class="flex-1">
-                        <p class="font-semibold text-lg text-gray-900">${player.name}</p>
-                        <p class="text-sm text-gray-600">POS: ${player.position}</p>
-                        <p class="text-lg font-bold nba-blue">SAL: $${player.salary.toFixed(2)}M</p>
-                        ${chemistryIndicator}
+                    <div class="flex-1 flex items-center">
+                        <div class="mr-6">
+                            <p class="font-semibold text-lg text-gray-900">${player.name}</p>
+                            <p class="text-sm text-gray-600">POS: ${player.position}</p>
+                            <p class="text-lg font-bold nba-blue">SAL: $${player.salary.toFixed(2)}M</p>
+                            ${chemistryIndicator}
+                        </div>
+                        <img src="${getPlayerHeadshotUrl(player.name)}" alt="${player.name} headshot" class="w-20 h-20 object-cover rounded-full border-2 border-gray-200 bg-white ml-8" onerror="this.onerror=null;this.src='${placeholderHeadshot}';">
                     </div>
                     <div class="text-right ml-4">
                         <button class="draft-btn text-sm ${inTeam ? 'bg-red-600 hover:bg-red-700 text-white' : 'nba-gradient hover:opacity-90 text-white'} rounded transition duration-300 shadow-sm player-card-button px-3 py-1">${inTeam ? 'Remove' : 'Draft'}</button>
