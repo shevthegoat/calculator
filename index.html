@@ -281,6 +281,188 @@
                 { position: "C", label: "Centers" }
             ];
 
+            // Chemistry system - players who work well together
+            const playerChemistry = {
+                // Golden State Warriors
+                "Stephen Curry": ["Draymond Green", "Klay Thompson", "Andrew Wiggins"],
+                "Draymond Green": ["Stephen Curry", "Klay Thompson", "Andrew Wiggins"],
+                "Klay Thompson": ["Stephen Curry", "Draymond Green", "Andrew Wiggins"],
+                "Andrew Wiggins": ["Stephen Curry", "Draymond Green", "Klay Thompson"],
+                
+                // Indiana Pacers
+                "Tyrese Haliburton": ["Myles Turner", "Pascal Siakam", "Bennedict Mathurin"],
+                "Myles Turner": ["Tyrese Haliburton", "Pascal Siakam"],
+                "Pascal Siakam": ["Tyrese Haliburton", "Myles Turner"],
+                
+                // Denver Nuggets
+                "Nikola Jokic": ["Jamal Murray", "Aaron Gordon", "Michael Porter Jr."],
+                "Jamal Murray": ["Nikola Jokic", "Aaron Gordon", "Michael Porter Jr."],
+                "Aaron Gordon": ["Nikola Jokic", "Jamal Murray", "Michael Porter Jr."],
+                "Michael Porter Jr.": ["Nikola Jokic", "Jamal Murray", "Aaron Gordon"],
+                
+                // Boston Celtics
+                "Jayson Tatum": ["Jaylen Brown", "Derrick White", "Kristaps Porziņģis"],
+                "Jaylen Brown": ["Jayson Tatum", "Derrick White", "Kristaps Porziņģis"],
+                "Derrick White": ["Jayson Tatum", "Jaylen Brown", "Kristaps Porziņģis"],
+                "Kristaps Porziņģis": ["Jayson Tatum", "Jaylen Brown", "Derrick White"],
+                
+                // Milwaukee Bucks
+                "Giannis Antetokounmpo": ["Damian Lillard", "Brook Lopez", "Khris Middleton"],
+                "Damian Lillard": ["Giannis Antetokounmpo", "Brook Lopez", "Khris Middleton"],
+                "Brook Lopez": ["Giannis Antetokounmpo", "Damian Lillard", "Khris Middleton"],
+                "Khris Middleton": ["Giannis Antetokounmpo", "Damian Lillard", "Brook Lopez"],
+                
+                // Phoenix Suns
+                "Devin Booker": ["Kevin Durant", "Bradley Beal", "Jusuf Nurkić"],
+                "Kevin Durant": ["Devin Booker", "Bradley Beal", "Jusuf Nurkić"],
+                "Bradley Beal": ["Devin Booker", "Kevin Durant", "Jusuf Nurkić"],
+                "Jusuf Nurkić": ["Devin Booker", "Kevin Durant", "Bradley Beal"],
+                
+                // Dallas Mavericks
+                "Luka Dončić": ["Kyrie Irving", "P.J. Washington", "Daniel Gafford"],
+                "Kyrie Irving": ["Luka Dončić", "P.J. Washington", "Daniel Gafford"],
+                "P.J. Washington": ["Luka Dončić", "Kyrie Irving", "Daniel Gafford"],
+                "Daniel Gafford": ["Luka Dončić", "Kyrie Irving", "P.J. Washington"],
+                
+                // Los Angeles Lakers
+                "LeBron James": ["Anthony Davis", "Austin Reaves", "D'Angelo Russell"],
+                "Anthony Davis": ["LeBron James", "Austin Reaves", "D'Angelo Russell"],
+                "Austin Reaves": ["LeBron James", "Anthony Davis", "D'Angelo Russell"],
+                "D'Angelo Russell": ["LeBron James", "Anthony Davis", "Austin Reaves"],
+                
+                // Miami Heat
+                "Jimmy Butler": ["Bam Adebayo", "Tyler Herro", "Terry Rozier"],
+                "Bam Adebayo": ["Jimmy Butler", "Tyler Herro", "Terry Rozier"],
+                "Tyler Herro": ["Jimmy Butler", "Bam Adebayo", "Terry Rozier"],
+                "Terry Rozier": ["Jimmy Butler", "Bam Adebayo", "Tyler Herro"],
+                
+                // Oklahoma City Thunder
+                "Shai Gilgeous-Alexander": ["Chet Holmgren", "Jalen Williams", "Josh Giddey"],
+                "Chet Holmgren": ["Shai Gilgeous-Alexander", "Jalen Williams", "Josh Giddey"],
+                "Jalen Williams": ["Shai Gilgeous-Alexander", "Chet Holmgren", "Josh Giddey"],
+                "Josh Giddey": ["Shai Gilgeous-Alexander", "Chet Holmgren", "Jalen Williams"],
+                
+                // Minnesota Timberwolves
+                "Anthony Edwards": ["Karl-Anthony Towns", "Rudy Gobert", "Mike Conley"],
+                "Karl-Anthony Towns": ["Anthony Edwards", "Rudy Gobert", "Mike Conley"],
+                "Rudy Gobert": ["Anthony Edwards", "Karl-Anthony Towns", "Mike Conley"],
+                "Mike Conley": ["Anthony Edwards", "Karl-Anthony Towns", "Rudy Gobert"],
+                
+                // Sacramento Kings
+                "De'Aaron Fox": ["Domantas Sabonis", "Keegan Murray", "Malik Monk"],
+                "Domantas Sabonis": ["De'Aaron Fox", "Keegan Murray", "Malik Monk"],
+                "Keegan Murray": ["De'Aaron Fox", "Domantas Sabonis", "Malik Monk"],
+                "Malik Monk": ["De'Aaron Fox", "Domantas Sabonis", "Keegan Murray"],
+                
+                // New York Knicks
+                "Jalen Brunson": ["Julius Randle", "OG Anunoby", "Donte DiVincenzo"],
+                "Julius Randle": ["Jalen Brunson", "OG Anunoby", "Donte DiVincenzo"],
+                "OG Anunoby": ["Jalen Brunson", "Julius Randle", "Donte DiVincenzo"],
+                "Donte DiVincenzo": ["Jalen Brunson", "Julius Randle", "OG Anunoby"],
+                
+                // Cleveland Cavaliers
+                "Donovan Mitchell": ["Darius Garland", "Evan Mobley", "Jarrett Allen"],
+                "Darius Garland": ["Donovan Mitchell", "Evan Mobley", "Jarrett Allen"],
+                "Evan Mobley": ["Donovan Mitchell", "Darius Garland", "Jarrett Allen"],
+                "Jarrett Allen": ["Donovan Mitchell", "Darius Garland", "Evan Mobley"],
+                
+                // Orlando Magic
+                "Paolo Banchero": ["Franz Wagner", "Jalen Suggs", "Wendell Carter Jr."],
+                "Franz Wagner": ["Paolo Banchero", "Jalen Suggs", "Wendell Carter Jr."],
+                "Jalen Suggs": ["Paolo Banchero", "Franz Wagner", "Wendell Carter Jr."],
+                "Wendell Carter Jr.": ["Paolo Banchero", "Franz Wagner", "Jalen Suggs"],
+                
+                // Houston Rockets
+                "Alperen Şengün": ["Jalen Green", "Fred VanVleet", "Dillon Brooks"],
+                "Jalen Green": ["Alperen Şengün", "Fred VanVleet", "Dillon Brooks"],
+                "Fred VanVleet": ["Alperen Şengün", "Jalen Green", "Dillon Brooks"],
+                "Dillon Brooks": ["Alperen Şengün", "Jalen Green", "Fred VanVleet"],
+                
+                // Memphis Grizzlies
+                "Ja Morant": ["Jaren Jackson Jr.", "Desmond Bane", "Marcus Smart"],
+                "Jaren Jackson Jr.": ["Ja Morant", "Desmond Bane", "Marcus Smart"],
+                "Desmond Bane": ["Ja Morant", "Jaren Jackson Jr.", "Marcus Smart"],
+                "Marcus Smart": ["Ja Morant", "Jaren Jackson Jr.", "Desmond Bane"],
+                
+                // Atlanta Hawks
+                "Trae Young": ["Dejounte Murray", "De'Andre Hunter", "Clint Capela"],
+                "Dejounte Murray": ["Trae Young", "De'Andre Hunter", "Clint Capela"],
+                "De'Andre Hunter": ["Trae Young", "Dejounte Murray", "Clint Capela"],
+                "Clint Capela": ["Trae Young", "Dejounte Murray", "De'Andre Hunter"],
+                
+                // Chicago Bulls
+                "Zach LaVine": ["DeMar DeRozan", "Nikola Vučević", "Coby White"],
+                "DeMar DeRozan": ["Zach LaVine", "Nikola Vučević", "Coby White"],
+                "Nikola Vučević": ["Zach LaVine", "DeMar DeRozan", "Coby White"],
+                "Coby White": ["Zach LaVine", "DeMar DeRozan", "Nikola Vučević"],
+                
+                // Los Angeles Clippers
+                "Kawhi Leonard": ["Paul George", "James Harden", "Russell Westbrook"],
+                "Paul George": ["Kawhi Leonard", "James Harden", "Russell Westbrook"],
+                "James Harden": ["Kawhi Leonard", "Paul George", "Russell Westbrook"],
+                "Russell Westbrook": ["Kawhi Leonard", "Paul George", "James Harden"],
+                
+                // Philadelphia 76ers
+                "Joel Embiid": ["Tyrese Maxey", "Tobias Harris", "Kelly Oubre Jr."],
+                "Tyrese Maxey": ["Joel Embiid", "Tobias Harris", "Kelly Oubre Jr."],
+                "Tobias Harris": ["Joel Embiid", "Tyrese Maxey", "Kelly Oubre Jr."],
+                "Kelly Oubre Jr.": ["Joel Embiid", "Tyrese Maxey", "Tobias Harris"],
+                
+                // Portland Trail Blazers
+                "Anfernee Simons": ["Scoot Henderson", "Jerami Grant", "Deandre Ayton"],
+                "Scoot Henderson": ["Anfernee Simons", "Jerami Grant", "Deandre Ayton"],
+                "Jerami Grant": ["Anfernee Simons", "Scoot Henderson", "Deandre Ayton"],
+                "Deandre Ayton": ["Anfernee Simons", "Scoot Henderson", "Jerami Grant"],
+                
+                // San Antonio Spurs
+                "Victor Wembanyama": ["Devin Vassell", "Keldon Johnson", "Jeremy Sochan"],
+                "Devin Vassell": ["Victor Wembanyama", "Keldon Johnson", "Jeremy Sochan"],
+                "Keldon Johnson": ["Victor Wembanyama", "Devin Vassell", "Jeremy Sochan"],
+                "Jeremy Sochan": ["Victor Wembanyama", "Devin Vassell", "Keldon Johnson"],
+                
+                // Toronto Raptors
+                "Scottie Barnes": ["RJ Barrett", "Immanuel Quickley", "Bruce Brown"],
+                "RJ Barrett": ["Scottie Barnes", "Immanuel Quickley", "Bruce Brown"],
+                "Immanuel Quickley": ["Scottie Barnes", "RJ Barrett", "Bruce Brown"],
+                "Bruce Brown": ["Scottie Barnes", "RJ Barrett", "Immanuel Quickley"],
+                
+                // Utah Jazz
+                "Lauri Markkanen": ["Collin Sexton", "Jordan Clarkson", "John Collins"],
+                "Collin Sexton": ["Lauri Markkanen", "Jordan Clarkson", "John Collins"],
+                "Jordan Clarkson": ["Lauri Markkanen", "Collin Sexton", "John Collins"],
+                "John Collins": ["Lauri Markkanen", "Collin Sexton", "Jordan Clarkson"],
+                
+                // Washington Wizards
+                "Kyle Kuzma": ["Jordan Poole", "Deni Avdija", "Tyus Jones"],
+                "Jordan Poole": ["Kyle Kuzma", "Deni Avdija", "Tyus Jones"],
+                "Deni Avdija": ["Kyle Kuzma", "Jordan Poole", "Tyus Jones"],
+                "Tyus Jones": ["Kyle Kuzma", "Jordan Poole", "Deni Avdija"],
+                
+                // Charlotte Hornets
+                "LaMelo Ball": ["Brandon Miller", "Miles Bridges", "Mark Williams"],
+                "Brandon Miller": ["LaMelo Ball", "Miles Bridges", "Mark Williams"],
+                "Miles Bridges": ["LaMelo Ball", "Brandon Miller", "Mark Williams"],
+                "Mark Williams": ["LaMelo Ball", "Brandon Miller", "Miles Bridges"],
+                
+                // Detroit Pistons
+                "Cade Cunningham": ["Jaden Ivey", "Ausar Thompson", "Jalen Duren"],
+                "Jaden Ivey": ["Cade Cunningham", "Ausar Thompson", "Jalen Duren"],
+                "Ausar Thompson": ["Cade Cunningham", "Jaden Ivey", "Jalen Duren"],
+                "Jalen Duren": ["Cade Cunningham", "Jaden Ivey", "Ausar Thompson"],
+                
+                // Brooklyn Nets
+                "Mikal Bridges": ["Cameron Johnson", "Ben Simmons", "Dennis Smith Jr."],
+                "Cameron Johnson": ["Mikal Bridges", "Ben Simmons", "Dennis Smith Jr."],
+                "Ben Simmons": ["Mikal Bridges", "Cameron Johnson", "Dennis Smith Jr."],
+                "Dennis Smith Jr.": ["Mikal Bridges", "Cameron Johnson", "Ben Simmons"],
+                
+                // New Orleans Pelicans
+                "Brandon Ingram": ["Zion Williamson", "CJ McCollum", "Herb Jones"],
+                "Zion Williamson": ["Brandon Ingram", "CJ McCollum", "Herb Jones"],
+                "CJ McCollum": ["Brandon Ingram", "Zion Williamson", "Herb Jones"],
+                "Herb Jones": ["Brandon Ingram", "Zion Williamson", "CJ McCollum"]
+            };
+
             let players = [
                 { name: "Nikola Jokic", rating: 98, position: "C" },
                 { name: "Luka Dončić", rating: 97, position: "PG" },
@@ -658,14 +840,34 @@
 
             function createPlayerCard(player, inTeam) {
                 const card = document.createElement('div');
+                
+                // Check for chemistry with current team
+                let chemistryIndicator = '';
+                if (!inTeam && yourTeam.length > 0) {
+                    const chemistryPartners = playerChemistry[player.name] || [];
+                    const chemistryWithTeam = chemistryPartners.filter(partner => 
+                        yourTeam.some(teammate => teammate.name === partner)
+                    );
+                    
+                    if (chemistryWithTeam.length > 0) {
+                        chemistryIndicator = `
+                            <div class="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs">
+                                <p class="text-green-800 font-semibold">🏀 Chemistry with: ${chemistryWithTeam.join(', ')}</p>
+                                <p class="text-green-700">+${chemistryWithTeam.length * 2} rating bonus</p>
+                            </div>
+                        `;
+                    }
+                }
+                
                 card.className = 'bg-card p-3 rounded-lg flex justify-between items-center mb-2 shadow-sm border hover:bg-accent transition-colors duration-200';
                 card.innerHTML = `
-                    <div>
+                    <div class="flex-1">
                         <p class="font-semibold text-lg text-gray-900">${player.name}</p>
                         <p class="text-sm text-gray-600">POS: ${player.position}</p>
                         <p class="text-lg font-bold nba-blue">SAL: $${player.salary.toFixed(2)}M</p>
+                        ${chemistryIndicator}
                     </div>
-                    <div class="text-right">
+                    <div class="text-right ml-4">
                         <button class="draft-btn text-sm ${inTeam ? 'bg-red-600 hover:bg-red-700 text-white' : 'nba-gradient hover:opacity-90 text-white'} rounded transition duration-300 shadow-sm player-card-button px-3 py-1">${inTeam ? 'Remove' : 'Draft'}</button>
                     </div>
                 `;
@@ -839,10 +1041,13 @@
             }
 
             simSeasonBtn.addEventListener('click', () => {
-                const playerTotalRating = yourTeam.reduce((sum, p) => sum + p.rating, 0);
-                const botTotalRatings = botTeams.map(team => team.reduce((sum, p) => sum + p.rating, 0));
+                const teamRatingData = getTeamRatingWithChemistry(yourTeam);
+                const botTotalRatings = botTeams.map(team => {
+                    const botTeamData = getTeamRatingWithChemistry(team);
+                    return botTeamData.totalRating;
+                });
                 const avgBotRating = botTotalRatings.reduce((sum, rating) => sum + rating, 0) / botTeams.length;
-                const ratingDiff = playerTotalRating - avgBotRating;
+                const ratingDiff = teamRatingData.totalRating - avgBotRating;
                 const winProb = 0.5 + 0.01 * ratingDiff;
                 const clampedWinProb = Math.max(0, Math.min(1, winProb));
                 const expectedWins = 82 * clampedWinProb;
@@ -850,19 +1055,34 @@
                 const finalWins = Math.max(0, Math.min(82, wins));
                 const losses = 82 - finalWins;
 
+                let chemistryInfo = '';
+                if (teamRatingData.chemistryBonus > 0) {
+                    chemistryInfo = `
+                        <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <p class="font-semibold text-green-800 mb-2">🏀 Team Chemistry Bonus: +${teamRatingData.chemistryBonus} Rating</p>
+                            <p class="text-sm text-green-700 mb-2">Chemistry Pairs:</p>
+                            <ul class="text-sm text-green-700 list-disc list-inside">
+                                ${teamRatingData.chemistryPairs.map(pair => `<li>${pair}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
                 resultsDisplay.innerHTML = `
                     <p class="text-xl font-bold text-green-600">Regular Season Finished!</p>
                     <p>Your team's record: <span class="text-green-600">${finalWins}</span> - <span class="text-red-600">${losses}</span></p>
+                    <p class="text-sm text-gray-600 mt-2">Base Team Rating: ${teamRatingData.baseRating} | Total Rating with Chemistry: ${teamRatingData.totalRating}</p>
+                    ${chemistryInfo}
                 `;
                 if (finalWins >= PLAYOFF_WIN_THRESHOLD) {
                     resultsDisplay.innerHTML += '<p class="text-blue-500 mt-2">Congratulations, you made the playoffs!</p>';
                     simPlayoffsBtn.style.display = 'inline-block';
                     currentPlayoffRound = 1;
                     simPlayoffsBtn.textContent = 'Simulate First Round';
-                    resetBtn.style.display = 'none';
+                    resetBtn.style.display = 'none'; // Hide "Draft Again" when making playoffs
                 } else {
                     resultsDisplay.innerHTML += '<p class="text-gray-600 mt-2">You missed the playoffs. Better luck next year!</p>';
-                    resetBtn.style.display = 'inline-block';
+                    resetBtn.style.display = 'inline-block'; // Show "Draft Again" when missing playoffs
                 }
                 simSeasonBtn.style.display = 'none';
                 simSeasonBtn.dataset.regularSeasonWins = finalWins;
@@ -935,8 +1155,8 @@
             }
 
             simPlayoffsBtn.addEventListener('click', () => {
-                const totalRating = yourTeam.reduce((acc, p) => acc + p.rating, 0);
-                const avgRating = totalRating / TEAM_SIZE;
+                const teamRatingData = getTeamRatingWithChemistry(yourTeam);
+                const avgRating = teamRatingData.totalRating / TEAM_SIZE;
                 const regularSeasonWins = parseInt(simSeasonBtn.dataset.regularSeasonWins || 0);
 
                 const roundNames = ["First Round", "Conference Semifinals", "Conference Finals", "NBA Finals"];
@@ -959,7 +1179,7 @@
                             <p class="mt-2 text-gray-700">Your team was eliminated in the ${roundNames[currentPlayoffRound - 1]}. Better luck next season!</p>
                         `;
                         simPlayoffsBtn.style.display = 'none';
-                        resetBtn.style.display = 'inline-block';
+                        resetBtn.style.display = 'inline-block'; // Show "Draft Again" when eliminated
                         currentPlayoffRound = 0;
                     }
                 } else if (currentPlayoffRound === 3 || currentPlayoffRound === 4) { // Conference Finals & Finals
@@ -971,8 +1191,9 @@
                         let minDiff = Infinity;
                         botTeams.forEach(team => {
                             if (team.length !== TEAM_SIZE) return;
-                            const avgRating = team.reduce((sum, p) => sum + p.rating, 0) / TEAM_SIZE;
-                            const diff = Math.abs(avgRating - currentSeries.opponentRating);
+                            const botTeamData = getTeamRatingWithChemistry(team);
+                            const botAvgRating = botTeamData.totalRating / TEAM_SIZE;
+                            const diff = Math.abs(botAvgRating - currentSeries.opponentRating);
                             if (diff < minDiff) {
                                 minDiff = diff;
                                 closestTeam = team;
@@ -1007,7 +1228,7 @@
                             `;
                             triggerConfetti();
                             simPlayoffsBtn.style.display = 'none';
-                            resetBtn.style.display = 'inline-block';
+                            resetBtn.style.display = 'inline-block'; // Show "Draft Again" after winning championship
                             currentPlayoffRound = 0;
                         } else { // Won Conference Finals
                             resultsDisplay.innerHTML += `<p class="mt-4 text-green-600 font-bold">You won the Conference Finals and advanced to the NBA Finals!</p>`;
@@ -1021,7 +1242,6 @@
                             <p class="mt-2 text-gray-700">Your team was eliminated in the ${roundName}. Better luck next season!</p>
                         `;
                         simPlayoffsBtn.style.display = 'none';
-                        resetBtn.style.display = 'inline-block';
                         currentPlayoffRound = 0;
                         currentSeries = { userWins: 0, oppWins: 0, opponentRating: 0, opponentTeam: null };
                     } else {
@@ -1063,6 +1283,37 @@
                     confettiContainer.appendChild(confetti);
                     confetti.addEventListener('animationend', () => confetti.remove());
                 }
+            }
+
+            function calculateChemistryBonus(team) {
+                let totalBonus = 0;
+                let chemistryPairs = [];
+                
+                for (let i = 0; i < team.length; i++) {
+                    const player = team[i];
+                    const chemistryPartners = playerChemistry[player.name] || [];
+                    
+                    for (let j = i + 1; j < team.length; j++) {
+                        const teammate = team[j];
+                        if (chemistryPartners.includes(teammate.name)) {
+                            totalBonus += 2; // +2 rating bonus per chemistry pair
+                            chemistryPairs.push(`${player.name} + ${teammate.name}`);
+                        }
+                    }
+                }
+                
+                return { bonus: totalBonus, pairs: chemistryPairs };
+            }
+
+            function getTeamRatingWithChemistry(team) {
+                const baseRating = team.reduce((sum, p) => sum + p.rating, 0);
+                const chemistry = calculateChemistryBonus(team);
+                return {
+                    totalRating: baseRating + chemistry.bonus,
+                    baseRating: baseRating,
+                    chemistryBonus: chemistry.bonus,
+                    chemistryPairs: chemistry.pairs
+                };
             }
         });
     </script>
