@@ -1075,13 +1075,13 @@
                     ${chemistryInfo}
                 `;
                 if (finalWins >= PLAYOFF_WIN_THRESHOLD) {
-                    resultsDisplay.innerHTML += '<p class="text-blue-500 mt-2">Congratulations, you made the playoffs!</p>';
+                    resultsDisplay.innerHTML += '<p class="text-black mt-2 font-semibold">Congratulations, you made the playoffs!</p>';
                     simPlayoffsBtn.style.display = 'inline-block';
                     currentPlayoffRound = 1;
                     simPlayoffsBtn.textContent = 'Simulate First Round';
                     resetBtn.style.display = 'none'; // Hide "Draft Again" when making playoffs
                 } else {
-                    resultsDisplay.innerHTML += '<p class="text-gray-600 mt-2">You missed the playoffs. Better luck next year!</p>';
+                    resultsDisplay.innerHTML += '<p class="text-black mt-2 font-semibold">You missed the playoffs. Better luck next year!</p>';
                     resetBtn.style.display = 'inline-block'; // Show "Draft Again" when missing playoffs
                 }
                 simSeasonBtn.style.display = 'none';
