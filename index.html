@@ -838,25 +838,12 @@
                 renderTeams();
             });
 
-            // ESPN headshot mapping for a few well-known players (add more as needed)
-            const espnHeadshotMap = {
-                "LeBron James": "https://a.espncdn.com/i/headshots/nba/players/full/1966.png",
-                "Stephen Curry": "https://a.espncdn.com/i/headshots/nba/players/full/3975.png",
-                "Kevin Durant": "https://a.espncdn.com/i/headshots/nba/players/full/3202.png",
-                "Nikola Jokic": "https://a.espncdn.com/i/headshots/nba/players/full/3112335.png",
-                "Joel Embiid": "https://a.espncdn.com/i/headshots/nba/players/full/3059318.png",
-                "Luka Dončić": "https://a.espncdn.com/i/headshots/nba/players/full/3945274.png",
-                "Giannis Antetokounmpo": "https://a.espncdn.com/i/headshots/nba/players/full/3032977.png",
-                "Jayson Tatum": "https://a.espncdn.com/i/headshots/nba/players/full/4065648.png",
-                "Anthony Davis": "https://a.espncdn.com/i/headshots/nba/players/full/6583.png",
-                "Damian Lillard": "https://a.espncdn.com/i/headshots/nba/players/full/6606.png"
-                // Add more as needed
-            };
-            const placeholderHeadshot = "https://a.espncdn.com/i/headshots/nophoto.png";
-
+            // Use GitHub repo for NBA player headshots
             function getPlayerHeadshotUrl(playerName) {
-                return espnHeadshotMap[playerName] || placeholderHeadshot;
+                const encodedName = encodeURIComponent(playerName);
+                return `https://raw.githubusercontent.com/GreenGuitar0/nba-players/main/player_images/${encodedName}.jpg`;
             }
+            const placeholderHeadshot = "https://a.espncdn.com/i/headshots/nophoto.png";
 
             function createPlayerCard(player, inTeam) {
                 const card = document.createElement('div');
